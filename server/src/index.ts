@@ -1,47 +1,52 @@
 import 'reflect-metadata';
+// Load environment variables early (ensures other modules see process.env)
+import './config/env';
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { connectDB } from './config/db';
 import chatRoutes from './routes/chatRoutes';
 import { AppDataSource } from './config/data-source';
 import { Message } from './entities/Message';
 
-// Load environment variables
-dotenv.config();
+// Environment variables are loaded by `src/config/env` above.
 
 // Initialize Express app
 const app = express();
 const server = http.createServer(app);
 
 // Socket.io setup
+const CLIENT_ORIGIN = process.env.CLIENT_URL || 'http://localhost:5173';
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: CLIENT_ORIGIN,
     methods: ['GET', 'POST'],
   },
 });
 
-// Middleware
-app.use(cors());
+// Middleware: enable CORS only for the configured client origin
+app.use(cors({ origin: CLIENT_ORIGIN, methods: ['GET', 'POST'] }));
 app.use(express.json());
 
 // Database connection
 connectDB();
 
-// Test database connection
+// Test database connection (use connectDB which is idempotent)
 const testConnection = async () => {
   try {
-    await AppDataSource.initialize();
+    await connectDB();
+    if (!AppDataSource.isInitialized) {
+      throw new Error('AppDataSource was not initialized');
+    }
+
     console.log('Database connection established');
-    
+
     // Test query
     const messageRepository = AppDataSource.getRepository(Message);
     const count = await messageRepository.count();
     console.log(`Connected to database. Found ${count} messages.`);
-    
+
   } catch (error) {
     console.error('Error connecting to database:', error);
     process.exit(1);

@@ -15,6 +15,9 @@ interface Message {
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const App = () => {
+  // Helper to generate a stable unique id for messages when backend id is missing
+  const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -35,15 +38,16 @@ const App = () => {
     socketRef.current = io(API_URL);
 
     // Listen for ghost messages
-    socketRef.current.on('receive_message', (message: Omit<Message, 'id'>) => {
+    socketRef.current.on('receive_message', (message: Omit<Message, 'id'> & Partial<Message>) => {
       setIsTyping(false);
-      setMessages(prevMessages => [
-        ...prevMessages, 
-        { 
-          ...message, 
-          id: Date.now().toString() 
-        }
-      ]);
+      // Ensure incoming message has a stable id
+      const incoming: Message = {
+        id: (message as any).id || generateId(),
+        content: message.content,
+        isGhost: message.isGhost,
+        timestamp: message.timestamp || new Date().toISOString(),
+      };
+      setMessages(prevMessages => [...prevMessages, incoming]);
     });
 
     // Clean up on unmount
@@ -65,7 +69,14 @@ const App = () => {
       try {
         const response = await axios.get(`${API_URL}/api/chat/history/${sessionId}`);
         if (response.data) {
-          setMessages(response.data);
+          // Normalize history: ensure every message has a non-empty unique id
+          const normalized: Message[] = response.data.map((m: any, idx: number) => ({
+            id: m.id || `${m.timestamp || Date.now()}-${idx}-${Math.random().toString(36).slice(2,6)}`,
+            content: m.content,
+            isGhost: !!m.isGhost,
+            timestamp: m.timestamp || new Date().toISOString(),
+          }));
+          setMessages(normalized);
         }
       } catch (error) {
         console.error('Error fetching chat history:', error);
@@ -80,7 +91,7 @@ const App = () => {
     if (!input.trim()) return;
 
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: generateId(),
       content: input,
       isGhost: false,
       timestamp: new Date().toISOString(),
@@ -92,11 +103,22 @@ const App = () => {
     setIsTyping(true);
 
     try {
-      // Send message to server
-      await axios.post(`${API_URL}/api/chat/send`, {
+      // Send message to server and use the returned messages to update UI
+      const resp = await axios.post(`${API_URL}/api/chat/send`, {
         content: input,
         sessionId,
       });
+
+      if (resp.data) {
+        const normalized: Message[] = resp.data.map((m: any, idx: number) => ({
+          id: m.id || `${m.timestamp || Date.now()}-${idx}-${Math.random().toString(36).slice(2,6)}`,
+          content: m.content,
+          isGhost: !!m.isGhost,
+          timestamp: m.timestamp || new Date().toISOString(),
+        }));
+        setMessages(normalized);
+        setIsTyping(false);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       setIsTyping(false);
@@ -139,7 +161,7 @@ const App = () => {
         <AnimatePresence>
           {messages.map((message) => (
             <motion.div
-              key={message.id}
+              key={message.id || `${message.timestamp}-${Math.random().toString(36).slice(2,6)}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
@@ -173,6 +195,7 @@ const App = () => {
           
           {isTyping && (
             <motion.div
+                key="typing"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="flex justify-start"
@@ -187,7 +210,7 @@ const App = () => {
               </motion.div>
           )}
           
-          <div ref={messagesEndRef} />
+          <div key="end" ref={messagesEndRef} />
         </AnimatePresence>
       </main>
 
