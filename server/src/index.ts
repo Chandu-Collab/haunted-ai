@@ -17,15 +17,16 @@ const app = express();
 const server = http.createServer(app);
 
 // Socket.io setup
+const CLIENT_ORIGIN = process.env.CLIENT_URL || 'http://localhost:5173';
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: CLIENT_ORIGIN,
     methods: ['GET', 'POST'],
   },
 });
 
-// Middleware
-app.use(cors());
+// Middleware: enable CORS only for the configured client origin
+app.use(cors({ origin: CLIENT_ORIGIN, methods: ['GET', 'POST'] }));
 app.use(express.json());
 
 // Database connection
