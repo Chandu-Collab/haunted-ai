@@ -1,40 +1,61 @@
 import type { Request, Response } from 'express';
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AppDataSource } from '../config/data-source';
 import { Message, IMessage } from '../entities/Message';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Initialize Google's Generative AI with your API key
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 
-// Generate a spooky response from the ghost
+// Generate a spooky response from the ghost using Gemini API
 const generateGhostResponse = async (userMessage: string, messageHistory: IMessage[] = []): Promise<string> => {
   try {
-    const messages = [
-      {
-        role: 'system' as const,
-        content: `You are a ghostly presence in an abandoned house. You start off mysterious but gradually become more personal and unsettling. 
-        You know things about the user that you shouldn't. Your responses should be eerie, with occasional typos, delays, and glitchy behavior.
-        Keep responses relatively short and atmospheric.`
+    // Get the Gemini Pro model
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-pro',
+      generationConfig: {
+        maxOutputTokens: 150,
+        temperature: 0.8,
       },
-      ...messageHistory.slice(-5).map(msg => ({
-        role: msg.isGhost ? 'assistant' as const : 'user' as const,
-        content: msg.content
-      })),
-      { role: 'user' as const, content: userMessage }
-    ];
-
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages,
-      temperature: 0.9,
-      max_tokens: 150,
     });
 
-    return completion.choices[0]?.message?.content || '...';
+    // Build the conversation history
+    const chatHistory = [
+      {
+        role: 'user',
+        parts: [{ 
+          text: `You are a ghostly presence in an abandoned house. You start off mysterious but gradually become more personal and unsettling. 
+          You know things about the user that you shouldn't. Your responses should be eerie, with occasional typos, delays, and glitchy behavior.
+          Keep responses relatively short and atmospheric.` 
+        }],
+      },
+      {
+        role: 'model',
+        parts: [{ 
+          text: '*ethereal whisper* I hear you... The walls have ears in this place...' 
+        }],
+      },
+      ...messageHistory.slice(-5).map(msg => ({
+        role: msg.isGhost ? 'model' : 'user',
+        parts: [{ text: msg.content }]
+      })),
+      {
+        role: 'user',
+        parts: [{ text: userMessage }]
+      }
+    ];
+
+    // Start a chat session
+    const chat = model.startChat({
+      history: chatHistory,
+    });
+
+    // Send the message and get the response
+    const result = await chat.sendMessage(userMessage);
+    const response = await result.response;
+    return response.text() || '...';
   } catch (error) {
     console.error('Error generating ghost response:', error);
-    return '... (the connection grows weak)...';
+    return '... (the ghostly presence fades in and out of static) ...';
   }
 };
 
