@@ -5,23 +5,27 @@ import useBackgroundMusic from '../hooks/useBackgroundMusic';
 interface MusicControlsProps {
   isEnabled: boolean;
   onToggle: (enabled: boolean) => void;
+  volume?: number; // External volume control (0-1)
+  onVolumeChange?: (volume: number) => void; // External volume change handler
   className?: string;
 }
 
 const MusicControls: React.FC<MusicControlsProps> = ({ 
   isEnabled, 
   onToggle, 
+  volume: externalVolume,
+  onVolumeChange: externalVolumeChange,
   className = '' 
 }) => {
   const { 
     isPlaying, 
     currentTrack, 
-    volume, 
+    volume: internalVolume, 
     tracks, 
     play, 
     pause, 
     stop, 
-    setVolume, 
+    setVolume: setInternalVolume, 
     nextTrack, 
     previousTrack,
     isSupported 
@@ -29,17 +33,32 @@ const MusicControls: React.FC<MusicControlsProps> = ({
 
   const [selectedTrackIndex, setSelectedTrackIndex] = useState(0);
 
+  // Use external volume if provided, otherwise use internal
+  const currentVolume = externalVolume !== undefined ? externalVolume : internalVolume;
+  const setCurrentVolume = externalVolumeChange || setInternalVolume;
+
   const handlePlayPause = async () => {
     if (isPlaying) {
       pause();
     } else {
+      console.log(`Starting playback of: ${tracks[selectedTrackIndex].name}`);
       await play(tracks[selectedTrackIndex], { fadeIn: true, loop: true });
     }
   };
 
   const handleTrackChange = async (index: number) => {
     setSelectedTrackIndex(index);
-    if (isPlaying) {
+    // Always switch track immediately if music is enabled, regardless of playing state
+    if (isEnabled) {
+      console.log(`Switching to track: ${tracks[index].name}`);
+      // First stop current track explicitly
+      if (isPlaying) {
+        console.log('Stopping current track before switching...');
+        stop();
+        // Wait a bit for cleanup
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+      // Then start the new track
       await play(tracks[index], { fadeIn: true, loop: true });
     }
   };
@@ -130,15 +149,15 @@ const MusicControls: React.FC<MusicControlsProps> = ({
           {/* Volume Control */}
           <div>
             <label className="text-haunted-300 text-sm block mb-2">
-              Volume ({Math.round(volume * 100)}%)
+              Volume ({Math.round(currentVolume * 100)}%)
             </label>
             <input
               type="range"
               min="0"
               max="1"
               step="0.1"
-              value={volume}
-              onChange={(e) => setVolume(parseFloat(e.target.value))}
+              value={currentVolume}
+              onChange={(e) => setCurrentVolume(parseFloat(e.target.value))}
               className="w-full accent-haunted-600"
             />
           </div>
@@ -185,13 +204,52 @@ const MusicControls: React.FC<MusicControlsProps> = ({
           </div>
 
           {/* Info */}
-          <div className="text-xs text-haunted-400 bg-haunted-800/30 rounded-lg p-3">
+          <div className="text-xs text-haunted-400 bg-haunted-800/30 rounded-lg p-3 space-y-2">
             <p className="mb-1">
-              <strong>Tracks:</strong> {tracks.length} supernatural ambiences
+              <strong>Tracks:</strong> {tracks.length} terrifying horror ambiences
             </p>
-            <p>
-              Background music enhances the ghostly atmosphere during conversations.
+            <p className="mb-2">
+              🎭 Experience intense horror atmospheres with synthetic audio generation
             </p>
+            <p className="mb-2 text-haunted-300">
+              <strong>Featured Horror Tracks:</strong> Nightmare Asylum, Demon's Lair, Torture Chamber, Blood Moon Rising, Purgatory Gates & more!
+            </p>
+            
+            {/* Track Categories */}
+            <div className="border-t border-haunted-700/30 pt-2">
+              <p className="font-semibold text-haunted-300 mb-1">Horror Categories:</p>
+              <div className="grid grid-cols-2 gap-1 text-xs">
+                <span className="text-red-400">💀 Supernatural</span>
+                <span className="text-purple-400">🔮 Demonic</span>
+                <span className="text-blue-400">🌙 Atmospheric</span>
+                <span className="text-orange-400">🔥 Intense</span>
+              </div>
+            </div>
+            
+            {/* Debug Controls */}
+            <div className="border-t border-haunted-700/30 pt-2 space-y-1">
+              <p className="font-semibold text-haunted-300">Debug Controls:</p>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => {
+                    console.log('🎵 Manual pause test');
+                    pause();
+                  }}
+                  className="px-2 py-1 bg-haunted-700/60 hover:bg-haunted-600/60 rounded text-xs"
+                >
+                  Force Pause
+                </button>
+                <button
+                  onClick={() => {
+                    console.log('🎵 Manual resume test');
+                    handlePlayPause();
+                  }}
+                  className="px-2 py-1 bg-haunted-700/60 hover:bg-haunted-600/60 rounded text-xs"
+                >
+                  Force Play
+                </button>
+              </div>
+            </div>
           </div>
         </motion.div>
       )}

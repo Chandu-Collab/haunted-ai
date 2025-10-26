@@ -13,37 +13,44 @@ interface FloatingGhost {
 interface FloatingGhostsProps {
   triggerCount?: number;
   className?: string;
+  intensity?: number; // 0-100 percentage
 }
 
 const FloatingGhosts: React.FC<FloatingGhostsProps> = ({ 
   triggerCount = 0, 
-  className = '' 
+  className = '',
+  intensity = 100
 }) => {
   const [ghosts, setGhosts] = useState<FloatingGhost[]>([]);
 
   const ghostEmojis = ['👻', '🎃', '💀', '🔮', '⚡', '🌙', '✨', '🕯️'];
 
   useEffect(() => {
-    if (triggerCount === 0) return;
+    if (triggerCount === 0 || intensity === 0) return;
+
+    // Use intensity to determine if ghost should spawn (0-100%)
+    const shouldSpawn = Math.random() * 100 < intensity;
+    if (!shouldSpawn) return;
 
     const newGhost: FloatingGhost = {
       id: Date.now() + Math.random(),
       x: Math.random() * 80 + 10, // 10-90% of screen width
       y: Math.random() * 30 + 60, // 60-90% of screen height
-      opacity: 0.7 + Math.random() * 0.3,
-      size: 2 + Math.random() * 3, // 2-5rem
+      opacity: (0.7 + Math.random() * 0.3) * (intensity / 100), // Scale opacity with intensity
+      size: (2 + Math.random() * 3) * Math.max(0.5, intensity / 100), // Scale size with intensity
       emoji: ghostEmojis[Math.floor(Math.random() * ghostEmojis.length)]
     };
 
     setGhosts(prev => [...prev, newGhost]);
 
-    // Remove ghost after animation
+    // Remove ghost after animation (duration also scales with intensity)
+    const duration = 4000 * Math.max(0.5, intensity / 100);
     const timer = setTimeout(() => {
       setGhosts(prev => prev.filter(ghost => ghost.id !== newGhost.id));
-    }, 4000);
+    }, duration);
 
     return () => clearTimeout(timer);
-  }, [triggerCount]);
+  }, [triggerCount, intensity]);
 
   return (
     <div className={`fixed inset-0 pointer-events-none z-10 ${className}`}>

@@ -6,8 +6,16 @@ import FloatingGhosts from './components/FloatingGhosts';
 import GhostTypingIndicator from './components/GhostTypingIndicator';
 import TypewriterText from './components/TypewriterText';
 import Settings from './components/Settings';
+import FogEffect from './components/FogEffect';
+import LightningFlash from './components/LightningFlash';
+import FloatingTextSpirits from './components/FloatingTextSpirits';
+import EyeTrackingCursor from './components/EyeTrackingCursor';
+import MessageEffects from './components/MessageEffects';
+import NotificationSystem from './components/NotificationSystem';
+import AudioInitPrompt from './components/AudioInitPrompt';
 import useAudio from './hooks/useAudio';
 import useVoiceSynthesis from './hooks/useVoiceSynthesis';
+import useBackgroundMusic from './hooks/useBackgroundMusic';
 import { GHOST_PERSONALITIES, type GhostPersonality } from './utils/ghostPersonalities';
 
 // Types
@@ -38,14 +46,30 @@ const App = () => {
   const [sessionId] = useState(`session-${Math.random().toString(36).substring(2, 9)}`);
   const [ghostTriggerCount, setGhostTriggerCount] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
+  const [showAudioPrompt, setShowAudioPrompt] = useState(true);
+  const [audioInitialized, setAudioInitialized] = useState(false);
+  const [soundEffectPlaying, setSoundEffectPlaying] = useState(false);
+  const musicInitializingRef = useRef(false);
+  const [notifications, setNotifications] = useState<Array<{
+    id: string;
+    type: 'success' | 'info' | 'warning' | 'error';
+    title: string;
+    message?: string;
+    duration?: number;
+  }>>([]);
   const [appSettings, setAppSettings] = useState({
     soundEnabled: true,
     voiceEnabled: true,
     musicEnabled: true,
+    musicVolume: 30, // 0-100 scale for UI
     particleCount: 60,
     ghostIntensity: 100,
-    theme: 'dark' as const,
-    ghostPersonality: GHOST_PERSONALITIES[0] // Default to Casper
+    theme: 'dark' as 'dark' | 'darker' | 'midnight',
+    ghostPersonality: GHOST_PERSONALITIES[0], // Default to Casper
+    lightningEnabled: true,
+    fogEnabled: true,
+    eyeTrackingEnabled: true,
+    textSpiritsEnabled: true,
   });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
@@ -55,6 +79,159 @@ const App = () => {
   
   // Voice synthesis system
   const { speak: speakText, isSpeaking } = useVoiceSynthesis();
+  
+  // Background music system
+  const { 
+    isPlaying: isMusicPlaying, 
+    play: playMusic, 
+    pause: pauseMusic, 
+    setVolume: setMusicVolume,
+    volume: musicVolume 
+  } = useBackgroundMusic();
+
+  // Debug: Log music state changes
+  useEffect(() => {
+    console.log('🎵 Music playing state changed:', isMusicPlaying);
+  }, [isMusicPlaying]);
+
+  useEffect(() => {
+    console.log('🗣️ Voice speaking state changed:', isSpeaking);
+  }, [isSpeaking]);
+
+  useEffect(() => {
+    console.log('🔊 Sound effect playing state changed:', soundEffectPlaying);
+  }, [soundEffectPlaying]);
+
+  // Notification system
+  const addNotification = useCallback((notification: Omit<typeof notifications[0], 'id'>) => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    setNotifications(prev => [...prev, { ...notification, id }]);
+  }, []);
+
+  const removeNotification = useCallback((id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  }, []);
+
+  // Settings change handler with notifications
+  const handleSettingsChange = useCallback((newSettings: typeof appSettings) => {
+    const oldSettings = appSettings;
+    setAppSettings(newSettings);
+
+    // Show notifications for important changes
+    if (oldSettings.ghostPersonality.id !== newSettings.ghostPersonality.id) {
+      addNotification({
+        type: 'info',
+        title: 'Ghost Personality Changed',
+        message: `Now channeling ${newSettings.ghostPersonality.name} ${newSettings.ghostPersonality.emoji}`,
+        duration: 4000
+      });
+    }
+
+    if (oldSettings.theme !== newSettings.theme) {
+      addNotification({
+        type: 'success',
+        title: 'Theme Updated',
+        message: `Switched to ${newSettings.theme} theme`,
+        duration: 3000
+      });
+    }
+
+    // Visual effects toggles
+    if (oldSettings.lightningEnabled !== newSettings.lightningEnabled) {
+      addNotification({
+        type: 'info',
+        title: `Lightning Effects ${newSettings.lightningEnabled ? 'Enabled' : 'Disabled'}`,
+        duration: 2000
+      });
+    }
+
+    if (oldSettings.fogEnabled !== newSettings.fogEnabled) {
+      addNotification({
+        type: 'info',
+        title: `Fog Effects ${newSettings.fogEnabled ? 'Enabled' : 'Disabled'}`,
+        duration: 2000
+      });
+    }
+
+    if (oldSettings.eyeTrackingEnabled !== newSettings.eyeTrackingEnabled) {
+      addNotification({
+        type: 'info',
+        title: `Eye Tracking ${newSettings.eyeTrackingEnabled ? 'Enabled' : 'Disabled'}`,
+        duration: 2000
+      });
+    }
+
+    if (oldSettings.textSpiritsEnabled !== newSettings.textSpiritsEnabled) {
+      addNotification({
+        type: 'info',
+        title: `Text Spirits ${newSettings.textSpiritsEnabled ? 'Enabled' : 'Disabled'}`,
+        duration: 2000
+      });
+    }
+  }, [appSettings, addNotification]);
+
+  // Background music management
+  useEffect(() => {
+    // Sync music volume (convert from 0-100 to 0-1)
+    const normalizedVolume = appSettings.musicVolume / 100;
+    setMusicVolume(normalizedVolume);
+  }, [appSettings.musicVolume, setMusicVolume]);
+
+  // Auto-start background music when enabled
+  useEffect(() => {
+    if (appSettings.musicEnabled && !isMusicPlaying && !musicInitializingRef.current) {
+      console.log('🎵 Auto-starting background music...');
+      musicInitializingRef.current = true;
+      
+      // Use a small delay to ensure audio context is ready
+      const timer = setTimeout(() => {
+        playMusic(undefined, { fadeIn: true, loop: true })
+          .then(() => {
+            musicInitializingRef.current = false;
+          })
+          .catch(err => {
+            console.warn('Failed to start background music:', err);
+            musicInitializingRef.current = false;
+          });
+      }, 1000);
+      
+      return () => {
+        clearTimeout(timer);
+        musicInitializingRef.current = false;
+      };
+    } else if (!appSettings.musicEnabled && isMusicPlaying) {
+      console.log('🎵 Auto-stopping background music...');
+      pauseMusic();
+      musicInitializingRef.current = false;
+    }
+  }, [appSettings.musicEnabled]); // Only depend on musicEnabled setting
+
+  // Pause music during voice synthesis and sound effects, resume after
+  useEffect(() => {
+    const shouldPauseMusic = (isSpeaking || soundEffectPlaying) && appSettings.musicEnabled;
+    const shouldResumeMusic = !isSpeaking && !soundEffectPlaying && appSettings.musicEnabled;
+    
+    console.log('Music control check:', {
+      isSpeaking,
+      soundEffectPlaying,
+      isMusicPlaying,
+      musicEnabled: appSettings.musicEnabled,
+      shouldPauseMusic,
+      shouldResumeMusic
+    });
+    
+    if (shouldPauseMusic && isMusicPlaying) {
+      console.log('🎵 PAUSING music for voice/sound effect...');
+      pauseMusic();
+    } else if (shouldResumeMusic && !isMusicPlaying) {
+      console.log('🎵 RESUMING music after voice/sound effect...');
+      setTimeout(() => {
+        playMusic(undefined, { fadeIn: true, loop: true }).catch(err => {
+          console.warn('Failed to resume background music:', err);
+        });
+      }, 300); // Shorter delay for better responsiveness
+    }
+  }, [isSpeaking, soundEffectPlaying, isMusicPlaying, appSettings.musicEnabled]);
 
   // Format timestamp
   const formatTimestamp = useCallback((timestamp: string): string => {
@@ -76,20 +253,33 @@ const App = () => {
       // Trigger floating ghosts for ghost messages
       if (message.isGhost) {
         setGhostTriggerCount(prev => prev + 1);
-        if (appSettings.soundEnabled) playSyntheticSound('ghost');
+        playSoundEffect('ghost');
         
         // Speak ghost messages if voice is enabled
         if (appSettings.voiceEnabled) {
-          setTimeout(() => {
-            speakText(message.content, {
+          console.log('Voice enabled, will speak ghost message:', message.content.substring(0, 50) + '...');
+          setTimeout(async () => {
+            console.log('Starting ghost voice synthesis with settings:', {
               rate: appSettings.ghostPersonality.voiceSettings.rate,
               pitch: appSettings.ghostPersonality.voiceSettings.pitch,
               volume: appSettings.ghostPersonality.voiceSettings.volume
             });
+            try {
+              await speakText(message.content, {
+                rate: appSettings.ghostPersonality.voiceSettings.rate,
+                pitch: appSettings.ghostPersonality.voiceSettings.pitch,
+                volume: appSettings.ghostPersonality.voiceSettings.volume
+              });
+              console.log('Ghost voice synthesis completed');
+            } catch (err) {
+              console.error('Voice synthesis failed:', err);
+            }
           }, 500); // Small delay for dramatic effect
+        } else {
+          console.log('Voice disabled in settings');
         }
       } else {
-        if (appSettings.soundEnabled) playSyntheticSound('message');
+        playSoundEffect('message');
       }
       
       // Ensure incoming message has a stable id
@@ -161,7 +351,7 @@ const App = () => {
     setIsTyping(true);
     
     // Play send sound
-    if (appSettings.soundEnabled) playSyntheticSound('send');
+    playSoundEffect('send');
 
     console.log('Sending message via Socket.io:', messageContent);
 
@@ -191,20 +381,151 @@ const App = () => {
     }
   };
 
-  return (
-    <div className="flex flex-col h-screen bg-haunted-900 relative overflow-hidden">
-      {/* Particle System Background */}
-      <ParticleSystem particleCount={appSettings.particleCount} />
+  // Function to get theme classes
+  const getThemeClasses = () => {
+    switch (appSettings.theme) {
+      case 'darker':
+        return 'bg-gray-950 text-gray-100 theme-darker';
+      case 'midnight':
+        return 'bg-black text-blue-100 theme-midnight';
+      default:
+        return 'bg-haunted-900 text-haunted-100 theme-dark';
+    }
+  };
+
+  // Apply theme to document body
+  useEffect(() => {
+    const body = document.body;
+    // Remove all theme classes
+    body.classList.remove('theme-dark', 'theme-darker', 'theme-midnight');
+    
+    // Add current theme class
+    switch (appSettings.theme) {
+      case 'darker':
+        body.classList.add('theme-darker');
+        break;
+      case 'midnight':
+        body.classList.add('theme-midnight');
+        break;
+      default:
+        body.classList.add('theme-dark');
+        break;
+    }
+  }, [appSettings.theme]);
+
+  // Initialize audio on first user interaction
+  const initializeAudio = useCallback(async () => {
+    try {
+      // Initialize synthetic audio using the helper
+      await playSoundEffect('typing');
+      setAudioInitialized(true);
+      setShowAudioPrompt(false);
       
-      {/* Floating Ghosts */}
-      <FloatingGhosts triggerCount={ghostTriggerCount} />
+      addNotification({
+        type: 'success',
+        title: 'Audio Enabled',
+        message: 'Spectral sounds are now active! 👻🔊',
+        duration: 3000
+      });
+      
+      console.log('Audio context initialized successfully');
+    } catch (error) {
+      console.warn('Failed to initialize audio:', error);
+      setShowAudioPrompt(false); // Hide prompt even if failed
+      
+      addNotification({
+        type: 'warning',
+        title: 'Audio Unavailable',
+        message: 'Audio could not be enabled, but you can still chat with the spirits',
+        duration: 4000
+      });
+    }
+  }, [playSyntheticSound, addNotification]);
+
+  // Auto-hide audio prompt if user interacts without clicking the button
+  useEffect(() => {
+    if (audioInitialized) return;
+
+    const handleInteraction = () => {
+      setShowAudioPrompt(false);
+    };
+
+    // Auto-hide prompt after 10 seconds or on any interaction
+    const timer = setTimeout(() => {
+      setShowAudioPrompt(false);
+    }, 10000);
+
+    document.addEventListener('click', handleInteraction);
+    document.addEventListener('keydown', handleInteraction);
+    document.addEventListener('touchstart', handleInteraction);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('keydown', handleInteraction);
+      document.removeEventListener('touchstart', handleInteraction);
+    };
+  }, [audioInitialized]);
+
+  // Helper function to play sound effects with music pausing
+  const playSoundEffect = useCallback(async (type: 'message' | 'ghost' | 'typing' | 'send') => {
+    if (!appSettings.soundEnabled) return;
+    
+    console.log(`🔊 Playing sound effect: ${type}, setting soundEffectPlaying to true`);
+    setSoundEffectPlaying(true);
+    
+    try {
+      await playSyntheticSound(type);
+      console.log(`🔊 Sound effect ${type} completed`);
+    } catch (err) {
+      console.warn('Audio failed:', err);
+    }
+    
+    // Set different delays based on sound type
+    const delay = type === 'ghost' ? 2500 : type === 'message' ? 1800 : 1000;
+    
+    setTimeout(() => {
+      console.log(`🔊 Clearing soundEffectPlaying after ${type} sound effect (${delay}ms delay)`);
+      setSoundEffectPlaying(false);
+    }, delay);
+  }, [appSettings.soundEnabled, playSyntheticSound]);
+
+  return (
+    <div className={`flex flex-col h-screen relative overflow-hidden ${getThemeClasses()}`}>
+      {/* Background Effects */}
+      <ParticleSystem particleCount={appSettings.particleCount} />
+      {appSettings.fogEnabled && <FogEffect intensity={3} />}
+      {appSettings.lightningEnabled && <LightningFlash intensity={0.3} />}
+      
+      {/* Floating Effects */}
+      <FloatingGhosts triggerCount={ghostTriggerCount} intensity={appSettings.ghostIntensity} />
+      {appSettings.textSpiritsEnabled && (
+        <FloatingTextSpirits messages={messages} maxSpirits={3} spawnRate={0.3} />
+      )}
+      
+      {/* Interactive Effects */}
+      {appSettings.eyeTrackingEnabled && <EyeTrackingCursor enabled={true} eyeCount={3} />}
+      
+      {/* Audio Initialization Prompt */}
+      {showAudioPrompt && (
+        <AudioInitPrompt 
+          onInitialize={initializeAudio}
+          isVisible={showAudioPrompt}
+        />
+      )}
       
       {/* Settings Panel */}
       <Settings
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
         settings={appSettings}
-        onSettingsChange={setAppSettings}
+        onSettingsChange={handleSettingsChange}
+      />
+
+      {/* Notification System */}
+      <NotificationSystem 
+        notifications={notifications}
+        onRemove={removeNotification}
       />
       
       {/* Header */}
@@ -309,18 +630,23 @@ const App = () => {
                   </span>
                 </div>
                 
-                <div className="text-haunted-100 whitespace-pre-wrap leading-relaxed">
+                <MessageEffects 
+                  content={message.content} 
+                  isGhost={message.isGhost}
+                  className="text-haunted-100 whitespace-pre-wrap leading-relaxed"
+                >
                   {message.isGhost ? (
                     <TypewriterText 
                       text={message.content}
                       speed={30}
                       isGhost={true}
+                      enableSound={true}
                       className="ghost-text"
                     />
                   ) : (
                     <span>{message.content}</span>
                   )}
-                </div>
+                </MessageEffects>
               </div>
             </motion.div>
           ))}

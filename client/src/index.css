@@ -12,6 +12,50 @@
   --haunted-light: #f8f5ff;
 }
 
+/* Theme variations */
+.theme-dark {
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #1a1a1a;
+  --bg-tertiary: #2a1a3a;
+  --text-primary: #f8f5ff;
+  --text-secondary: #e0d4ff;
+  --accent-primary: #7c2dff;
+  --accent-secondary: #4c13b3;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(124, 45, 255, 0.1) 0%, transparent 20%),
+    radial-gradient(circle at 90% 80%, rgba(124, 45, 255, 0.1) 0%, transparent 20%),
+    radial-gradient(circle at 50% 50%, rgba(76, 19, 179, 0.05) 0%, transparent 50%),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.95));
+}
+
+.theme-darker {
+  --bg-primary: #000000;
+  --bg-secondary: #111111;
+  --bg-tertiary: #222222;
+  --text-primary: #f3f4f6;
+  --text-secondary: #d1d5db;
+  --accent-primary: #6366f1;
+  --accent-secondary: #4338ca;
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.08) 0%, transparent 25%),
+    radial-gradient(circle at 80% 70%, rgba(67, 56, 202, 0.08) 0%, transparent 25%),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 1));
+}
+
+.theme-midnight {
+  --bg-primary: #000000;
+  --bg-secondary: #0f172a;
+  --bg-tertiary: #1e293b;
+  --text-primary: #dbeafe;
+  --text-secondary: #93c5fd;
+  --accent-primary: #3b82f6;
+  --accent-secondary: #1e40af;
+  background-image: 
+    radial-gradient(circle at 15% 25%, rgba(59, 130, 246, 0.1) 0%, transparent 30%),
+    radial-gradient(circle at 85% 75%, rgba(30, 64, 175, 0.1) 0%, transparent 30%),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.9), rgba(15, 23, 42, 0.8));
+}
+
 body {
   @apply bg-haunted-950 text-haunted-100 min-h-screen overflow-x-hidden;
   font-family: 'Inter', sans-serif;
@@ -103,10 +147,157 @@ body::before {
   box-shadow: 0 0 15px rgba(124, 45, 255, 0.8);
 }
 
+/* Custom scrollbar for settings modal */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(76, 19, 179, 0.1);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(45deg, rgba(124, 45, 255, 0.6), rgba(76, 19, 179, 0.8));
+  border-radius: 4px;
+  box-shadow: 0 0 8px rgba(124, 45, 255, 0.3);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(45deg, rgba(124, 45, 255, 0.8), rgba(76, 19, 179, 1));
+  box-shadow: 0 0 12px rgba(124, 45, 255, 0.6);
+}
+
+/* For Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(124, 45, 255, 0.6) rgba(76, 19, 179, 0.1);
+}
+
+/* Theme-aware component styles */
+.theme-bg-primary {
+  background-color: var(--bg-primary);
+}
+
+.theme-bg-secondary {
+  background-color: var(--bg-secondary);
+}
+
+.theme-bg-tertiary {
+  background-color: var(--bg-tertiary);
+}
+
+.theme-text-primary {
+  color: var(--text-primary);
+}
+
+.theme-text-secondary {
+  color: var(--text-secondary);
+}
+
+.theme-accent-primary {
+  color: var(--accent-primary);
+}
+
+.theme-accent-secondary {
+  color: var(--accent-secondary);
+}
+
+.theme-border {
+  border-color: var(--accent-primary);
+}
+
 /* Enhanced glitch effect */
 .glitch {
   position: relative;
   display: inline-block;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  pointer-events: none;
+}
+
+.glitch::before {
+  left: 2px;
+  text-shadow: -2px 0 #ff00c1;
+  animation: glitch-anim-1 2s infinite linear alternate-reverse;
+  clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+}
+
+.glitch::after {
+  left: -2px;
+  text-shadow: 2px 0 #00fff9;
+  animation: glitch-anim-2 2s infinite linear alternate-reverse;
+  clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+}
+
+/* Advanced glitch for ghost messages */
+.glitch-ghost {
+  position: relative;
+  display: inline-block;
+  animation: ghost-static 0.5s infinite;
+}
+
+.glitch-ghost::before,
+.glitch-ghost::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  pointer-events: none;
+}
+
+.glitch-ghost::before {
+  left: 1px;
+  text-shadow: -1px 0 rgba(124, 45, 255, 0.8);
+  animation: glitch-ghost-1 3s infinite linear alternate-reverse;
+  opacity: 0.7;
+}
+
+.glitch-ghost::after {
+  left: -1px;
+  text-shadow: 1px 0 rgba(46, 10, 102, 0.9);
+  animation: glitch-ghost-2 3s infinite linear alternate-reverse;
+  opacity: 0.5;
+}
+
+/* Glitch in/out animation */
+.glitch-in {
+  animation: glitch-fade-in 0.6s ease-out forwards;
+}
+
+.glitch-out {
+  animation: glitch-fade-out 0.4s ease-in forwards;
+}
+
+/* Shake/tremble effect */
+.shake {
+  animation: shake 0.5s ease-in-out infinite;
+}
+
+.tremble {
+  animation: tremble 2s ease-in-out infinite;
+}
+
+/* Fade from darkness */
+.fade-from-darkness {
+  animation: fade-from-darkness 1s ease-out forwards;
+}
+
+/* Color shifting text */
+.color-shift {
+  animation: color-shift 3s ease-in-out infinite;
 }
 
 .glitch::before,
@@ -246,4 +437,151 @@ body::before {
   90% { clip: rect(26px, 9999px, 55px, 0); }
   95% { clip: rect(33px, 9999px, 95px, 0); }
   100% { clip: rect(95px, 9999px, 86px, 0); }
+}
+
+/* New advanced glitch keyframes */
+@keyframes glitch-ghost-1 {
+  0% { clip-path: polygon(0 2%, 100% 2%, 100% 5%, 0 5%); }
+  10% { clip-path: polygon(0 15%, 100% 15%, 100% 15%, 0 15%); }
+  20% { clip-path: polygon(0 10%, 100% 10%, 100% 20%, 0 20%); }
+  30% { clip-path: polygon(0 1%, 100% 1%, 100% 2%, 0 2%); }
+  40% { clip-path: polygon(0 33%, 100% 33%, 100% 33%, 0 33%); }
+  50% { clip-path: polygon(0 44%, 100% 44%, 100% 44%, 0 44%); }
+  60% { clip-path: polygon(0 50%, 100% 50%, 100% 20%, 0 20%); }
+  70% { clip-path: polygon(0 70%, 100% 70%, 100% 70%, 0 70%); }
+  80% { clip-path: polygon(0 80%, 100% 80%, 100% 80%, 0 80%); }
+  90% { clip-path: polygon(0 50%, 100% 50%, 100% 55%, 0 55%); }
+  100% { clip-path: polygon(0 70%, 100% 70%, 100% 80%, 0 80%); }
+}
+
+@keyframes glitch-ghost-2 {
+  0% { clip-path: polygon(0 25%, 100% 25%, 100% 30%, 0 30%); }
+  15% { clip-path: polygon(0 3%, 100% 3%, 100% 3%, 0 3%); }
+  22% { clip-path: polygon(0 5%, 100% 5%, 100% 20%, 0 20%); }
+  31% { clip-path: polygon(0 20%, 100% 20%, 100% 20%, 0 20%); }
+  45% { clip-path: polygon(0 40%, 100% 40%, 100% 40%, 0 40%); }
+  51% { clip-path: polygon(0 52%, 100% 52%, 100% 59%, 0 59%); }
+  63% { clip-path: polygon(0 60%, 100% 60%, 100% 68%, 0 68%); }
+  76% { clip-path: polygon(0 75%, 100% 75%, 100% 75%, 0 75%); }
+  81% { clip-path: polygon(0 65%, 100% 65%, 100% 75%, 0 75%); }
+  94% { clip-path: polygon(0 45%, 100% 45%, 100% 60%, 0 60%); }
+  100% { clip-path: polygon(0 14%, 100% 14%, 100% 33%, 0 33%); }
+}
+
+@keyframes ghost-static {
+  0% { filter: contrast(1) brightness(1); }
+  1% { filter: contrast(1.1) brightness(1.1); }
+  2% { filter: contrast(1) brightness(1); }
+  3% { filter: contrast(1.05) brightness(1.05); }
+  4% { filter: contrast(1) brightness(1); }
+  95% { filter: contrast(1) brightness(1); }
+  96% { filter: contrast(1.08) brightness(1.08); }
+  97% { filter: contrast(1) brightness(1); }
+  98% { filter: contrast(1.03) brightness(1.03); }
+  100% { filter: contrast(1) brightness(1); }
+}
+
+@keyframes glitch-fade-in {
+  0% { 
+    opacity: 0; 
+    transform: translateX(-20px) scale(0.8);
+    filter: blur(2px);
+  }
+  20% {
+    opacity: 0.5;
+    transform: translateX(5px) scale(1.1);
+    filter: blur(1px);
+  }
+  40% {
+    opacity: 0.8;
+    transform: translateX(-2px) scale(0.95);
+    filter: blur(0.5px);
+  }
+  60% {
+    opacity: 0.9;
+    transform: translateX(1px) scale(1.02);
+    filter: blur(0px);
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateX(0) scale(1);
+    filter: blur(0px);
+  }
+}
+
+@keyframes glitch-fade-out {
+  0% { 
+    opacity: 1; 
+    transform: scale(1);
+    filter: blur(0px);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.1);
+    filter: blur(1px);
+  }
+  100% { 
+    opacity: 0; 
+    transform: scale(0.8);
+    filter: blur(2px);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-2px) rotateZ(-1deg); }
+  20% { transform: translateX(2px) rotateZ(1deg); }
+  30% { transform: translateX(-3px) rotateZ(-1deg); }
+  40% { transform: translateX(3px) rotateZ(1deg); }
+  50% { transform: translateX(-2px) rotateZ(-1deg); }
+  60% { transform: translateX(2px) rotateZ(1deg); }
+  70% { transform: translateX(-1px) rotateZ(-1deg); }
+  80% { transform: translateX(1px) rotateZ(1deg); }
+  90% { transform: translateX(-1px) rotateZ(-1deg); }
+}
+
+@keyframes tremble {
+  0%, 100% { transform: translate(0); }
+  10% { transform: translate(-1px, -1px); }
+  20% { transform: translate(1px, 1px); }
+  30% { transform: translate(-1px, 1px); }
+  40% { transform: translate(1px, -1px); }
+  50% { transform: translate(-0.5px, -0.5px); }
+  60% { transform: translate(0.5px, 0.5px); }
+  70% { transform: translate(-0.5px, 0.5px); }
+  80% { transform: translate(0.5px, -0.5px); }
+  90% { transform: translate(-0.5px, -0.5px); }
+}
+
+@keyframes fade-from-darkness {
+  0% { 
+    opacity: 0;
+    filter: brightness(0) contrast(0);
+    text-shadow: none;
+  }
+  30% {
+    opacity: 0.3;
+    filter: brightness(0.3) contrast(0.5);
+    text-shadow: 0 0 5px rgba(124, 45, 255, 0.3);
+  }
+  60% {
+    opacity: 0.7;
+    filter: brightness(0.7) contrast(0.8);
+    text-shadow: 0 0 8px rgba(124, 45, 255, 0.5);
+  }
+  100% { 
+    opacity: 1;
+    filter: brightness(1) contrast(1);
+    text-shadow: 0 0 10px rgba(124, 45, 255, 0.6);
+  }
+}
+
+@keyframes color-shift {
+  0% { color: #f8f5ff; }
+  16% { color: #e0d4ff; }
+  33% { color: #c8b0ff; }
+  50% { color: #a77eff; }
+  66% { color: #8a4fff; }
+  83% { color: #7c2dff; }
+  100% { color: #f8f5ff; }
 }
