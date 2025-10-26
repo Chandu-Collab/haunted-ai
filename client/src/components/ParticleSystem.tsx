@@ -52,6 +52,44 @@ const ParticleSystem: React.FC<ParticleSystemProps> = ({
     setParticles(newParticles);
   }, [particleCount]);
 
+  // Adjust particle count dynamically
+  useEffect(() => {
+    setParticles(prevParticles => {
+      const currentCount = prevParticles.length;
+      
+      if (currentCount === particleCount) return prevParticles;
+      
+      if (currentCount < particleCount) {
+        // Add more particles
+        const canvas = canvasRef.current;
+        if (!canvas) return prevParticles;
+        
+        const rect = canvas.getBoundingClientRect();
+        const additionalParticles: Particle[] = [];
+        
+        for (let i = currentCount; i < particleCount; i++) {
+          additionalParticles.push({
+            id: i,
+            x: Math.random() * rect.width,
+            y: Math.random() * rect.height,
+            size: Math.random() * 3 + 1,
+            speedX: (Math.random() - 0.5) * 0.5,
+            speedY: (Math.random() - 0.5) * 0.5,
+            opacity: Math.random() * 0.5 + 0.2,
+            color: `hsl(${250 + Math.random() * 60}, 70%, 60%)`,
+            life: Math.random() * 100,
+            maxLife: 100 + Math.random() * 200
+          });
+        }
+        
+        return [...prevParticles, ...additionalParticles];
+      } else {
+        // Remove excess particles
+        return prevParticles.slice(0, particleCount);
+      }
+    });
+  }, [particleCount]);
+
   // Animation loop
   useEffect(() => {
     const canvas = canvasRef.current;
