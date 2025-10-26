@@ -1,14 +1,21 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import VoiceControls from './VoiceControls';
+import MusicControls from './MusicControls';
+import PersonalitySelector from './PersonalitySelector';
+import type { GhostPersonality } from '../utils/ghostPersonalities';
 
 interface SettingsProps {
   isOpen: boolean;
   onClose: () => void;
   settings: {
     soundEnabled: boolean;
+    voiceEnabled: boolean;
+    musicEnabled: boolean;
     particleCount: number;
     ghostIntensity: number;
     theme: 'dark' | 'darker' | 'midnight';
+    ghostPersonality: GhostPersonality;
   };
   onSettingsChange: (newSettings: any) => void;
 }
@@ -69,6 +76,24 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
                 />
               </button>
             </div>
+
+            {/* Voice Controls */}
+            <VoiceControls
+              isEnabled={localSettings.voiceEnabled}
+              onToggle={(enabled) => handleChange('voiceEnabled', enabled)}
+            />
+
+            {/* Music Controls */}
+            <MusicControls
+              isEnabled={localSettings.musicEnabled}
+              onToggle={(enabled) => handleChange('musicEnabled', enabled)}
+            />
+
+            {/* Ghost Personality Selector */}
+            <PersonalitySelector
+              selectedPersonality={localSettings.ghostPersonality}
+              onPersonalityChange={(personality) => handleChange('ghostPersonality', personality)}
+            />
 
             {/* Particle Count */}
             <div>

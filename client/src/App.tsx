@@ -7,6 +7,8 @@ import GhostTypingIndicator from './components/GhostTypingIndicator';
 import TypewriterText from './components/TypewriterText';
 import Settings from './components/Settings';
 import useAudio from './hooks/useAudio';
+import useVoiceSynthesis from './hooks/useVoiceSynthesis';
+import { GHOST_PERSONALITIES, type GhostPersonality } from './utils/ghostPersonalities';
 
 // Types
 interface Message {
@@ -38,15 +40,21 @@ const App = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [appSettings, setAppSettings] = useState({
     soundEnabled: true,
+    voiceEnabled: true,
+    musicEnabled: true,
     particleCount: 60,
     ghostIntensity: 100,
-    theme: 'dark' as const
+    theme: 'dark' as const,
+    ghostPersonality: GHOST_PERSONALITIES[0] // Default to Casper
   });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
   
   // Audio system
   const { playSyntheticSound } = useAudio();
+  
+  // Voice synthesis system
+  const { speak: speakText, isSpeaking } = useVoiceSynthesis();
 
   // Format timestamp
   const formatTimestamp = useCallback((timestamp: string): string => {
@@ -69,6 +77,17 @@ const App = () => {
       if (message.isGhost) {
         setGhostTriggerCount(prev => prev + 1);
         if (appSettings.soundEnabled) playSyntheticSound('ghost');
+        
+        // Speak ghost messages if voice is enabled
+        if (appSettings.voiceEnabled) {
+          setTimeout(() => {
+            speakText(message.content, {
+              rate: appSettings.ghostPersonality.voiceSettings.rate,
+              pitch: appSettings.ghostPersonality.voiceSettings.pitch,
+              volume: appSettings.ghostPersonality.voiceSettings.volume
+            });
+          }, 500); // Small delay for dramatic effect
+        }
       } else {
         if (appSettings.soundEnabled) playSyntheticSound('message');
       }
@@ -151,6 +170,7 @@ const App = () => {
       socketRef.current.emit('send_message', {
         content: messageContent,
         sessionId,
+        personalityId: appSettings.ghostPersonality.id,
       });
       
       // Note: We don't add the user message here immediately anymore

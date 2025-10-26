@@ -2,31 +2,38 @@ import type { Request, Response } from 'express';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AppDataSource } from '../config/data-source';
 import { Message, IMessage } from '../entities/Message';
+import { getPersonalityById, DEFAULT_PERSONALITY, type GhostPersonality } from '../utils/ghostPersonalities';
 
 // Initialize Google's Generative AI with your API key
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 
-// Generate a spooky response from the ghost using Gemini API
-const generateGhostResponse = async (userMessage: string, messageHistory: IMessage[] = []): Promise<string> => {
+// Generate a spooky response from the ghost using Gemini API with personality
+const generateGhostResponse = async (
+  userMessage: string, 
+  messageHistory: IMessage[] = [], 
+  personalityId?: string
+): Promise<string> => {
   try {
+    // Get the selected personality or use default
+    const personality = personalityId ? getPersonalityById(personalityId) : null;
+    const activePersonality = personality || DEFAULT_PERSONALITY;
+
     // Get the Gemini model
     const model = genAI.getGenerativeModel({ 
       model: 'gemini-2.5-flash',
       generationConfig: {
-        maxOutputTokens: 150,
+        maxOutputTokens: activePersonality.responseStyle.lengthPreference === 'brief' ? 100 : 
+                        activePersonality.responseStyle.lengthPreference === 'moderate' ? 150 : 200,
         temperature: 0.8,
       },
     });
 
-        // Build the conversation history. Use a `system` role for the priming prompt so the model
-        // treats it as instruction (not as a user message). Keep a small example assistant turn
-        // to set tone, but prefer system for behavior instructions.
-          // Improved system prompt + few-shot examples to prevent verbatim echoing.
+    // Build the conversation history with personality-specific system prompt
     const chatHistory = [
       {
         role: 'system',
         parts: [{
-          text: `You are a ghostly presence in an abandoned house. You are mysterious, haunting, and atmospheric. Speak in first person as a ghost. Keep responses brief (1-2 sentences). Use atmospheric and spooky language. Never repeat the user's message. Examples of your speech: "I sense your presence in my domain...", "The shadows whisper your name...", "This old house holds many secrets...", "Do you feel the chill? That's my touch..."`
+          text: activePersonality.systemPrompt
         }],
       },
       ...messageHistory.slice(-5).map(msg => ({
@@ -194,7 +201,7 @@ const getChatHistory = async (req: Request, res: Response): Promise<void> => {
 // Send a message and get ghost response
 const sendMessage = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { content, sessionId } = req.body;
+    const { content, sessionId, personalityId } = req.body;
     
     // Save user message
     await saveMessage(content, false, sessionId);
@@ -207,8 +214,8 @@ const sendMessage = async (req: Request, res: Response): Promise<void> => {
       take: 5
     });
     
-    // Generate ghost response
-    const ghostResponse = await generateGhostResponse(content, recentMessages.reverse());
+    // Generate ghost response with personality
+    const ghostResponse = await generateGhostResponse(content, recentMessages.reverse(), personalityId);
     
     // Save ghost response
     await saveMessage(ghostResponse, true, sessionId);

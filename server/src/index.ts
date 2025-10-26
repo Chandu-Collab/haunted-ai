@@ -10,32 +10,42 @@ import chatRoutes from './routes/chatRoutes';
 import { AppDataSource } from './config/data-source';
 import { Message } from './entities/Message';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getPersonalityById, DEFAULT_PERSONALITY } from './utils/ghostPersonalities';
 
 // Environment variables are loaded by `src/config/env` above.
 
 // Initialize Google's Generative AI
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 
-// Generate AI response function (same as in controller)
-const generateGhostResponse = async (userMessage: string, messageHistory: any[] = []): Promise<string> => {
+// Generate AI response function with personality support
+const generateGhostResponse = async (
+  userMessage: string, 
+  messageHistory: any[] = [], 
+  personalityId?: string
+): Promise<string> => {
   try {
     console.log('Generating AI response for:', userMessage);
+    
+    // Get the selected personality or use default
+    const personality = personalityId ? getPersonalityById(personalityId) : null;
+    const activePersonality = personality || DEFAULT_PERSONALITY;
     
     // Get the Gemini model
     const model = genAI.getGenerativeModel({ 
       model: 'gemini-2.5-flash',
       generationConfig: {
-        maxOutputTokens: 150,
+        maxOutputTokens: activePersonality.responseStyle.lengthPreference === 'brief' ? 100 : 
+                        activePersonality.responseStyle.lengthPreference === 'moderate' ? 150 : 200,
         temperature: 0.8,
       },
     });
 
-    // Build the conversation history
+    // Build the conversation history with personality-specific system prompt
     const chatHistory = [
       {
         role: 'system',
         parts: [{
-          text: `You are a ghostly presence in an abandoned house. You are mysterious, haunting, and atmospheric. Speak in first person as a ghost. Keep responses brief (1-2 sentences). Use atmospheric and spooky language. Never repeat the user's message. Examples of your speech: "I sense your presence in my domain...", "The shadows whisper your name...", "This old house holds many secrets...", "Do you feel the chill? That's my touch..."`
+          text: activePersonality.systemPrompt
         }],
       },
       ...messageHistory.slice(-5).map(msg => ({
@@ -161,7 +171,7 @@ io.on('connection', (socket) => {
   // Handle chat messages
   socket.on('send_message', async (data) => {
     try {
-      const { content, sessionId } = data;
+      const { content, sessionId, personalityId } = data;
       const messageRepository = AppDataSource.getRepository(Message);
       
       // Save user message
@@ -187,8 +197,8 @@ io.on('connection', (socket) => {
         take: 5
       });
       
-      // Generate AI ghost response
-      const aiResponse = await generateGhostResponse(content, recentMessages.reverse());
+      // Generate AI ghost response with personality
+      const aiResponse = await generateGhostResponse(content, recentMessages.reverse(), personalityId);
       
       // Save ghost response
       const ghostResponse = new Message();
