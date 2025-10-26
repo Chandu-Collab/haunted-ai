@@ -2,178 +2,269 @@ import type { Request, Response } from 'express';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AppDataSource } from '../config/data-source';
 import { Message, IMessage } from '../entities/Message';
-import { getPersonalityById, DEFAULT_PERSONALITY, type GhostPersonality } from '../utils/ghostPersonalities';
+import { getPersonalityById, DEFAULT_PERSONALITY, adaptResponseToMood, adaptToWeatherAndTime } from '../utils/enhancedGhostPersonalities';
+import SentimentAnalyzer, { MoodAnalysis, ContextualFactors } from '../utils/sentimentAnalyzer';
+import MemorySystem from '../utils/memorySystem';
+import WeatherService from '../utils/weatherService';
+import StorytellingSystem from '../utils/storytellingSystem';
+import ImageAnalysisService from '../utils/imageAnalysisService';
+
+// Initialize services
+const sentimentAnalyzer = new SentimentAnalyzer();
+const memorySystem = new MemorySystem();
+const weatherService = new WeatherService();
+const storytellingSystem = new StorytellingSystem();
+const imageAnalysisService = new ImageAnalysisService();
 
 // Initialize Google's Generative AI with your API key
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 
-// Generate a spooky response from the ghost using Gemini API with personality
+// Enhanced ghost response generation with full AI capabilities
 const generateGhostResponse = async (
   userMessage: string, 
   messageHistory: IMessage[] = [], 
-  personalityId?: string
-): Promise<string> => {
+  personalityId?: string,
+  sessionId?: string,
+  imageBase64?: string
+): Promise<{ response: string; moodAnalysis: MoodAnalysis; contextualFactors: ContextualFactors }> => {
   try {
     // Get the selected personality or use default
     const personality = personalityId ? getPersonalityById(personalityId) : null;
     const activePersonality = personality || DEFAULT_PERSONALITY;
 
+    // Analyze user's mood and sentiment
+    const moodAnalysis = sentimentAnalyzer.analyzeMood(userMessage);
+    const contextualFactors = sentimentAnalyzer.getContextualFactors();
+    contextualFactors.conversationLength = messageHistory.length;
+
+    // Update memory system
+    if (sessionId) {
+      await memorySystem.updateUserMemory(sessionId, userMessage, moodAnalysis);
+    }
+
+    // Get weather data
+    const weather = await weatherService.getCurrentWeather();
+    
+    // Build enhanced system prompt
+    let enhancedPrompt = activePersonality.systemPrompt;
+    
+    // Add mood adaptation
+    enhancedPrompt += adaptResponseToMood(activePersonality, moodAnalysis);
+    
+    // Add weather and time context
+    enhancedPrompt += adaptToWeatherAndTime(activePersonality, contextualFactors.timeOfDay, weather);
+    
+    // Add memory context
+    if (sessionId) {
+      enhancedPrompt += memorySystem.generateMemoryPrompt(sessionId);
+    }
+    
+    // Add weather context
+    enhancedPrompt += weatherService.generateWeatherPrompt(weather);
+    
+    // Check for active story
+    if (sessionId) {
+      const activeStory = storytellingSystem.getCurrentStory(sessionId);
+      if (activeStory) {
+        enhancedPrompt += storytellingSystem.generateContinuationPrompt(sessionId, userMessage);
+      }
+    }
+
+    // Handle image analysis if provided
+    let imageAnalysisPrompt = '';
+    if (imageBase64) {
+      const imageAnalysis = await imageAnalysisService.analyzeImage(imageBase64, personalityId);
+      imageAnalysisPrompt = imageAnalysisService.generateImageResponsePrompt(imageAnalysis, personalityId);
+      enhancedPrompt += imageAnalysisPrompt;
+    }
+
     // Get the Gemini model
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash',
+      model: 'gemini-pro-latest',
       generationConfig: {
-        maxOutputTokens: activePersonality.responseStyle.lengthPreference === 'brief' ? 100 : 
-                        activePersonality.responseStyle.lengthPreference === 'moderate' ? 150 : 200,
+        maxOutputTokens: activePersonality.responseStyle.lengthPreference === 'brief' ? 150 : 
+                        activePersonality.responseStyle.lengthPreference === 'moderate' ? 250 : 350,
         temperature: 0.8,
-      },
+      }
     });
 
-    // Build the conversation history with personality-specific system prompt
+    // Build conversation history with system prompt in first message
     const chatHistory = [
       {
-        role: 'system',
-        parts: [{
-          text: activePersonality.systemPrompt
-        }],
+        role: 'user' as const,
+        parts: [{ text: enhancedPrompt }]
       },
-      ...messageHistory.slice(-5).map(msg => ({
-        role: msg.isGhost ? 'model' : 'user',
-        parts: [{ text: msg.content }]
-      })),
       {
-        role: 'user',
-        parts: [{ text: userMessage }]
-      }
+        role: 'model' as const,
+        parts: [{ text: 'I understand. I am ready to respond as this character.' }]
+      },
+      ...messageHistory.slice(-6).map(msg => ({
+        role: msg.isGhost ? 'model' as const : 'user' as const,
+        parts: [{ text: msg.content }]
+      }))
     ];
 
     // Start a chat session
     const chat = model.startChat({ history: chatHistory });
 
     // Send the message and get the response
+    console.log('Sending message to Gemini...');
     const result = await chat.sendMessage(userMessage);
-    // Log result shape keys to help debug SDK differences (trimmed, no secrets)
-    try {
-      const rkeys = result && typeof result === 'object' ? Object.keys(result) : [];
-      console.log('Generative SDK result keys:', rkeys);
-    } catch (e) {
-      console.warn('Could not enumerate result keys');
-    }
     const response = await result.response;
-    try {
-      const keys = response && typeof response === 'object' ? Object.keys(response) : [];
-      console.log('Generative SDK response keys:', keys);
-    } catch (e) {
-      console.warn('Could not enumerate response keys');
-    }
-
-    // Resilient extractor for different SDK response shapes
-    const extractResponseText = async (resp: any): Promise<string> => {
-      try {
-        // If SDK exposes a text() method (sync or async)
-        if (resp && typeof resp.text === 'function') {
-          const maybe = resp.text();
-          return typeof maybe.then === 'function' ? await maybe : String(maybe);
-        }
-
-        // Newer shapes: response.output[0].content is an array of { type: 'output_text', text }
-        if (resp?.output && Array.isArray(resp.output)) {
-          // try to join any text parts
-          const out = resp.output
-            .map((o: any) => {
-              if (typeof o === 'string') return o;
-              if (o?.content && Array.isArray(o.content)) {
-                return o.content.map((c: any) => c.text || '').join('');
-              }
-              return o?.text || '';
-            })
-            .filter(Boolean)
-            .join('\n');
-          if (out) return out;
-        }
-
-        // Some responses put candidates content inside `candidates` or `output_captions`
-        if (resp?.candidates && Array.isArray(resp.candidates) && resp.candidates[0]) {
-          const c = resp.candidates[0];
-          if (c?.content && Array.isArray(c.content)) {
-            return c.content.map((pc: any) => pc.text || '').join('');
-          }
-          if (c?.message) return String(c.message);
-        }
-
-        // Fallback: stringify plain object with possible text fields
-        if (typeof resp === 'string') return resp;
-        if (resp?.text) return String(resp.text);
-        if (resp?.message) return String(resp.message);
-
-        // Last resort, try to JSON stringify a small portion for debugging
-        try {
-          return JSON.stringify(resp).slice(0, 2000);
-        } catch {
-          return '';
-        }
-      } catch (e) {
-        console.error('Error extracting response text shape:', e);
-        return '';
-      }
-    };
-
     const responseText = await extractResponseText(response);
-    // Log the shape we received minimally for debugging (don't log secrets)
-    try {
-        if (responseText && responseText.trim().length > 0) {
-          console.log('Ghost response (trimmed):', responseText.slice(0, 500));
-        } else {
-          // If empty, dump safe diagnostics so we can see what's coming back from the SDK
-          try {
-            const keys = response && typeof response === 'object' ? Object.keys(response) : [];
-            console.warn('Extractor returned empty text. Response keys:', keys);
-          } catch (e) {
-            console.warn('Extractor returned empty text and could not enumerate response keys');
-          }
+    
+    console.log('Raw Gemini response:', responseText);
+    console.log('Response length:', responseText?.length || 0);
 
-          // Try a safe, short JSON preview (non-blocking)
-          try {
-            const preview = JSON.stringify(response, Object.keys(response || {}).slice(0, 20)).slice(0, 1000);
-            console.warn('Response preview (trimmed):', preview);
-          } catch (e) {
-            console.warn('Could not stringify response preview');
-          }
-
-          console.warn('Will use atmospheric fallback (non-echoing) instead of verbatim echo.');
-        }
-    } catch (e) {
-      console.warn('Unable to log response text:', e);
-    }
-
-    // If the model returned nothing or only ellipses, return a minimal placeholder so the client decides how to display it
+    // If the model returned nothing or only ellipses, return a fallback response
     if (!responseText || responseText.trim().length < 3 || /^\.*$/.test(responseText.trim())) {
-      console.warn('Generated response was empty or minimal; returning placeholder');
-      return '...';
+      console.log('Empty response detected, using personality fallback');
+      
+      const personalityFallbacks = {
+        friendly: "Hello there! I can sense your presence, though my ethereal connection seems a bit unstable tonight. How are you feeling?",
+        mysterious: "Your words reach me through the shadows... though the veil between worlds grows thick...",
+        spooky: "OOOOOH! I hear you calling to me from beyond! Though my haunting powers flicker tonight... MWAHAHAHA!",
+        wise: "Greetings, seeker. Even ancient spirits must sometimes gather their cosmic energies before speaking.",
+        playful: "Hey there! My ghostly WiFi seems to be acting up, but I'm still here to chat! Hehe!"
+      };
+      
+      const fallbackResponse = personalityFallbacks[personalityId as keyof typeof personalityFallbacks] || personalityFallbacks.friendly;
+      
+      return {
+        response: fallbackResponse,
+        moodAnalysis,
+        contextualFactors
+      };
     }
 
-    return responseText || '...';
+    // Add to memory if this creates a meaningful interaction
+    if (sessionId && responseText !== '...') {
+      memorySystem.addSharedMemory(sessionId, `Discussed: ${userMessage.substring(0, 50)}...`);
+    }
+
+    return {
+      response: responseText,
+      moodAnalysis,
+      contextualFactors
+    };
   } catch (error: any) {
-    // Log detailed error information for debugging
-    console.error('Error generating ghost response:', error && (error.stack || error));
-    try {
-      if (error && error.response) {
-        console.error('Error response details:', JSON.stringify(error.response).slice(0, 2000));
-      }
-    } catch (e) {
-      // ignore stringify errors
-    }
-
-    // On error, return a minimal placeholder so the client can decide how to display it.
-    return '...';
+    console.error('Error generating ghost response:', error);
+    
+    // Fallback responses based on personality
+    const fallbackResponses = {
+      friendly: [
+        "I sense your presence... though the ethereal connection seems weak tonight.",
+        "The spirits whisper to me, but their words are faint. Tell me more about yourself.",
+        "My otherworldly abilities are a bit clouded at the moment, but I'm here with you.",
+        "Even ghosts have their off days! But I'm still delighted to chat with you."
+      ],
+      mysterious: [
+        "The shadows speak in riddles tonight... their secrets remain hidden.",
+        "Something stirs in the darkness, but its message eludes me...",
+        "The veil between worlds grows thick... yet I sense your curiosity.",
+        "Ancient forces cloud my vision, but your presence is clear to me."
+      ],
+      spooky: [
+        "OOOOOH... my spectral powers waver! But I can still feel your fear...",
+        "The darkness consumes my thoughts... yet you dare to speak with me!",
+        "My haunting abilities are disrupted... but I hunger for your terror!",
+        "Even in weakness, I remain a creature of the night! MWAHAHAHA!"
+      ],
+      wise: [
+        "In centuries of existence, I have learned that some knowledge comes only through patience.",
+        "The cosmic energies are in flux tonight, young soul. But wisdom endures.",
+        "Even ancient spirits must sometimes wait for clarity to return.",
+        "Your questions reach me across the void, though my answers may be delayed."
+      ],
+      playful: [
+        "Oops! Even ghost magic has glitches sometimes! Isn't that funny?",
+        "My supernatural powers are on vacation! But I'm still here to play!",
+        "Technical difficulties in the afterlife! Who would have thought? Hehe!",
+        "The spirit realm's WiFi is down! But let's have fun anyway!"
+      ]
+    };
+    
+    const responses = fallbackResponses[personalityId as keyof typeof fallbackResponses] || fallbackResponses.friendly;
+    const fallbackResponse = responses[Math.floor(Math.random() * responses.length)];
+    
+    return {
+      response: fallbackResponse,
+      moodAnalysis: {
+        dominant: 'neutral',
+        confidence: 0.5,
+        emotions: {
+          joy: 0, sadness: 0, anger: 0, fear: 0,
+          surprise: 0, disgust: 0, trust: 0, anticipation: 0
+        },
+        sentiment: 'neutral',
+        intensity: 'medium'
+      },
+      contextualFactors: sentimentAnalyzer.getContextualFactors()
+    };
   }
 };
 
-// Save a message to the database
-const saveMessage = async (content: string, isGhost: boolean, sessionId: string): Promise<Message> => {
+// Helper method for extracting response text
+const extractResponseText = async (response: any): Promise<string> => {
+  try {
+    if (response && typeof response.text === 'function') {
+      const maybe = response.text();
+      return typeof maybe.then === 'function' ? await maybe : String(maybe);
+    }
+
+    if (response?.output && Array.isArray(response.output)) {
+      const out = response.output
+        .map((o: any) => {
+          if (typeof o === 'string') return o;
+          if (o?.content && Array.isArray(o.content)) {
+            return o.content.map((c: any) => c.text || '').join('');
+          }
+          return o?.text || '';
+        })
+        .filter(Boolean)
+        .join('\n');
+      if (out) return out;
+    }
+
+    if (response?.candidates && Array.isArray(response.candidates) && response.candidates[0]) {
+      const c = response.candidates[0];
+      if (c?.content && Array.isArray(c.content)) {
+        return c.content.map((pc: any) => pc.text || '').join('');
+      }
+      if (c?.message) return String(c.message);
+    }
+
+    if (typeof response === 'string') return response;
+    if (response?.text) return String(response.text);
+    if (response?.message) return String(response.message);
+
+    return '';
+  } catch (e) {
+    console.error('Error extracting response text:', e);
+    return '';
+  }
+};
+
+// Save a message to the database with enhanced data
+const saveMessage = async (
+  content: string, 
+  isGhost: boolean, 
+  sessionId: string, 
+  personalityId?: string,
+  moodAnalysis?: MoodAnalysis,
+  contextualFactors?: ContextualFactors,
+  imageUrl?: string,
+  imageAnalysis?: any
+): Promise<Message> => {
   const message = new Message();
   message.content = content;
   message.isGhost = isGhost;
   message.sessionId = sessionId;
+  message.personalityId = personalityId;
+  message.moodAnalysis = moodAnalysis;
+  message.contextualFactors = contextualFactors;
+  message.imageUrl = imageUrl;
+  message.imageAnalysis = imageAnalysis;
   
   const messageRepository = AppDataSource.getRepository(Message);
   return await messageRepository.save(message);
@@ -198,27 +289,52 @@ const getChatHistory = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-// Send a message and get ghost response
+// Send a message and get ghost response with enhanced AI features
 const sendMessage = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { content, sessionId, personalityId } = req.body;
+    const { content, sessionId, personalityId, imageBase64 } = req.body;
     
-    // Save user message
-    await saveMessage(content, false, sessionId);
+    // Analyze user message mood first
+    const userMoodAnalysis = sentimentAnalyzer.analyzeMood(content);
+    const userContextualFactors = sentimentAnalyzer.getContextualFactors();
+    
+    // Save user message with analysis
+    await saveMessage(
+      content, 
+      false, 
+      sessionId, 
+      personalityId,
+      userMoodAnalysis,
+      userContextualFactors,
+      imageBase64 ? 'uploaded_image' : undefined
+    );
     
     // Get recent messages for context
     const messageRepository = AppDataSource.getRepository(Message);
     const recentMessages = await messageRepository.find({
       where: { sessionId },
       order: { createdAt: 'DESC' },
-      take: 5
+      take: 8
     });
     
-    // Generate ghost response with personality
-    const ghostResponse = await generateGhostResponse(content, recentMessages.reverse(), personalityId);
+    // Generate enhanced ghost response
+    const ghostResponseData = await generateGhostResponse(
+      content, 
+      recentMessages.reverse(), 
+      personalityId,
+      sessionId,
+      imageBase64
+    );
     
-    // Save ghost response
-    await saveMessage(ghostResponse, true, sessionId);
+    // Save ghost response with analysis
+    await saveMessage(
+      ghostResponseData.response, 
+      true, 
+      sessionId,
+      personalityId,
+      ghostResponseData.moodAnalysis,
+      ghostResponseData.contextualFactors
+    );
     
     // Get updated message history
     const messages = await messageRepository.find({
@@ -226,14 +342,168 @@ const sendMessage = async (req: Request, res: Response): Promise<void> => {
       order: { createdAt: 'ASC' }
     });
     
-    res.json(messages);
+    // Return enhanced response
+    res.json({
+      messages,
+      analysis: {
+        userMood: userMoodAnalysis,
+        ghostMood: ghostResponseData.moodAnalysis,
+        context: ghostResponseData.contextualFactors
+      }
+    });
   } catch (error) {
     console.error('Error sending message:', error);
     res.status(500).json({ error: 'Failed to send message' });
   }
 };
 
+// Start an interactive ghost story
+const startStory = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { sessionId, storyId, userName } = req.body;
+    
+    const firstSegment = storytellingSystem.startStory(sessionId, storyId, userName);
+    
+    if (!firstSegment) {
+      res.status(404).json({ error: 'Story not found' });
+      return;
+    }
+    
+    // Save the story start as a message
+    await saveMessage(
+      firstSegment.text,
+      true,
+      sessionId,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { storyMode: true, storyId, segmentId: firstSegment.id }
+    );
+    
+    res.json({
+      segment: firstSegment,
+      isStoryActive: true
+    });
+  } catch (error) {
+    console.error('Error starting story:', error);
+    res.status(500).json({ error: 'Failed to start story' });
+  }
+};
+
+// Make a choice in an interactive story
+const makeStoryChoice = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { sessionId, choiceId } = req.body;
+    
+    const nextSegment = storytellingSystem.makeChoice(sessionId, choiceId);
+    
+    if (!nextSegment) {
+      // Story ended or choice not valid
+      res.json({
+        segment: null,
+        isStoryActive: false,
+        message: 'The story has reached its conclusion...'
+      });
+      return;
+    }
+    
+    // Save the story continuation
+    await saveMessage(
+      nextSegment.text,
+      true,
+      sessionId,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { storyMode: true, segmentId: nextSegment.id }
+    );
+    
+    res.json({
+      segment: nextSegment,
+      isStoryActive: true
+    });
+  } catch (error) {
+    console.error('Error making story choice:', error);
+    res.status(500).json({ error: 'Failed to process story choice' });
+  }
+};
+
+// Get available stories
+const getAvailableStories = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const stories = storytellingSystem.getAvailableStories();
+    res.json(stories);
+  } catch (error) {
+    console.error('Error getting stories:', error);
+    res.status(500).json({ error: 'Failed to get available stories' });
+  }
+};
+
+// Analyze uploaded image
+const analyzeImage = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { imageBase64, personalityId } = req.body;
+    
+    if (!imageBase64) {
+      res.status(400).json({ error: 'No image provided' });
+      return;
+    }
+    
+    const analysis = await imageAnalysisService.analyzeImage(imageBase64, personalityId);
+    
+    res.json({
+      analysis,
+      ghostResponsePrompt: imageAnalysisService.generateImageResponsePrompt(analysis, personalityId)
+    });
+  } catch (error) {
+    console.error('Error analyzing image:', error);
+    res.status(500).json({ error: 'Failed to analyze image' });
+  }
+};
+
+// Get memory context for user
+const getMemoryContext = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { sessionId } = req.params;
+    
+    const context = await memorySystem.getConversationContext(sessionId);
+    
+    res.json(context);
+  } catch (error) {
+    console.error('Error getting memory context:', error);
+    res.status(500).json({ error: 'Failed to get memory context' });
+  }
+};
+
+// Get current weather for atmospheric context
+const getCurrentWeather = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { lat, lon } = req.query;
+    
+    const weather = await weatherService.getCurrentWeather(
+      lat ? Number(lat) : undefined,
+      lon ? Number(lon) : undefined
+    );
+    
+    res.json({
+      weather,
+      prompt: weatherService.generateWeatherPrompt(weather)
+    });
+  } catch (error) {
+    console.error('Error getting weather:', error);
+    res.status(500).json({ error: 'Failed to get weather data' });
+  }
+};
+
 export {
   getChatHistory,
-  sendMessage
+  sendMessage,
+  startStory,
+  makeStoryChoice,
+  getAvailableStories,
+  analyzeImage,
+  getMemoryContext,
+  getCurrentWeather
 };

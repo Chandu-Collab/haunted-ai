@@ -5,6 +5,13 @@ import MusicControls from './MusicControls';
 import PersonalitySelector from './PersonalitySelector';
 import type { GhostPersonality } from '../utils/ghostPersonalities';
 
+interface Track {
+  name: string;
+  url: string;
+  duration?: number;
+  description: string;
+}
+
 interface SettingsProps {
   isOpen: boolean;
   onClose: () => void;
@@ -23,9 +30,22 @@ interface SettingsProps {
     textSpiritsEnabled?: boolean;
   };
   onSettingsChange: (newSettings: any) => void;
+  onSettingsClose?: (hasChanges: boolean, selectedTrackIndex?: number) => void; // Updated to include track index
+  // Music control props to pass down
+  musicControls: {
+    isPlaying: boolean;
+    currentTrack: Track | null;
+    tracks: Track[];
+    play: (track?: Track, options?: any) => Promise<void>;
+    pause: () => void;
+    stop: () => void;
+    nextTrack: () => void;
+    previousTrack: () => void;
+    isSupported: boolean;
+  };
 }
 
-const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettingsChange }) => {
+const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettingsChange, onSettingsClose, musicControls }) => {
   const [localSettings, setLocalSettings] = useState({
     ...settings,
     lightningEnabled: settings.lightningEnabled ?? true,
@@ -33,12 +53,42 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
     eyeTrackingEnabled: settings.eyeTrackingEnabled ?? true,
     textSpiritsEnabled: settings.textSpiritsEnabled ?? true,
   });
+  
+  const [hasChanges, setHasChanges] = useState(false);
+  const [initialSettings] = useState(localSettings);
+  const [selectedTrackIndex, setSelectedTrackIndex] = useState(0); // Track the selected music track
 
   const handleChange = (key: string, value: any) => {
     const newSettings = { ...localSettings, [key]: value };
     setLocalSettings(newSettings);
     onSettingsChange(newSettings);
+    
+    // Track if any changes have been made
+    console.log('🔧 Settings changed:', key, '=', value, 'hasChanges will be set to true');
+    setHasChanges(true);
   };
+
+  const handleClose = () => {
+    // Reset hasChanges when modal closes
+    const changesWereMade = hasChanges;
+    console.log('🔧 Settings modal closing, changesWereMade:', changesWereMade);
+    setHasChanges(false);
+    
+    // Call the close callback with information about whether changes were made
+    if (onSettingsClose) {
+      console.log('🔧 Calling onSettingsClose with changesWereMade:', changesWereMade, 'selectedTrack:', selectedTrackIndex);
+      onSettingsClose(changesWereMade, selectedTrackIndex); // Pass the selected track index
+    }
+    
+    onClose();
+  };
+
+  // Reset tracking when modal opens
+  React.useEffect(() => {
+    if (isOpen) {
+      setHasChanges(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -49,7 +99,7 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        onClick={onClose}
+        onClick={handleClose}
       >
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
@@ -63,7 +113,7 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
               👻 Spectral Settings
             </h2>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="text-haunted-400 hover:text-haunted-200 transition-colors p-1"
             >
               ✕
@@ -102,6 +152,16 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
               onToggle={(enabled) => handleChange('musicEnabled', enabled)}
               volume={localSettings.musicVolume / 100} // Convert to 0-1 scale
               onVolumeChange={(volume) => handleChange('musicVolume', Math.round(volume * 100))} // Convert back to 0-100
+              isPlaying={musicControls.isPlaying}
+              currentTrack={musicControls.currentTrack}
+              tracks={musicControls.tracks}
+              play={musicControls.play}
+              pause={musicControls.pause}
+              stop={musicControls.stop}
+              nextTrack={musicControls.nextTrack}
+              previousTrack={musicControls.previousTrack}
+              isSupported={musicControls.isSupported}
+              onTrackSelect={setSelectedTrackIndex} // Pass track selection handler
             />
 
             {/* Ghost Personality Selector */}

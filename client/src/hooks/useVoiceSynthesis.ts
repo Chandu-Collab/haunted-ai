@@ -58,30 +58,36 @@ export const useVoiceSynthesis = (): UseVoiceSynthesis => {
         // Auto-select appropriate voice based on available options
         let selectedVoice = null;
 
+        // Filter for English voices only
+        const englishVoices = availableVoices.filter(voice => 
+          voice.lang.startsWith('en-') || voice.lang === 'en'
+        );
+
+        console.log('Found English voices:', englishVoices.length);
+
         // Look for male voices first (for haunted male characters)
-        const maleVoices = availableVoices.filter(voice => 
-          voice.lang.includes('en') && (
-            voice.name.toLowerCase().includes('male') ||
-            voice.name.toLowerCase().includes('daniel') ||
-            voice.name.toLowerCase().includes('david') ||
-            voice.name.toLowerCase().includes('mark') ||
-            voice.name.toLowerCase().includes('ryan')
-          )
+        const maleVoices = englishVoices.filter(voice => 
+          voice.name.toLowerCase().includes('male') ||
+          voice.name.toLowerCase().includes('daniel') ||
+          voice.name.toLowerCase().includes('david') ||
+          voice.name.toLowerCase().includes('mark') ||
+          voice.name.toLowerCase().includes('ryan') ||
+          voice.name.toLowerCase().includes('james') ||
+          voice.name.toLowerCase().includes('microsoft')
         );
 
         // Look for female voices (for haunted female characters)
-        const femaleVoices = availableVoices.filter(voice => 
-          voice.lang.includes('en') && (
-            voice.name.toLowerCase().includes('female') ||
-            voice.name.toLowerCase().includes('samantha') ||
-            voice.name.toLowerCase().includes('alex') ||
-            voice.name.toLowerCase().includes('kate') ||
-            voice.name.toLowerCase().includes('zira')
-          )
+        const femaleVoices = englishVoices.filter(voice => 
+          voice.name.toLowerCase().includes('female') ||
+          voice.name.toLowerCase().includes('samantha') ||
+          voice.name.toLowerCase().includes('alex') ||
+          voice.name.toLowerCase().includes('kate') ||
+          voice.name.toLowerCase().includes('zira') ||
+          voice.name.toLowerCase().includes('aria')
         );
 
-        // Look for spooky/low voices
-        const spookyVoices = availableVoices.filter(voice => 
+        // Look for spooky/low voices from English voices only
+        const spookyVoices = englishVoices.filter(voice => 
           voice.name.toLowerCase().includes('whisper') ||
           voice.name.toLowerCase().includes('dark') ||
           voice.name.toLowerCase().includes('deep') ||
@@ -98,11 +104,14 @@ export const useVoiceSynthesis = (): UseVoiceSynthesis => {
         } else if (femaleVoices.length > 0) {
           selectedVoice = femaleVoices[0];
           console.log('Selected female voice:', selectedVoice.name);
-        } else if (availableVoices.length > 0) {
+        } else if (englishVoices.length > 0) {
           // Fallback to first available English voice
-          const englishVoices = availableVoices.filter(voice => voice.lang.includes('en'));
-          selectedVoice = englishVoices[0] || availableVoices[0];
-          console.log('Selected fallback voice:', selectedVoice.name);
+          selectedVoice = englishVoices[0];
+          console.log('Selected fallback English voice:', selectedVoice.name);
+        } else if (availableVoices.length > 0) {
+          // Last resort: any voice
+          selectedVoice = availableVoices[0];
+          console.log('Selected last resort voice:', selectedVoice.name);
         } else {
           console.warn('No voices available yet, they may load asynchronously');
         }
