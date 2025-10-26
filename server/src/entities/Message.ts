@@ -14,6 +14,33 @@ export class Message {
     @Column('varchar')
     sessionId!: string;
 
+    @Column({ type: 'varchar', nullable: true })
+    personalityId?: string;
+
+    @Column({ type: 'json', nullable: true })
+    moodAnalysis?: {
+        dominant: string;
+        confidence: number;
+        emotions: Record<string, number>;
+        sentiment: 'positive' | 'negative' | 'neutral';
+        intensity: 'low' | 'medium' | 'high';
+    };
+
+    @Column({ type: 'json', nullable: true })
+    contextualFactors?: {
+        timeOfDay: string;
+        weather?: Record<string, any>;
+        roomAtmosphere: string;
+        conversationLength: number;
+        userEngagement: string;
+    };
+
+    @Column({ type: 'varchar', nullable: true })
+    imageUrl?: string;
+
+    @Column({ type: 'json', nullable: true })
+    imageAnalysis?: Record<string, any>;
+
     @CreateDateColumn({ type: 'timestamp with time zone' })
     createdAt!: Date;
 

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { io, type Socket } from 'socket.io-client';
+
+// Enhanced Components
 import ParticleSystem from './components/ParticleSystem';
 import FloatingGhosts from './components/FloatingGhosts';
 import GhostTypingIndicator from './components/GhostTypingIndicator';
@@ -13,9 +14,21 @@ import EyeTrackingCursor from './components/EyeTrackingCursor';
 import MessageEffects from './components/MessageEffects';
 import NotificationSystem from './components/NotificationSystem';
 import AudioInitPrompt from './components/AudioInitPrompt';
+
+// New AI Components
+import MoodVisualizer from './components/MoodVisualizer';
+import StoryInterface from './components/StoryInterface';
+import ImageUpload from './components/ImageUpload';
+import WeatherDisplay from './components/WeatherDisplay';
+
+// Enhanced Hooks
 import useAudio from './hooks/useAudio';
 import useVoiceSynthesis from './hooks/useVoiceSynthesis';
 import useBackgroundMusic from './hooks/useBackgroundMusic';
+import { useAIAnalysis, AIAnalysis } from './hooks/useAIAnalysis';
+import { useImageAnalysis, ImageAnalysis } from './hooks/useImageAnalysis';
+
+// Utils
 import { GHOST_PERSONALITIES, type GhostPersonality } from './utils/ghostPersonalities';
 
 // Types
@@ -24,6 +37,15 @@ interface Message {
   content: string;
   isGhost: boolean;
   timestamp: string;
+  personalityId?: string;
+  moodAnalysis?: any;
+  contextualFactors?: any;
+  imageUrl?: string;
+  imageAnalysis?: any;
+}
+
+interface EnhancedMessage extends Message {
+  analysis?: AIAnalysis;
 }
 
 // API configuration
@@ -33,23 +55,51 @@ const App = () => {
   // Helper to generate a stable unique id for messages when backend id is missing
   const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<EnhancedMessage[]>([
     {
       id: 'welcome',
-      content: '*A cold wind stirs... You feel a presence watching you...*\n\nWelcome to my domain, mortal. Speak, and I shall answer from beyond the veil...',
+      content: '*A cold wind stirs... You feel a presence watching you...*\\n\\nWelcome to my domain, mortal. The veil between worlds has thinned, and I can sense your emotions, see through your eyes, and weave tales that respond to your very soul...\\n\\nSpeak to me, share your images, or ask me to tell you a story. I am more aware than ever before...',
       isGhost: true,
       timestamp: new Date().toISOString(),
     }
   ]);
+
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [sessionId] = useState(`session-${Math.random().toString(36).substring(2, 9)}`);
-  const [ghostTriggerCount, setGhostTriggerCount] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
   const [showAudioPrompt, setShowAudioPrompt] = useState(true);
   const [audioInitialized, setAudioInitialized] = useState(false);
-  const [soundEffectPlaying, setSoundEffectPlaying] = useState(false);
-  const musicInitializingRef = useRef(false);
+  const [userName, setUserName] = useState<string>('');
+
+  // Enhanced AI states
+  const [showAIFeatures, setShowAIFeatures] = useState(false);
+  const [currentAnalysis, setCurrentAnalysis] = useState<AIAnalysis | null>(null);
+  const [storyMode, setStoryMode] = useState(false);
+
+  // Settings state
+  const [appSettings, setAppSettings] = useState({
+    soundEnabled: true,
+    voiceEnabled: true,
+    musicEnabled: true,
+    musicVolume: 30,
+    particleCount: 60,
+    ghostIntensity: 100,
+    theme: 'dark' as 'dark' | 'darker' | 'midnight',
+    ghostPersonality: GHOST_PERSONALITIES[0],
+    lightningEnabled: true,
+    fogEnabled: true,
+    eyeTrackingEnabled: true,
+    textSpiritsEnabled: true,
+    // New AI settings
+    moodVisualizationEnabled: true,
+    imageAnalysisEnabled: true,
+    weatherIntegrationEnabled: true,
+    storyModeEnabled: true,
+    emotionalAdaptationEnabled: true,
+  });
+
+  // Notification system
   const [notifications, setNotifications] = useState<Array<{
     id: string;
     type: 'success' | 'info' | 'warning' | 'error';
@@ -57,50 +107,24 @@ const App = () => {
     message?: string;
     duration?: number;
   }>>([]);
-  const [appSettings, setAppSettings] = useState({
-    soundEnabled: true,
-    voiceEnabled: true,
-    musicEnabled: true,
-    musicVolume: 30, // 0-100 scale for UI
-    particleCount: 60,
-    ghostIntensity: 100,
-    theme: 'dark' as 'dark' | 'darker' | 'midnight',
-    ghostPersonality: GHOST_PERSONALITIES[0], // Default to Casper
-    lightningEnabled: true,
-    fogEnabled: true,
-    eyeTrackingEnabled: true,
-    textSpiritsEnabled: true,
-  });
+
+  // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const socketRef = useRef<Socket | null>(null);
-  
-  // Audio system
+
+  // Hooks
   const { playSyntheticSound } = useAudio();
-  
-  // Voice synthesis system
   const { speak: speakText, isSpeaking } = useVoiceSynthesis();
-  
-  // Background music system
   const { 
     isPlaying: isMusicPlaying, 
     play: playMusic, 
     pause: pauseMusic, 
     setVolume: setMusicVolume,
-    volume: musicVolume 
+    volume: musicVolume,
+    currentTrack,
   } = useBackgroundMusic();
 
-  // Debug: Log music state changes
-  useEffect(() => {
-    console.log('🎵 Music playing state changed:', isMusicPlaying);
-  }, [isMusicPlaying]);
-
-  useEffect(() => {
-    console.log('🗣️ Voice speaking state changed:', isSpeaking);
-  }, [isSpeaking]);
-
-  useEffect(() => {
-    console.log('🔊 Sound effect playing state changed:', soundEffectPlaying);
-  }, [soundEffectPlaying]);
+  const { currentAnalysis: aiAnalysis, updateAnalysis } = useAIAnalysis();
+  const { currentAnalysis: imageAnalysis } = useImageAnalysis();
 
   // Notification system
   const addNotification = useCallback((notification: Omit<typeof notifications[0], 'id'>) => {
@@ -112,631 +136,449 @@ const App = () => {
     setNotifications(prev => prev.filter(n => n.id !== id));
   }, []);
 
-  // Settings change handler with notifications
-  const handleSettingsChange = useCallback((newSettings: typeof appSettings) => {
-    const oldSettings = appSettings;
-    setAppSettings(newSettings);
+  // Enhanced message sending with AI features
+  const sendMessage = useCallback(async (messageContent: string, imageBase64?: string) => {
+    if (!messageContent.trim() && !imageBase64) return;
 
-    // Show notifications for important changes
-    if (oldSettings.ghostPersonality.id !== newSettings.ghostPersonality.id) {
+    const userMessage: EnhancedMessage = {
+      id: generateId(),
+      content: messageContent || '📷 [Shared an image]',
+      isGhost: false,
+      timestamp: new Date().toISOString(),
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsTyping(true);
+
+    // Play typing sound
+    if (appSettings.soundEnabled) {
+      playSyntheticSound('typing');
+    }
+
+    try {
+      const requestBody = {
+        content: messageContent,
+        sessionId,
+        personalityId: appSettings.ghostPersonality.id,
+        ...(imageBase64 && { imageBase64 })
+      };
+
+      const response = await fetch(`${API_URL}/api/chat/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      // Handle enhanced response with analysis
+      if (result.messages) {
+        const enhancedMessages = result.messages.map((msg: Message) => ({
+          ...msg,
+          id: msg.id || generateId()
+        }));
+        
+        // Preserve the welcome message if it's not in the backend response
+        const hasWelcomeMessage = enhancedMessages.some(msg => msg.id === 'welcome');
+        const welcomeMessage = messages.find(msg => msg.id === 'welcome');
+        
+        if (!hasWelcomeMessage && welcomeMessage) {
+          setMessages([welcomeMessage, ...enhancedMessages]);
+        } else {
+          setMessages(enhancedMessages);
+        }
+        
+        // Update AI analysis if available
+        if (result.analysis) {
+          setCurrentAnalysis(result.analysis);
+          updateAnalysis(result.analysis);
+        }
+
+        // Get the latest ghost message for voice synthesis
+        const latestGhostMessage = enhancedMessages.filter((msg: Message) => msg.isGhost).pop();
+        if (latestGhostMessage && appSettings.voiceEnabled) {
+          const personality = appSettings.ghostPersonality;
+          speakText(latestGhostMessage.content, {
+            rate: personality.voiceSettings.rate,
+            pitch: personality.voiceSettings.pitch,
+            volume: personality.voiceSettings.volume,
+          });
+        }
+      }
+
+      // Show AI insights notification
+      if (result.analysis && appSettings.emotionalAdaptationEnabled) {
+        const userMood = result.analysis.userMood;
+        if (userMood.dominant !== 'neutral') {
+          addNotification({
+            type: 'info',
+            title: `Mood Detected: ${userMood.dominant}`,
+            message: `The ghost senses your ${userMood.sentiment} energy`,
+            duration: 3000
+          });
+        }
+      }
+
+    } catch (error) {
+      console.error('Error sending message:', error);
+      addNotification({
+        type: 'error',
+        title: 'Connection Error',
+        message: 'Failed to reach the spirit realm. Please try again.',
+        duration: 5000
+      });
+    } finally {
+      setIsTyping(false);
+    }
+  }, [
+    sessionId, 
+    appSettings.ghostPersonality, 
+    appSettings.soundEnabled, 
+    appSettings.voiceEnabled,
+    appSettings.emotionalAdaptationEnabled,
+    playSyntheticSound, 
+    speakText, 
+    addNotification,
+    updateAnalysis
+  ]);
+
+  // Handle form submission
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    sendMessage(input);
+  };
+
+  // Handle image analysis
+  const handleImageAnalyzed = useCallback((analysis: ImageAnalysis) => {
+    if (appSettings.imageAnalysisEnabled) {
       addNotification({
         type: 'info',
-        title: 'Ghost Personality Changed',
-        message: `Now channeling ${newSettings.ghostPersonality.name} ${newSettings.ghostPersonality.emoji}`,
+        title: 'Image Analyzed',
+        message: `The ghost sees: ${analysis.mood} atmosphere`,
+        duration: 4000
+      });
+      
+      // Send a message about the image
+      const imageMessage = `I can see through the ethereal veil... ${analysis.ghostReaction}`;
+      sendMessage(imageMessage);
+    }
+  }, [appSettings.imageAnalysisEnabled, addNotification, sendMessage]);
+
+  // Handle story messages
+  const handleStoryMessage = useCallback((storyText: string) => {
+    const storyMessage: EnhancedMessage = {
+      id: generateId(),
+      content: storyText,
+      isGhost: true,
+      timestamp: new Date().toISOString(),
+    };
+    
+    setMessages(prev => [...prev, storyMessage]);
+    
+    if (appSettings.voiceEnabled) {
+      speakText(storyText, appSettings.ghostPersonality.voiceSettings);
+    }
+  }, [appSettings.voiceEnabled, appSettings.ghostPersonality.voiceSettings, speakText]);
+
+  // Initialize audio and music
+  const handleAudioInit = useCallback(async () => {
+    try {
+      setAudioInitialized(true);
+      setShowAudioPrompt(false);
+      
+      if (appSettings.musicEnabled) {
+        await playMusic();
+      }
+      
+      addNotification({
+        type: 'success',
+        title: 'Audio Initialized',
+        message: 'The spirit realm sounds are now active',
+        duration: 3000
+      });
+    } catch (error) {
+      console.error('Audio initialization failed:', error);
+      addNotification({
+        type: 'warning',
+        title: 'Audio Warning',
+        message: 'Some audio features may not work properly',
         duration: 4000
       });
     }
+  }, [appSettings.musicEnabled, playMusic, addNotification]);
 
-    if (oldSettings.theme !== newSettings.theme) {
-      addNotification({
-        type: 'success',
-        title: 'Theme Updated',
-        message: `Switched to ${newSettings.theme} theme`,
-        duration: 3000
-      });
-    }
-
-    // Visual effects toggles
-    if (oldSettings.lightningEnabled !== newSettings.lightningEnabled) {
-      addNotification({
-        type: 'info',
-        title: `Lightning Effects ${newSettings.lightningEnabled ? 'Enabled' : 'Disabled'}`,
-        duration: 2000
-      });
-    }
-
-    if (oldSettings.fogEnabled !== newSettings.fogEnabled) {
-      addNotification({
-        type: 'info',
-        title: `Fog Effects ${newSettings.fogEnabled ? 'Enabled' : 'Disabled'}`,
-        duration: 2000
-      });
-    }
-
-    if (oldSettings.eyeTrackingEnabled !== newSettings.eyeTrackingEnabled) {
-      addNotification({
-        type: 'info',
-        title: `Eye Tracking ${newSettings.eyeTrackingEnabled ? 'Enabled' : 'Disabled'}`,
-        duration: 2000
-      });
-    }
-
-    if (oldSettings.textSpiritsEnabled !== newSettings.textSpiritsEnabled) {
-      addNotification({
-        type: 'info',
-        title: `Text Spirits ${newSettings.textSpiritsEnabled ? 'Enabled' : 'Disabled'}`,
-        duration: 2000
-      });
-    }
-  }, [appSettings, addNotification]);
-
-  // Background music management
-  useEffect(() => {
-    // Sync music volume (convert from 0-100 to 0-1)
-    const normalizedVolume = appSettings.musicVolume / 100;
-    setMusicVolume(normalizedVolume);
-  }, [appSettings.musicVolume, setMusicVolume]);
-
-  // Auto-start background music when enabled
-  useEffect(() => {
-    if (appSettings.musicEnabled && !isMusicPlaying && !musicInitializingRef.current) {
-      console.log('🎵 Auto-starting background music...');
-      musicInitializingRef.current = true;
-      
-      // Use a small delay to ensure audio context is ready
-      const timer = setTimeout(() => {
-        playMusic(undefined, { fadeIn: true, loop: true })
-          .then(() => {
-            musicInitializingRef.current = false;
-          })
-          .catch(err => {
-            console.warn('Failed to start background music:', err);
-            musicInitializingRef.current = false;
-          });
-      }, 1000);
-      
-      return () => {
-        clearTimeout(timer);
-        musicInitializingRef.current = false;
-      };
-    } else if (!appSettings.musicEnabled && isMusicPlaying) {
-      console.log('🎵 Auto-stopping background music...');
-      pauseMusic();
-      musicInitializingRef.current = false;
-    }
-  }, [appSettings.musicEnabled]); // Only depend on musicEnabled setting
-
-  // Pause music during voice synthesis and sound effects, resume after
-  useEffect(() => {
-    const shouldPauseMusic = (isSpeaking || soundEffectPlaying) && appSettings.musicEnabled;
-    const shouldResumeMusic = !isSpeaking && !soundEffectPlaying && appSettings.musicEnabled;
-    
-    console.log('Music control check:', {
-      isSpeaking,
-      soundEffectPlaying,
-      isMusicPlaying,
-      musicEnabled: appSettings.musicEnabled,
-      shouldPauseMusic,
-      shouldResumeMusic
-    });
-    
-    if (shouldPauseMusic && isMusicPlaying) {
-      console.log('🎵 PAUSING music for voice/sound effect...');
-      pauseMusic();
-    } else if (shouldResumeMusic && !isMusicPlaying) {
-      console.log('🎵 RESUMING music after voice/sound effect...');
-      setTimeout(() => {
-        playMusic(undefined, { fadeIn: true, loop: true }).catch(err => {
-          console.warn('Failed to resume background music:', err);
-        });
-      }, 300); // Shorter delay for better responsiveness
-    }
-  }, [isSpeaking, soundEffectPlaying, isMusicPlaying, appSettings.musicEnabled]);
-
-  // Format timestamp
-  const formatTimestamp = useCallback((timestamp: string): string => {
-    return new Date(timestamp).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
-  }, []);
-
-  // Initialize socket connection
-  useEffect(() => {
-    socketRef.current = io(API_URL);
-
-    // Listen for new messages from the server
-    socketRef.current.on('receive_message', (message: Omit<Message, 'id'> & Partial<Message>) => {
-      console.log('Received message:', message);
-      setIsTyping(false);
-      
-      // Trigger floating ghosts for ghost messages
-      if (message.isGhost) {
-        setGhostTriggerCount(prev => prev + 1);
-        playSoundEffect('ghost');
-        
-        // Speak ghost messages if voice is enabled
-        if (appSettings.voiceEnabled) {
-          console.log('Voice enabled, will speak ghost message:', message.content.substring(0, 50) + '...');
-          setTimeout(async () => {
-            console.log('Starting ghost voice synthesis with settings:', {
-              rate: appSettings.ghostPersonality.voiceSettings.rate,
-              pitch: appSettings.ghostPersonality.voiceSettings.pitch,
-              volume: appSettings.ghostPersonality.voiceSettings.volume
-            });
-            try {
-              await speakText(message.content, {
-                rate: appSettings.ghostPersonality.voiceSettings.rate,
-                pitch: appSettings.ghostPersonality.voiceSettings.pitch,
-                volume: appSettings.ghostPersonality.voiceSettings.volume
-              });
-              console.log('Ghost voice synthesis completed');
-            } catch (err) {
-              console.error('Voice synthesis failed:', err);
-            }
-          }, 500); // Small delay for dramatic effect
-        } else {
-          console.log('Voice disabled in settings');
-        }
-      } else {
-        playSoundEffect('message');
-      }
-      
-      // Ensure incoming message has a stable id
-      const incoming: Message = {
-        id: (message as any).id || generateId(),
-        content: message.content,
-        isGhost: message.isGhost,
-        timestamp: message.timestamp || new Date().toISOString(),
-      };
-      
-      // Only add if this message doesn't already exist (prevent duplicates)
-      setMessages(prevMessages => {
-        const exists = prevMessages.some(m => 
-          m.content === incoming.content && 
-          m.isGhost === incoming.isGhost && 
-          Math.abs(new Date(m.timestamp).getTime() - new Date(incoming.timestamp).getTime()) < 5000
-        );
-        
-        if (exists) {
-          console.log('Message already exists, skipping');
-          return prevMessages;
-        }
-        
-        console.log('Adding new message:', incoming);
-        return [...prevMessages, incoming];
-      });
-    });
-
-    // Handle connection errors
-    socketRef.current.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
-      setIsTyping(false);
-    });
-
-    // Handle socket errors
-    socketRef.current.on('error', (error) => {
-      console.error('Socket error:', error);
-      setIsTyping(false);
-      
-      // Add error message
-      const errorMessage: Message = {
-        id: generateId(),
-        content: 'The connection to the other side is weak... Try again.',
-        isGhost: true,
-        timestamp: new Date().toISOString(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    });
-
-    // Clean up on unmount
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
-    };
-  }, []);
-
-  // Auto-scroll to bottom of messages
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || !socketRef.current) return;
-
-    const messageContent = input.trim();
-    setInput('');
-    setIsTyping(true);
-    
-    // Play send sound
-    playSoundEffect('send');
-
-    console.log('Sending message via Socket.io:', messageContent);
-
-    try {
-      // Send message via Socket.io
-      socketRef.current.emit('send_message', {
-        content: messageContent,
-        sessionId,
-        personalityId: appSettings.ghostPersonality.id,
-      });
-      
-      // Note: We don't add the user message here immediately anymore
-      // because the server will send it back via Socket.io, ensuring consistency
-      
-    } catch (error) {
-      console.error('Error sending message:', error);
-      setIsTyping(false);
-      
-      // Add error message
-      const errorMessage: Message = {
-        id: generateId(),
-        content: 'Failed to send message. The connection to the other side is weak...',
-        isGhost: true,
-        timestamp: new Date().toISOString(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    }
-  };
-
-  // Function to get theme classes
-  const getThemeClasses = () => {
-    switch (appSettings.theme) {
-      case 'darker':
-        return 'bg-gray-950 text-gray-100 theme-darker';
-      case 'midnight':
-        return 'bg-black text-blue-100 theme-midnight';
-      default:
-        return 'bg-haunted-900 text-haunted-100 theme-dark';
-    }
-  };
-
-  // Apply theme to document body
+  // Music volume sync
   useEffect(() => {
-    const body = document.body;
-    // Remove all theme classes
-    body.classList.remove('theme-dark', 'theme-darker', 'theme-midnight');
-    
-    // Add current theme class
-    switch (appSettings.theme) {
-      case 'darker':
-        body.classList.add('theme-darker');
-        break;
-      case 'midnight':
-        body.classList.add('theme-midnight');
-        break;
-      default:
-        body.classList.add('theme-dark');
-        break;
-    }
-  }, [appSettings.theme]);
-
-  // Initialize audio on first user interaction
-  const initializeAudio = useCallback(async () => {
-    try {
-      // Initialize synthetic audio using the helper
-      await playSoundEffect('typing');
-      setAudioInitialized(true);
-      setShowAudioPrompt(false);
-      
-      addNotification({
-        type: 'success',
-        title: 'Audio Enabled',
-        message: 'Spectral sounds are now active! 👻🔊',
-        duration: 3000
-      });
-      
-      console.log('Audio context initialized successfully');
-    } catch (error) {
-      console.warn('Failed to initialize audio:', error);
-      setShowAudioPrompt(false); // Hide prompt even if failed
-      
-      addNotification({
-        type: 'warning',
-        title: 'Audio Unavailable',
-        message: 'Audio could not be enabled, but you can still chat with the spirits',
-        duration: 4000
-      });
-    }
-  }, [playSyntheticSound, addNotification]);
-
-  // Auto-hide audio prompt if user interacts without clicking the button
-  useEffect(() => {
-    if (audioInitialized) return;
-
-    const handleInteraction = () => {
-      setShowAudioPrompt(false);
-    };
-
-    // Auto-hide prompt after 10 seconds or on any interaction
-    const timer = setTimeout(() => {
-      setShowAudioPrompt(false);
-    }, 10000);
-
-    document.addEventListener('click', handleInteraction);
-    document.addEventListener('keydown', handleInteraction);
-    document.addEventListener('touchstart', handleInteraction);
-
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('click', handleInteraction);
-      document.removeEventListener('keydown', handleInteraction);
-      document.removeEventListener('touchstart', handleInteraction);
-    };
-  }, [audioInitialized]);
-
-  // Helper function to play sound effects with music pausing
-  const playSoundEffect = useCallback(async (type: 'message' | 'ghost' | 'typing' | 'send') => {
-    if (!appSettings.soundEnabled) return;
-    
-    console.log(`🔊 Playing sound effect: ${type}, setting soundEffectPlaying to true`);
-    setSoundEffectPlaying(true);
-    
-    try {
-      await playSyntheticSound(type);
-      console.log(`🔊 Sound effect ${type} completed`);
-    } catch (err) {
-      console.warn('Audio failed:', err);
-    }
-    
-    // Set different delays based on sound type
-    const delay = type === 'ghost' ? 2500 : type === 'message' ? 1800 : 1000;
-    
-    setTimeout(() => {
-      console.log(`🔊 Clearing soundEffectPlaying after ${type} sound effect (${delay}ms delay)`);
-      setSoundEffectPlaying(false);
-    }, delay);
-  }, [appSettings.soundEnabled, playSyntheticSound]);
+    setMusicVolume(appSettings.musicVolume / 100);
+  }, [appSettings.musicVolume, setMusicVolume]);
 
   return (
-    <div className={`flex flex-col h-screen relative overflow-hidden ${getThemeClasses()}`}>
-      {/* Background Effects */}
-      <ParticleSystem particleCount={appSettings.particleCount} />
-      {appSettings.fogEnabled && <FogEffect intensity={3} />}
-      {appSettings.lightningEnabled && <LightningFlash intensity={0.3} />}
-      
-      {/* Floating Effects */}
-      <FloatingGhosts triggerCount={ghostTriggerCount} intensity={appSettings.ghostIntensity} />
-      {appSettings.textSpiritsEnabled && (
-        <FloatingTextSpirits messages={messages} maxSpirits={3} spawnRate={0.3} />
-      )}
-      
-      {/* Interactive Effects */}
-      {appSettings.eyeTrackingEnabled && <EyeTrackingCursor enabled={true} eyeCount={3} />}
-      
-      {/* Audio Initialization Prompt */}
-      {showAudioPrompt && (
-        <AudioInitPrompt 
-          onInitialize={initializeAudio}
-          isVisible={showAudioPrompt}
+    <div className={`app min-h-screen relative overflow-hidden theme-${appSettings.theme}`}>
+      <div className="bg-gradient-to-br from-gray-900 via-purple-900 to-black min-h-screen relative">
+        
+        {/* Enhanced Background Effects */}
+        {appSettings.particleCount > 0 && (
+          <ParticleSystem 
+            particleCount={appSettings.particleCount} 
+          />
+        )}
+        
+        {appSettings.fogEnabled && <FogEffect />}
+        {appSettings.lightningEnabled && <LightningFlash />}
+        {appSettings.eyeTrackingEnabled && <EyeTrackingCursor />}
+        {appSettings.textSpiritsEnabled && <FloatingTextSpirits messages={messages} />}
+        
+        <FloatingGhosts 
+          intensity={appSettings.ghostIntensity} 
         />
-      )}
-      
-      {/* Settings Panel */}
-      <Settings
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-        settings={appSettings}
-        onSettingsChange={handleSettingsChange}
-      />
 
-      {/* Notification System */}
-      <NotificationSystem 
-        notifications={notifications}
-        onRemove={removeNotification}
-      />
-      
-      {/* Header */}
-      <header className="bg-haunted-800/50 backdrop-blur-sm border-b border-haunted-700/50 p-4 relative z-20">
-        <div className="container mx-auto flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-haunted-100 flex items-center">
-            <motion.span 
-              className="text-4xl mr-3"
-              animate={{ 
-                rotate: [0, 10, -10, 0],
-                scale: [1, 1.1, 1]
-              }}
-              transition={{ 
-                duration: 3,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            >
-              👻
-            </motion.span>
-            <span className="ghost-title glitch" data-text="Haunted Chat">
-              Haunted Chat
-            </span>
-          </h1>
-          <div className="text-haunted-400 text-sm flex items-center space-x-3">
-            <motion.div
-              animate={{ opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="flex items-center space-x-1"
-            >
-              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-              <span>Connected to the other side</span>
-            </motion.div>
-            <span>|</span>
-            <button
-              onClick={() => setShowSettings(true)}
-              className="flex items-center space-x-1 hover:text-haunted-200 transition-colors"
-            >
-              <span>⚙️</span>
-              <span>Settings</span>
-            </button>
-            <span>|</span>
-            <span>
-              {new Date().toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </span>
-          </div>
-        </div>
-      </header>
-
-      {/* Messages */}
-      <main className="flex-1 overflow-y-auto p-4 space-y-6 relative z-10">
+        {/* Audio Initialization Prompt */}
         <AnimatePresence>
-          {messages.map((message, index) => (
-            <motion.div
-              key={message.id || `${message.timestamp}-${Math.random().toString(36).slice(2,6)}`}
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ 
-                duration: 0.4,
-                delay: index * 0.1,
-                ease: "easeOut"
-              }}
-              className={`flex ${message.isGhost ? 'justify-start' : 'justify-end'}`}
-            >
-              <div
-                className={`max-w-3/4 rounded-xl p-5 message-bubble ${
-                  message.isGhost
-                    ? 'ghost-message'
-                    : 'user-message'
-                } backdrop-blur-sm`}
-              >
-                <div className="flex items-center mb-2">
-                  {message.isGhost && (
-                    <motion.span 
-                      className="text-lg mr-2"
-                      animate={{ 
-                        rotate: [0, 10, -5, 0],
-                        scale: [1, 1.1, 1]
-                      }}
-                      transition={{ 
-                        duration: 2,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }}
-                    >
-                      👻
-                    </motion.span>
-                  )}
-                  <span className={`font-medium text-sm ${
-                    message.isGhost ? 'text-haunted-300 ghost-text' : 'text-haunted-200'
-                  }`}>
-                    {message.isGhost ? 'Spectral Entity' : 'You'}
-                  </span>
-                  <span className="mx-2 text-haunted-500">•</span>
-                  <span className="text-xs text-haunted-400">
-                    {formatTimestamp(message.timestamp)}
-                  </span>
-                </div>
-                
-                <MessageEffects 
-                  content={message.content} 
-                  isGhost={message.isGhost}
-                  className="text-haunted-100 whitespace-pre-wrap leading-relaxed"
+          {showAudioPrompt && (
+            <AudioInitPrompt 
+              onInitialize={handleAudioInit} 
+              isVisible={showAudioPrompt}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Main Content */}
+        <div className="relative z-10 flex flex-col h-screen">
+          
+          {/* Header with Enhanced Controls */}
+          <header className="p-4 bg-black/30 backdrop-blur-sm border-b border-purple-500/30">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-4">
+                <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                  👻 Haunted AI
+                </h1>
+                {currentTrack && (
+                  <div className="text-purple-300 text-sm">
+                    🎵 {currentTrack.name}
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex items-center space-x-3">
+                {/* AI Features Toggle */}
+                <button
+                  onClick={() => setShowAIFeatures(!showAIFeatures)}
+                  className={`p-2 rounded-lg border transition-colors duration-200 ${
+                    showAIFeatures 
+                      ? 'bg-purple-600/30 border-purple-400 text-purple-200' 
+                      : 'bg-purple-900/20 border-purple-500/50 text-purple-300 hover:bg-purple-800/30'
+                  }`}
+                  title="AI Features Panel"
                 >
-                  {message.isGhost ? (
+                  🧠
+                </button>
+                
+                {/* Music Controls */}
+                <button
+                  onClick={() => isMusicPlaying ? pauseMusic() : playMusic()}
+                  className="p-2 bg-purple-900/20 hover:bg-purple-800/30 border border-purple-500/50 rounded-lg text-purple-300 transition-colors duration-200"
+                  title={isMusicPlaying ? 'Pause Music' : 'Play Music'}
+                >
+                  {isMusicPlaying ? '⏸️' : '▶️'}
+                </button>
+                
+                {/* Settings */}
+                <button
+                  onClick={() => setShowSettings(!showSettings)}
+                  className="p-2 bg-purple-900/20 hover:bg-purple-800/30 border border-purple-500/50 rounded-lg text-purple-300 transition-colors duration-200"
+                  title="Settings"
+                >
+                  ⚙️
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {/* Enhanced Sidebar - AI Features Panel */}
+          <AnimatePresence>
+            {showAIFeatures && (
+              <motion.div
+                initial={{ x: -300, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -300, opacity: 0 }}
+                className="fixed left-0 top-0 h-full w-80 bg-black/40 backdrop-blur-sm border-r border-purple-500/30 z-30 overflow-y-auto"
+              >
+                <div className="p-4 space-y-4">
+                  <h2 className="text-purple-300 font-semibold mb-4">🧠 AI Features</h2>
+                  
+                  {/* Mood Visualization */}
+                  {appSettings.moodVisualizationEnabled && currentAnalysis && (
+                    <MoodVisualizer 
+                      userMood={currentAnalysis.userMood}
+                      ghostMood={currentAnalysis.ghostMood}
+                    />
+                  )}
+                  
+                  {/* Weather Display */}
+                  {appSettings.weatherIntegrationEnabled && (
+                    <WeatherDisplay />
+                  )}
+                  
+                  {/* Story Interface */}
+                  {appSettings.storyModeEnabled && (
+                    <StoryInterface 
+                      sessionId={sessionId}
+                      userName={userName}
+                      onStoryMessage={handleStoryMessage}
+                    />
+                  )}
+                  
+                  {/* Image Upload */}
+                  {appSettings.imageAnalysisEnabled && (
+                    <ImageUpload 
+                      onImageAnalyzed={handleImageAnalyzed}
+                      personalityId={appSettings.ghostPersonality.id}
+                    />
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Settings Panel */}
+          <AnimatePresence>
+            {showSettings && (
+              <Settings
+                isOpen={showSettings}
+                settings={appSettings}
+                onSettingsChange={setAppSettings}
+                onClose={() => setShowSettings(false)}
+                musicControls={{
+                  isPlaying: isMusicPlaying,
+                  currentTrack: currentTrack,
+                  tracks: [],
+                  play: playMusic,
+                  pause: pauseMusic,
+                  stop: () => {},
+                  nextTrack: () => {},
+                  previousTrack: () => {},
+                  isSupported: true
+                }}
+              />
+            )}
+          </AnimatePresence>
+
+          {/* Chat Messages */}
+          <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${showAIFeatures ? 'ml-80' : ''} transition-all duration-300`}>
+            <AnimatePresence>
+              {messages.map((message, index) => (
+                <motion.div
+                  key={message.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className={`flex ${message.isGhost ? 'justify-start' : 'justify-end'}`}
+                >
+                  <div className={`max-w-md p-4 rounded-lg border backdrop-blur-sm relative ${
+                    message.isGhost
+                      ? 'bg-purple-900/30 border-purple-500/50 text-purple-100'
+                      : 'bg-blue-900/30 border-blue-500/50 text-blue-100'
+                  }`}>
+                    
+                    {message.isGhost && (
+                      <div className="flex items-center mb-2">
+                        <span className="text-lg mr-2">
+                          {appSettings.ghostPersonality.emoji}
+                        </span>
+                        <span className="text-sm text-purple-300">
+                          {appSettings.ghostPersonality.name}
+                        </span>
+                      </div>
+                    )}
+                    
                     <TypewriterText 
                       text={message.content}
-                      speed={30}
-                      isGhost={true}
-                      enableSound={true}
-                      className="ghost-text"
+                      speed={message.isGhost ? 30 : 0}
+                      className={message.isGhost ? 'text-purple-100' : 'text-blue-100'}
                     />
-                  ) : (
-                    <span>{message.content}</span>
-                  )}
-                </MessageEffects>
-              </div>
-            </motion.div>
-          ))}
-          
-          {/* Enhanced Typing Indicator */}
-          <GhostTypingIndicator isVisible={isTyping} />
-          
-          <div key="end" ref={messagesEndRef} />
-        </AnimatePresence>
-      </main>
+                    
+                    <div className="text-xs opacity-50 mt-2">
+                      {new Date(message.timestamp).toLocaleTimeString()}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            
+            {isTyping && (
+              <GhostTypingIndicator isVisible={true} />
+            )}
+            
+            <div ref={messagesEndRef} />
+          </div>
 
-      {/* Input */}
-      <footer className="bg-haunted-900/90 backdrop-blur-sm border-t border-haunted-800/50 p-6 relative z-20">
-        <form onSubmit={handleSubmit} className="container mx-auto">
-          <div className="flex space-x-4">
-            <div className="flex-1 relative">
+          {/* Enhanced Input Form */}
+          <form onSubmit={handleSubmit} className={`p-4 bg-black/30 backdrop-blur-sm border-t border-purple-500/30 ${showAIFeatures ? 'ml-80' : ''} transition-all duration-300`}>
+            <div className="flex space-x-2">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Whisper your message to the void..."
-                className="w-full bg-haunted-800/60 border border-haunted-700/50 rounded-xl px-6 py-4 text-haunted-100 placeholder-haunted-400 focus:outline-none focus:ring-2 focus:ring-haunted-500/50 focus:border-haunted-500/50 transition-all duration-300 backdrop-blur-sm pulse-glow"
+                placeholder="Speak to the spirits..."
+                className="flex-1 bg-gray-800/50 border border-purple-500/50 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
                 disabled={isTyping}
-                style={{
-                  textShadow: '0 0 5px rgba(124, 45, 255, 0.3)'
-                }}
               />
-              {/* Magical sparkles on focus */}
-              <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-                {input && [...Array(3)].map((_, index) => (
-                  <motion.div
-                    key={index}
-                    className="absolute w-1 h-1 bg-haunted-400 rounded-full"
-                    style={{
-                      top: `${20 + index * 20}%`,
-                      right: `${5 + index * 15}%`,
-                    }}
-                    animate={{
-                      scale: [0, 1, 0],
-                      opacity: [0, 1, 0],
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      delay: index * 0.3,
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-            
-            <motion.button
-              type="submit"
-              disabled={!input.trim() || isTyping}
-              className="bg-gradient-to-r from-haunted-600 to-haunted-700 hover:from-haunted-500 hover:to-haunted-600 text-white font-medium px-8 py-4 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-haunted-400 focus:ring-offset-2 focus:ring-offset-haunted-900 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <span className="relative z-10 flex items-center space-x-2">
-                <span>Send</span>
-                <motion.span
-                  animate={isTyping ? { rotate: 360 } : {}}
-                  transition={{ duration: 1, repeat: isTyping ? Infinity : 0 }}
-                >
-                  ⚡
-                </motion.span>
-              </span>
               
-              {/* Button glow effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-haunted-400/20 to-haunted-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </motion.button>
-          </div>
-          
-          <div className="flex items-center justify-between mt-4">
-            <motion.p 
-              className="text-xs text-haunted-500 italic"
-              animate={{ opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 3, repeat: Infinity }}
-            >
-              The spirit may take a moment to materialize...
-            </motion.p>
-            
-            <div className="flex items-center space-x-2 text-xs text-haunted-400">
-              <span>Messages: {messages.length}</span>
-              <span>•</span>
-              <span>Session: {sessionId.slice(-4)}</span>
+              <button
+                type="submit"
+                disabled={(!input.trim() || isTyping)}
+                className="px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors duration-200"
+              >
+                {isTyping ? '👻' : '📨'}
+              </button>
             </div>
-          </div>
-        </form>
-      </footer>
+            
+            {/* Quick actions */}
+            <div className="flex mt-2 space-x-2 text-xs">
+              <button
+                type="button"
+                onClick={() => setInput("Tell me about yourself")}
+                className="text-purple-400 hover:text-purple-200"
+              >
+                About
+              </button>
+              <button
+                type="button"
+                onClick={() => setInput("Tell me a scary story")}
+                className="text-purple-400 hover:text-purple-200"
+              >
+                Story
+              </button>
+              <button
+                type="button"
+                onClick={() => setInput("What can you see around me?")}
+                className="text-purple-400 hover:text-purple-200"
+              >
+                Vision
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Notification System */}
+        <NotificationSystem 
+          notifications={notifications}
+          onRemove={removeNotification}
+        />
+      </div>
     </div>
   );
 };

@@ -26,6 +26,7 @@ interface UseBackgroundMusic {
   nextTrack: () => void;
   previousTrack: () => void;
   isSupported: boolean;
+  playSettingsMusic: (trackIndex?: number) => void;
 }
 
 // Predefined supernatural tracks (URLs would normally point to actual audio files)
@@ -168,11 +169,197 @@ export const useBackgroundMusic = (): UseBackgroundMusic => {
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fadeIntervalRef = useRef<number | null>(null);
+  const timerRef = useRef<number | null>(null);
+  const playbackTimeoutRef = useRef<number | null>(null);
+  const isPlayingRef = useRef<boolean>(false); // Track if play operation is in progress
+  const lastAbortErrorTime = useRef<number>(0); // Track last AbortError for throttling logs
+  const preventCleanupRef = useRef<boolean>(false); // Prevent cleanup during active playback
 
   // Check audio support
   useEffect(() => {
     setIsSupported(typeof Audio !== 'undefined');
   }, []);
+
+  // Play music for a specific duration
+  const playScheduledMusic = useCallback(async (duration: number, isSettingsMusic: boolean = false, trackIndex?: number) => {
+    if (!isSupported) {
+      console.log('🎵 Audio not supported, skipping scheduled music');
+      return;
+    }
+    
+    try {
+      console.log(`🎵 Playing ${isSettingsMusic ? 'settings' : 'scheduled'} background music for ${duration/1000} seconds`);
+      
+      // Use provided track index or rotate to next track for variety
+      let selectedIndex: number;
+      if (trackIndex !== undefined) {
+        selectedIndex = trackIndex;
+        console.log(`🎵 Using selected track index: ${selectedIndex}`);
+      } else {
+        selectedIndex = (currentTrackIndex + 1) % SUPERNATURAL_TRACKS.length;
+        setCurrentTrackIndex(selectedIndex);
+        console.log(`🎵 Auto-rotated to track index: ${selectedIndex}`);
+      }
+      
+      const targetTrack = SUPERNATURAL_TRACKS[selectedIndex];
+      console.log(`🎵 Selected track: ${targetTrack.name}`);
+      
+      // Clear any existing audio
+      if (audioRef.current) {
+        console.log('🎵 Clearing existing audio');
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      clearGlobalAudio();
+
+      // Create new audio instance
+      let audio: HTMLAudioElement | null = null;
+      
+      try {
+        audio = new Audio(targetTrack.url);
+        await new Promise((resolve, reject) => {
+          if (!audio) return reject(new Error('Audio creation failed'));
+          
+          audio.addEventListener('canplay', resolve);
+          audio.addEventListener('error', reject);
+          audio.load();
+          
+          setTimeout(() => reject(new Error('Audio load timeout')), 2000);
+        });
+      } catch {
+        console.log(`Creating synthetic audio for: ${targetTrack.name}`);
+        audio = createSyntheticAmbientAudio(targetTrack.name);
+      }
+
+      if (!audio) {
+        throw new Error('Failed to create audio');
+      }
+
+      audioRef.current = audio;
+      globalAudioInstance = audio;
+      
+      audio.loop = false; // Don't loop for scheduled playback
+      audio.volume = volume;
+
+      // Stop after specified duration
+      if (playbackTimeoutRef.current) {
+        clearTimeout(playbackTimeoutRef.current);
+      }
+      
+      playbackTimeoutRef.current = window.setTimeout(() => {
+        console.log(`🎵 Stopping ${isSettingsMusic ? 'settings' : 'scheduled'} background music`);
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+        }
+        setIsPlaying(false);
+        setCurrentTrack(null);
+        
+        // Re-enable cleanup after settings music finishes
+        if (isSettingsMusic) {
+          preventCleanupRef.current = false;
+          console.log('🎵 Cleanup prevention disabled - settings music finished');
+        }
+        
+        // No more automatic scheduling - settings music is one-time only
+        console.log('🎵 Settings music finished - no further scheduling');
+      }, duration);
+
+      audio.addEventListener('ended', () => {
+        console.log(`🎵 ${isSettingsMusic ? 'Settings' : 'Scheduled'} music ended`);
+        setIsPlaying(false);
+        setCurrentTrack(null);
+        
+        // Reset cleanup prevention when music ends
+        if (isSettingsMusic) {
+          preventCleanupRef.current = false;
+          console.log('🎵 Cleanup prevention disabled - music ended');
+        }
+        
+        // No scheduling for any music - one-time only
+      });
+
+      audio.addEventListener('error', (e) => {
+        console.error(`🎵 ${isSettingsMusic ? 'Settings' : 'Scheduled'} audio playback error:`, e);
+        setIsPlaying(false);
+        setCurrentTrack(null);
+        
+        // Reset cleanup prevention on error
+        if (isSettingsMusic) {
+          preventCleanupRef.current = false;
+          console.log('🎵 Cleanup prevention disabled due to playback error');
+        }
+        
+        // No scheduling for any music - one-time only
+      });
+
+      // Add a small delay and check before playing
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      if (audio && audioRef.current === audio && audio.paused) {
+        try {
+          console.log(`🎵 Starting playback of ${isSettingsMusic ? 'settings' : 'scheduled'} music`);
+          
+          // Prevent cleanup during settings music playback
+          if (isSettingsMusic) {
+            preventCleanupRef.current = true;
+            console.log('🎵 Cleanup prevention enabled for settings music');
+          }
+          
+          await audio.play();
+          setIsPlaying(true);
+          setCurrentTrack(targetTrack);
+        } catch (playError) {
+          if (playError.name === 'AbortError') {
+            // Throttle AbortError logs for scheduled music too
+            const now = Date.now();
+            if (now - lastAbortErrorTime.current > 5000) {
+              console.debug('🎵 Scheduled audio play interrupted (normal)');
+              lastAbortErrorTime.current = now;
+            }
+          } else {
+            console.error(`🎵 ${isSettingsMusic ? 'Settings' : 'Scheduled'} audio play error:`, playError);
+          }
+          setIsPlaying(false);
+          setCurrentTrack(null);
+          
+          // Reset cleanup prevention on error
+          if (isSettingsMusic) {
+            preventCleanupRef.current = false;
+            console.log('🎵 Cleanup prevention disabled due to error');
+          }
+          
+          // No scheduling - one-time music only
+        }
+      } else {
+        console.log(`${isSettingsMusic ? 'Settings' : 'Scheduled'} audio instance invalid, skipping play`);
+        
+        // Reset cleanup prevention if audio is invalid
+        if (isSettingsMusic) {
+          preventCleanupRef.current = false;
+        }
+        
+        // No scheduling - one-time music only
+      }
+      
+    } catch (error) {
+      console.error(`Failed to play ${isSettingsMusic ? 'settings' : 'scheduled'} music:`, error);
+      // No scheduling after error - music is one-time only
+      console.log('🎵 Music error - no rescheduling (one-time only)');
+    }
+  }, [volume, currentTrackIndex, isSupported]);
+
+  // Schedule automatic playback - DISABLED (only settings music now)
+  const scheduleNextPlayback = useCallback(() => {
+    console.log('🎵 Automatic scheduling disabled - only settings music plays');
+    // Do nothing - no more 5-minute scheduling
+  }, []);
+
+  // Play music for settings changes (15 seconds) - THE ONLY automatic music
+  const playSettingsMusic = useCallback((trackIndex?: number) => {
+    console.log('🎵 playSettingsMusic called - triggering 15-second music (no scheduling)');
+    playScheduledMusic(15000, true, trackIndex); // Play for 15 seconds, this IS settings music
+  }, [playScheduledMusic]);
 
   // Create synthetic ambient audio using Web Audio API when real files aren't available
   const createSyntheticAmbientAudio = useCallback((trackName: string): HTMLAudioElement | null => {
@@ -515,101 +702,16 @@ export const useBackgroundMusic = (): UseBackgroundMusic => {
   const play = useCallback(async (track?: Track, options: BackgroundMusicOptions = {}): Promise<void> => {
     if (!isSupported) return;
 
-    const targetTrack = track || SUPERNATURAL_TRACKS[currentTrackIndex] || SUPERNATURAL_TRACKS[0];
-    
-    if (!targetTrack) return;
-
-    try {
-      // Stop current audio with proper cleanup
-      if (audioRef.current || globalAudioInstance) {
-        console.log('Cleaning up previous audio before starting new track...');
-        
-        // Clear global instance first
-        clearGlobalAudio();
-        
-        // Clear local instance
-        if (audioRef.current) {
-          const currentAudio = audioRef.current;
-          currentAudio.pause();
-          currentAudio.currentTime = 0;
-          
-          // Remove all possible event listeners to prevent interference
-          currentAudio.removeEventListener('ended', () => {});
-          currentAudio.removeEventListener('error', () => {});
-          currentAudio.removeEventListener('canplay', () => {});
-          currentAudio.removeEventListener('loadstart', () => {});
-          currentAudio.removeEventListener('loadeddata', () => {});
-          
-          audioRef.current = null;
-        }
-        
-        setIsPlaying(false);
-        setCurrentTrack(null);
-        
-        // Longer delay to ensure complete cleanup
-        await new Promise(resolve => setTimeout(resolve, 500));
-        console.log('Previous audio cleanup complete');
-      }
-
-      // Try to load real audio file first, fallback to synthetic
-      let audio: HTMLAudioElement | null = null;
-      
-      try {
-        audio = new Audio(targetTrack.url);
-        await new Promise((resolve, reject) => {
-          if (!audio) return reject(new Error('Audio creation failed'));
-          
-          audio.addEventListener('canplay', resolve);
-          audio.addEventListener('error', reject);
-          audio.load();
-          
-          // Timeout after 2 seconds for demo purposes
-          setTimeout(() => reject(new Error('Audio load timeout')), 2000);
-        });
-      } catch {
-        // Fallback to synthetic audio
-        console.log(`Creating synthetic audio for: ${targetTrack.name}`);
-        audio = createSyntheticAmbientAudio(targetTrack.name);
-      }
-
-      if (!audio) {
-        throw new Error('Failed to create audio');
-      }
-
-      // Set as both local and global reference
-      audioRef.current = audio;
-      globalAudioInstance = audio;
-      
-      audio.loop = options.loop !== false;
-      audio.volume = options.fadeIn ? 0 : (options.volume || volume);
-
-      // Event listeners
-      audio.addEventListener('ended', () => {
-        setIsPlaying(false);
-        // Auto-play next track
-        nextTrack();
-      });
-
-      audio.addEventListener('error', (e) => {
-        console.error('Audio playback error:', e);
-        setIsPlaying(false);
-      });
-
-      await audio.play();
-      setIsPlaying(true);
-      setCurrentTrack(targetTrack);
-      console.log('Background music started playing:', targetTrack.name);
-
-      // Fade in if requested
-      if (options.fadeIn) {
-        fadeVolume(options.volume || volume, 3000);
-      }
-
-    } catch (error) {
-      console.error('Failed to play background music:', error);
-      setIsPlaying(false);
+    // Prevent concurrent play operations
+    if (isPlayingRef.current) {
+      console.log('Play operation already in progress, ignoring new request');
+      return;
     }
-  }, [isSupported, currentTrackIndex, volume, fadeVolume, createSyntheticAmbientAudio]);
+
+    // DISABLE ALL MANUAL CONTINUOUS PLAYBACK - only settings music allowed
+    console.log('🎵 Manual continuous playback disabled - use playSettingsMusic() instead');
+    return;
+  }, [isSupported]);
 
   const pause = useCallback(() => {
     console.log('Background music pause called, audioRef exists:', !!audioRef.current, 'paused:', audioRef.current?.paused);
@@ -676,24 +778,29 @@ export const useBackgroundMusic = (): UseBackgroundMusic => {
     const nextIndex = (currentTrackIndex + 1) % SUPERNATURAL_TRACKS.length;
     setCurrentTrackIndex(nextIndex);
     
-    if (isPlaying) {
-      play(SUPERNATURAL_TRACKS[nextIndex], { fadeIn: true });
-    }
-  }, [currentTrackIndex, isPlaying, play]);
+    // Manual track switching disabled - only settings music plays
+    console.log('🎵 Manual track switching disabled - only 15-second settings music allowed');
+  }, [currentTrackIndex]);
 
   const previousTrack = useCallback(() => {
     const prevIndex = currentTrackIndex === 0 ? SUPERNATURAL_TRACKS.length - 1 : currentTrackIndex - 1;
     setCurrentTrackIndex(prevIndex);
     
-    if (isPlaying) {
-      play(SUPERNATURAL_TRACKS[prevIndex], { fadeIn: true });
-    }
-  }, [currentTrackIndex, isPlaying, play]);
+    // Manual track switching disabled - only settings music plays  
+    console.log('🎵 Manual track switching disabled - only 15-second settings music allowed');
+  }, [currentTrackIndex]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       console.log('useBackgroundMusic cleanup on unmount');
+      
+      // Don't cleanup if we're in the middle of playing settings music
+      if (preventCleanupRef.current) {
+        console.log('🎵 Cleanup prevented - audio is actively playing');
+        return;
+      }
+      
       clearGlobalAudio();
       if (audioRef.current) {
         audioRef.current.pause();
@@ -702,6 +809,14 @@ export const useBackgroundMusic = (): UseBackgroundMusic => {
       if (fadeIntervalRef.current) {
         clearInterval(fadeIntervalRef.current);
       }
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+      if (playbackTimeoutRef.current) {
+        clearTimeout(playbackTimeoutRef.current);
+      }
+      isPlayingRef.current = false; // Reset play operation flag
+      preventCleanupRef.current = false; // Reset cleanup prevention
     };
   }, []);
 
@@ -716,7 +831,8 @@ export const useBackgroundMusic = (): UseBackgroundMusic => {
     setVolume,
     nextTrack,
     previousTrack,
-    isSupported
+    isSupported,
+    playSettingsMusic: playSettingsMusic
   };
 };
 

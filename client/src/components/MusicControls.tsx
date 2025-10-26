@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import useBackgroundMusic from '../hooks/useBackgroundMusic';
+
+interface Track {
+  name: string;
+  url: string;
+  duration?: number;
+  description: string;
+}
 
 interface MusicControlsProps {
   isEnabled: boolean;
@@ -8,6 +14,17 @@ interface MusicControlsProps {
   volume?: number; // External volume control (0-1)
   onVolumeChange?: (volume: number) => void; // External volume change handler
   className?: string;
+  // Music control props
+  isPlaying: boolean;
+  currentTrack: Track | null;
+  tracks: Track[];
+  play: (track?: Track, options?: any) => Promise<void>;
+  pause: () => void;
+  stop: () => void;
+  nextTrack: () => void;
+  previousTrack: () => void;
+  isSupported: boolean;
+  onTrackSelect?: (trackIndex: number) => void; // Track selection callback
 }
 
 const MusicControls: React.FC<MusicControlsProps> = ({ 
@@ -15,52 +32,39 @@ const MusicControls: React.FC<MusicControlsProps> = ({
   onToggle, 
   volume: externalVolume,
   onVolumeChange: externalVolumeChange,
-  className = '' 
+  className = '',
+  // Music control props
+  isPlaying,
+  currentTrack,
+  tracks,
+  play,
+  pause,
+  stop,
+  nextTrack,
+  previousTrack,
+  isSupported,
+  onTrackSelect
 }) => {
-  const { 
-    isPlaying, 
-    currentTrack, 
-    volume: internalVolume, 
-    tracks, 
-    play, 
-    pause, 
-    stop, 
-    setVolume: setInternalVolume, 
-    nextTrack, 
-    previousTrack,
-    isSupported 
-  } = useBackgroundMusic();
-
   const [selectedTrackIndex, setSelectedTrackIndex] = useState(0);
 
-  // Use external volume if provided, otherwise use internal
-  const currentVolume = externalVolume !== undefined ? externalVolume : internalVolume;
-  const setCurrentVolume = externalVolumeChange || setInternalVolume;
+  // Use external volume if provided, otherwise default to 0.3
+  const currentVolume = externalVolume !== undefined ? externalVolume : 0.3;
+  const setCurrentVolume = externalVolumeChange || (() => {});
 
   const handlePlayPause = async () => {
+    // Disabled - only settings music should play (15 seconds)
+    console.log('🎵 Manual playback disabled - only 15-second settings music allowed');
     if (isPlaying) {
       pause();
-    } else {
-      console.log(`Starting playback of: ${tracks[selectedTrackIndex].name}`);
-      await play(tracks[selectedTrackIndex], { fadeIn: true, loop: true });
     }
+    // Don't start any new music manually
   };
 
   const handleTrackChange = async (index: number) => {
     setSelectedTrackIndex(index);
-    // Always switch track immediately if music is enabled, regardless of playing state
-    if (isEnabled) {
-      console.log(`Switching to track: ${tracks[index].name}`);
-      // First stop current track explicitly
-      if (isPlaying) {
-        console.log('Stopping current track before switching...');
-        stop();
-        // Wait a bit for cleanup
-        await new Promise(resolve => setTimeout(resolve, 200));
-      }
-      // Then start the new track
-      await play(tracks[index], { fadeIn: true, loop: true });
-    }
+    onTrackSelect?.(index); // Notify parent component of track selection
+    console.log(`🎵 Track selected: ${tracks[index].name} (will play for 15s when settings change)`);
+    // Just update selection - no playback until settings change
   };
 
   if (!isSupported) {
@@ -128,15 +132,16 @@ const MusicControls: React.FC<MusicControlsProps> = ({
             </div>
           )}
 
-          {/* Track Selection */}
+          {/* Track Selection - ENABLED for Settings Music */}
           <div>
             <label className="text-haunted-300 text-sm block mb-2">
-              Ambient Track
+              Ambient Track (For 15s Settings Music)
             </label>
             <select
               value={selectedTrackIndex}
               onChange={(e) => handleTrackChange(parseInt(e.target.value))}
               className="w-full bg-haunted-800/60 border border-haunted-700/50 rounded-lg px-3 py-2 text-haunted-100 text-sm focus:outline-none focus:ring-2 focus:ring-haunted-500/50"
+              title="Select which track plays for 15-second settings music"
             >
               {tracks.map((track, index) => (
                 <option key={index} value={index}>
@@ -144,6 +149,9 @@ const MusicControls: React.FC<MusicControlsProps> = ({
                 </option>
               ))}
             </select>
+            <p className="text-xs text-haunted-400 mt-1">
+              🎵 Selected track will play for 15s when closing settings
+            </p>
           </div>
 
           {/* Volume Control */}
@@ -162,12 +170,13 @@ const MusicControls: React.FC<MusicControlsProps> = ({
             />
           </div>
 
-          {/* Playback Controls */}
+          {/* Playback Controls - DISABLED */}
           <div className="flex items-center justify-center space-x-3">
             <button
               onClick={previousTrack}
-              className="p-2 bg-haunted-700/60 hover:bg-haunted-600/60 rounded-lg transition-colors"
-              title="Previous Track"
+              disabled
+              className="p-2 bg-haunted-800/40 text-haunted-600 rounded-lg cursor-not-allowed opacity-50"
+              title="Manual Controls Disabled"
             >
               ⏮️
             </button>
@@ -175,6 +184,7 @@ const MusicControls: React.FC<MusicControlsProps> = ({
             <button
               onClick={handlePlayPause}
               className="p-3 bg-haunted-600/60 hover:bg-haunted-500/60 rounded-lg transition-colors flex items-center justify-center min-w-[3rem]"
+              title={isPlaying ? "Stop Current Music" : "Manual Play Disabled"}
             >
               <motion.span
                 key={isPlaying ? 'pause' : 'play'}
@@ -182,14 +192,15 @@ const MusicControls: React.FC<MusicControlsProps> = ({
                 animate={{ scale: 1 }}
                 className="text-lg"
               >
-                {isPlaying ? '⏸️' : '▶️'}
+                {isPlaying ? '⏸️' : '🚫'}
               </motion.span>
             </button>
 
             <button
               onClick={nextTrack}
-              className="p-2 bg-haunted-700/60 hover:bg-haunted-600/60 rounded-lg transition-colors"
-              title="Next Track"
+              disabled
+              className="p-2 bg-haunted-800/40 text-haunted-600 rounded-lg cursor-not-allowed opacity-50"
+              title="Manual Controls Disabled"
             >
               ⏭️
             </button>
@@ -197,7 +208,7 @@ const MusicControls: React.FC<MusicControlsProps> = ({
             <button
               onClick={stop}
               className="p-2 bg-haunted-700/60 hover:bg-haunted-600/60 rounded-lg transition-colors"
-              title="Stop"
+              title="Stop Current Music"
             >
               ⏹️
             </button>
@@ -209,7 +220,13 @@ const MusicControls: React.FC<MusicControlsProps> = ({
               <strong>Tracks:</strong> {tracks.length} terrifying horror ambiences
             </p>
             <p className="mb-2">
-              🎭 Experience intense horror atmospheres with synthetic audio generation
+              🎭 Settings-triggered music ONLY - 15 seconds when you change settings
+            </p>
+            <p className="mb-2 text-haunted-300">
+              <strong>Manual Controls:</strong> Disabled - Music plays automatically for 15 seconds when closing settings after changes
+            </p>
+            <p className="mb-2 text-haunted-300">
+              <strong>No Continuous Music:</strong> No background loops, no manual playback - only brief settings feedback
             </p>
             <p className="mb-2 text-haunted-300">
               <strong>Featured Horror Tracks:</strong> Nightmare Asylum, Demon's Lair, Torture Chamber, Blood Moon Rising, Purgatory Gates & more!
@@ -228,7 +245,7 @@ const MusicControls: React.FC<MusicControlsProps> = ({
             
             {/* Debug Controls */}
             <div className="border-t border-haunted-700/30 pt-2 space-y-1">
-              <p className="font-semibold text-haunted-300">Debug Controls:</p>
+              <p className="font-semibold text-haunted-300">Manual Controls:</p>
               <div className="flex space-x-2">
                 <button
                   onClick={() => {
@@ -241,12 +258,12 @@ const MusicControls: React.FC<MusicControlsProps> = ({
                 </button>
                 <button
                   onClick={() => {
-                    console.log('🎵 Manual resume test');
+                    console.log('🎵 Manual continuous play test');
                     handlePlayPause();
                   }}
                   className="px-2 py-1 bg-haunted-700/60 hover:bg-haunted-600/60 rounded text-xs"
                 >
-                  Force Play
+                  Manual Play
                 </button>
               </div>
             </div>

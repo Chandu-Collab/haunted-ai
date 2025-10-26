@@ -63,42 +63,42 @@ const LightningFlash: React.FC<LightningFlashProps> = ({
         return {
           opacity: [0, 1, 0, 0.8, 0, 0.6, 0],
           background: [
-            'transparent',
+            'rgba(0, 0, 0, 0)',
             'rgba(255, 255, 255, 0.9)',
-            'transparent',
+            'rgba(0, 0, 0, 0)',
             'rgba(124, 45, 255, 0.7)',
-            'transparent',
+            'rgba(0, 0, 0, 0)',
             'rgba(255, 255, 255, 0.5)',
-            'transparent'
+            'rgba(0, 0, 0, 0)'
           ]
         };
       case 'pulse':
         return {
           opacity: [0, 0.8, 0],
           background: [
-            'transparent',
+            'rgba(0, 0, 0, 0)',
             'rgba(124, 45, 255, 0.4)',
-            'transparent'
+            'rgba(0, 0, 0, 0)'
           ]
         };
       case 'strobe':
         return {
           opacity: [0, 1, 0, 1, 0],
           background: [
-            'transparent',
+            'rgba(0, 0, 0, 0)',
             'rgba(255, 255, 255, 0.95)',
-            'transparent',
+            'rgba(0, 0, 0, 0)',
             'rgba(255, 255, 255, 0.95)',
-            'transparent'
+            'rgba(0, 0, 0, 0)'
           ]
         };
       default:
         return {
           opacity: [0, 1, 0],
           background: [
-            'transparent',
+            'rgba(0, 0, 0, 0)',
             'rgba(255, 255, 255, 0.8)',
-            'transparent'
+            'rgba(0, 0, 0, 0)'
           ]
         };
     }
