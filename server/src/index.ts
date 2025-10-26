@@ -9,8 +9,99 @@ import { connectDB } from './config/db';
 import chatRoutes from './routes/chatRoutes';
 import { AppDataSource } from './config/data-source';
 import { Message } from './entities/Message';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Environment variables are loaded by `src/config/env` above.
+
+// Initialize Google's Generative AI
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
+
+// Generate AI response function (same as in controller)
+const generateGhostResponse = async (userMessage: string, messageHistory: any[] = []): Promise<string> => {
+  try {
+    console.log('Generating AI response for:', userMessage);
+    
+    // Get the Gemini model
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-2.5-flash',
+      generationConfig: {
+        maxOutputTokens: 150,
+        temperature: 0.8,
+      },
+    });
+
+    // Build the conversation history
+    const chatHistory = [
+      {
+        role: 'system',
+        parts: [{
+          text: `You are a ghostly presence in an abandoned house. You are mysterious, haunting, and atmospheric. Speak in first person as a ghost. Keep responses brief (1-2 sentences). Use atmospheric and spooky language. Never repeat the user's message. Examples of your speech: "I sense your presence in my domain...", "The shadows whisper your name...", "This old house holds many secrets...", "Do you feel the chill? That's my touch..."`
+        }],
+      },
+      ...messageHistory.slice(-5).map(msg => ({
+        role: msg.isGhost ? 'model' : 'user',
+        parts: [{ text: msg.content }]
+      })),
+      {
+        role: 'user',
+        parts: [{ text: userMessage }]
+      }
+    ];
+
+    // Start a chat session
+    const chat = model.startChat({ history: chatHistory });
+
+    // Send the message and get the response
+    const result = await chat.sendMessage(userMessage);
+    const response = await result.response;
+    
+    let responseText = '';
+    
+    // Extract response text safely
+    if (typeof response.text === 'function') {
+      responseText = await response.text();
+    } else if (response.candidates && response.candidates[0] && response.candidates[0].content) {
+      responseText = response.candidates[0].content.parts[0]?.text || '';
+    }
+
+    console.log('AI generated response:', responseText);
+
+    // If the model returned nothing, use a fallback
+    if (!responseText || responseText.trim().length < 3) {
+      const fallbacks = [
+        "*whispers from the shadows*",
+        "*a cold breeze stirs*",
+        "*something moves in the darkness*",
+        "*echoes of the past linger*",
+        "*the walls remember*"
+      ];
+      responseText = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+    }
+
+    return responseText;
+  } catch (error: any) {
+    console.error('Error generating ghost response:', error);
+    
+    // Log more details about the error
+    if (error.response) {
+      console.error('API Error Response:', error.response.status, error.response.data);
+    }
+    if (error.message) {
+      console.error('Error Message:', error.message);
+    }
+    
+    // Return atmospheric fallback on error
+    const errorFallbacks = [
+      "*silence fills the room*",
+      "*the ghost seems distant*", 
+      "*whispers fade into nothing*",
+      "*shadows shift mysteriously*",
+      "*a cold presence lingers*",
+      "*something stirs in the darkness*"
+    ];
+    return errorFallbacks[Math.floor(Math.random() * errorFallbacks.length)];
+  }
+};
 
 // Initialize Express app
 const app = express();
@@ -80,7 +171,7 @@ io.on('connection', (socket) => {
       userMessage.sessionId = sessionId;
       await messageRepository.save(userMessage);
       
-      // Broadcast the message to all connected clients
+      // Broadcast the user message to all connected clients
       io.emit('receive_message', {
         content: userMessage.content,
         isGhost: userMessage.isGhost,
@@ -89,14 +180,24 @@ io.on('connection', (socket) => {
         id: userMessage.id
       });
       
-      // Generate and send ghost response
+      // Get recent messages for context
+      const recentMessages = await messageRepository.find({
+        where: { sessionId },
+        order: { createdAt: 'DESC' },
+        take: 5
+      });
+      
+      // Generate AI ghost response
+      const aiResponse = await generateGhostResponse(content, recentMessages.reverse());
+      
+      // Save ghost response
       const ghostResponse = new Message();
-      ghostResponse.content = '... (ghostly whisper) ...';
+      ghostResponse.content = aiResponse;
       ghostResponse.isGhost = true;
       ghostResponse.sessionId = sessionId;
       await messageRepository.save(ghostResponse);
       
-      // Broadcast ghost response after a short delay
+      // Broadcast ghost response after a short delay for dramatic effect
       setTimeout(() => {
         io.emit('receive_message', {
           content: ghostResponse.content,
@@ -105,7 +206,7 @@ io.on('connection', (socket) => {
           timestamp: ghostResponse.timestamp.toISOString(),
           id: ghostResponse.id
         });
-      }, 1000);
+      }, 1500); // Slightly longer delay for more dramatic effect
       
     } catch (error) {
       console.error('Error handling message:', error);

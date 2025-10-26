@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { io, type Socket } from 'socket.io-client';
-import axios from 'axios';
 
 // Types
 interface Message {
@@ -18,7 +17,14 @@ const App = () => {
   // Helper to generate a stable unique id for messages when backend id is missing
   const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: 'welcome',
+      content: '*A cold wind stirs... You feel a presence watching you...*\n\nWelcome to my domain, mortal. Speak, and I shall answer from beyond the veil...',
+      isGhost: true,
+      timestamp: new Date().toISOString(),
+    }
+  ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [sessionId] = useState(`session-${Math.random().toString(36).substring(2, 9)}`);
@@ -37,9 +43,11 @@ const App = () => {
   useEffect(() => {
     socketRef.current = io(API_URL);
 
-    // Listen for ghost messages
+    // Listen for new messages from the server
     socketRef.current.on('receive_message', (message: Omit<Message, 'id'> & Partial<Message>) => {
+      console.log('Received message:', message);
       setIsTyping(false);
+      
       // Ensure incoming message has a stable id
       const incoming: Message = {
         id: (message as any).id || generateId(),
@@ -47,7 +55,44 @@ const App = () => {
         isGhost: message.isGhost,
         timestamp: message.timestamp || new Date().toISOString(),
       };
-      setMessages(prevMessages => [...prevMessages, incoming]);
+      
+      // Only add if this message doesn't already exist (prevent duplicates)
+      setMessages(prevMessages => {
+        const exists = prevMessages.some(m => 
+          m.content === incoming.content && 
+          m.isGhost === incoming.isGhost && 
+          Math.abs(new Date(m.timestamp).getTime() - new Date(incoming.timestamp).getTime()) < 5000
+        );
+        
+        if (exists) {
+          console.log('Message already exists, skipping');
+          return prevMessages;
+        }
+        
+        console.log('Adding new message:', incoming);
+        return [...prevMessages, incoming];
+      });
+    });
+
+    // Handle connection errors
+    socketRef.current.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+      setIsTyping(false);
+    });
+
+    // Handle socket errors
+    socketRef.current.on('error', (error) => {
+      console.error('Socket error:', error);
+      setIsTyping(false);
+      
+      // Add error message
+      const errorMessage: Message = {
+        id: generateId(),
+        content: 'The connection to the other side is weak... Try again.',
+        isGhost: true,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
     });
 
     // Clean up on unmount
@@ -63,76 +108,38 @@ const App = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Load chat history
-  useEffect(() => {
-    const fetchChatHistory = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/api/chat/history/${sessionId}`);
-        if (response.data) {
-          // Normalize history: ensure every message has a non-empty unique id
-          const normalized: Message[] = response.data.map((m: any, idx: number) => ({
-            id: m.id || `${m.timestamp || Date.now()}-${idx}-${Math.random().toString(36).slice(2,6)}`,
-            content: m.content,
-            isGhost: !!m.isGhost,
-            timestamp: m.timestamp || new Date().toISOString(),
-          }));
-          setMessages(normalized);
-        }
-      } catch (error) {
-        console.error('Error fetching chat history:', error);
-      }
-    };
-
-    fetchChatHistory();
-  }, [sessionId]);
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || !socketRef.current) return;
 
-    const userMessage: Message = {
-      id: generateId(),
-      content: input,
-      isGhost: false,
-      timestamp: new Date().toISOString(),
-    };
-
-    // Add user message to the chat
-    setMessages(prev => [...prev, userMessage]);
+    const messageContent = input.trim();
     setInput('');
     setIsTyping(true);
 
+    console.log('Sending message via Socket.io:', messageContent);
+
     try {
-      // Send message to server and use the returned messages to update UI
-      const resp = await axios.post(`${API_URL}/api/chat/send`, {
-        content: input,
+      // Send message via Socket.io
+      socketRef.current.emit('send_message', {
+        content: messageContent,
         sessionId,
       });
-
-      if (resp.data) {
-        const normalized: Message[] = resp.data.map((m: any, idx: number) => ({
-          id: m.id || `${m.timestamp || Date.now()}-${idx}-${Math.random().toString(36).slice(2,6)}`,
-          content: m.content,
-          isGhost: !!m.isGhost,
-          timestamp: m.timestamp || new Date().toISOString(),
-        }));
-        setMessages(normalized);
-        setIsTyping(false);
-      }
+      
+      // Note: We don't add the user message here immediately anymore
+      // because the server will send it back via Socket.io, ensuring consistency
+      
     } catch (error) {
       console.error('Error sending message:', error);
       setIsTyping(false);
       
       // Add error message
-      setMessages(prev => [
-        ...prev, 
-        {
-          id: `error-${Date.now()}`,
-          content: 'The connection to the other side is weak... Try again.',
-          isGhost: true,
-          timestamp: new Date().toISOString(),
-        }
-      ]);
+      const errorMessage: Message = {
+        id: generateId(),
+        content: 'Failed to send message. The connection to the other side is weak...',
+        isGhost: true,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
     }
   };
 
