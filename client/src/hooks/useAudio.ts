@@ -8,6 +8,33 @@ interface AudioClip {
 
 export const useAudio = () => {
   const audioContextRef = useRef<{ [key: string]: HTMLAudioElement }>({});
+  const syntheticAudioContextRef = useRef<AudioContext | null>(null);
+  const audioInitializedRef = useRef(false);
+
+  // Initialize Web Audio Context for synthetic sounds
+  const initializeSyntheticAudio = async () => {
+    if (!syntheticAudioContextRef.current && !audioInitializedRef.current) {
+      try {
+        audioInitializedRef.current = true;
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        
+        if (!AudioContext) {
+          console.warn('Web Audio API not supported');
+          return;
+        }
+
+        syntheticAudioContextRef.current = new AudioContext();
+        
+        // Don't auto-resume here - wait for explicit user interaction
+        // This prevents the "AudioContext was not allowed to start" error
+        console.log('Audio context created, state:', syntheticAudioContextRef.current.state);
+        
+      } catch (error) {
+        console.warn('Web Audio API not supported:', error);
+        audioInitializedRef.current = false;
+      }
+    }
+  };
 
   // Pre-load audio clips
   const loadAudio = useCallback((clips: AudioClip[]) => {
@@ -51,12 +78,31 @@ export const useAudio = () => {
   }, []);
 
   // Generate synthetic sounds for when we don't have audio files
-  const playSyntheticSound = useCallback((type: 'message' | 'ghost' | 'typing' | 'send') => {
+  const playSyntheticSound = useCallback(async (type: 'message' | 'ghost' | 'typing' | 'send') => {
     if (typeof window === 'undefined' || !window.AudioContext) return;
 
     try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      // Initialize audio context on first use (user gesture)
+      await initializeSyntheticAudio();
       
+      if (!syntheticAudioContextRef.current) {
+        console.warn('AudioContext not available');
+        return;
+      }
+
+      const audioContext = syntheticAudioContextRef.current;
+      
+      // Resume audio context if suspended (user gesture requirement)
+      if (audioContext.state === 'suspended') {
+        try {
+          await audioContext.resume();
+          console.log('AudioContext resumed');
+        } catch (error) {
+          console.warn('Failed to resume AudioContext:', error);
+          return;
+        }
+      }
+
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
       
