@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Enhanced Components
 import ParticleSystem from './components/ParticleSystem';
 import FloatingGhosts from './components/FloatingGhosts';
+import FloatingGhostOrbs from './components/FloatingGhostOrbs';
 import GhostTypingIndicator from './components/GhostTypingIndicator';
 import TypewriterText from './components/TypewriterText';
 import Settings from './components/Settings';
@@ -325,15 +326,23 @@ const App = () => {
   }, [appSettings.musicVolume, setMusicVolume]);
 
   return (
-    <div className={`app min-h-screen relative overflow-hidden theme-${appSettings.theme}`}>
-      <div className="bg-gradient-to-br from-gray-900 via-purple-900 to-black min-h-screen relative">
+    <div className={`app min-h-screen relative overflow-hidden theme-${appSettings.theme} force-visible-text`}>
+      <div className="bg-gradient-to-br from-gray-900 via-purple-900 to-black min-h-screen relative force-visible-text"
+           style={{ color: '#f8f5ff' }}>
         
         {/* Enhanced Background Effects */}
         {appSettings.particleCount > 0 && (
           <ParticleSystem 
-            particleCount={appSettings.particleCount} 
+            particleCount={appSettings.particleCount}
+            intensity={appSettings.particleCount} // Use particleCount as intensity (0-100)
           />
         )}
+        
+        {/* Floating Ghost Orbs - Enhanced particle effect */}
+        <FloatingGhostOrbs 
+          orbCount={Math.floor(appSettings.particleCount / 6)} 
+          intensity={appSettings.ghostIntensity}
+        />
         
         {appSettings.fogEnabled && <FogEffect />}
         {appSettings.lightningEnabled && <LightningFlash />}
@@ -355,15 +364,121 @@ const App = () => {
         </AnimatePresence>
 
         {/* Main Content */}
-        <div className="relative z-10 flex flex-col h-screen">
+        <div className="relative z-10 flex flex-col h-screen force-visible-text" style={{ color: '#ffffff' }}>
           
           {/* Header with Enhanced Controls */}
-          <header className="p-4 bg-black/30 backdrop-blur-sm border-b border-purple-500/30">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-4">
-                <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-                  👻 Haunted AI
-                </h1>
+          <header className="p-4 bg-black/30 backdrop-blur-sm border-b border-purple-500/30 force-visible-text" 
+                  style={{ color: '#ffffff' }}>
+            <div className="flex justify-between items-center" style={{ color: '#ffffff' }}>
+              <div className="flex items-center space-x-4" style={{ color: '#ffffff' }}>
+                <div className="relative">
+                  <motion.h1 
+                    className="text-2xl font-bold"
+                    animate={{
+                      scale: [1, 1 + (appSettings.ghostIntensity / 100) * 0.1, 1],
+                      textShadow: [
+                        `0 0 ${5 + (appSettings.ghostIntensity / 100) * 15}px rgba(124, 45, 255, ${0.6 + (appSettings.ghostIntensity / 100) * 0.4})`,
+                        `0 0 ${10 + (appSettings.ghostIntensity / 100) * 20}px rgba(124, 45, 255, ${0.8 + (appSettings.ghostIntensity / 100) * 0.2})`,
+                        `0 0 ${5 + (appSettings.ghostIntensity / 100) * 15}px rgba(124, 45, 255, ${0.6 + (appSettings.ghostIntensity / 100) * 0.4})`
+                      ],
+                      filter: [
+                        `brightness(${1 + (appSettings.ghostIntensity / 100) * 0.3})`,
+                        `brightness(${1.2 + (appSettings.ghostIntensity / 100) * 0.5})`,
+                        `brightness(${1 + (appSettings.ghostIntensity / 100) * 0.3})`
+                      ]
+                    }}
+                    transition={{
+                      duration: Math.max(2, 4 - (appSettings.ghostIntensity / 100) * 2),
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                    style={{
+                      color: '#ffffff !important',
+                      textShadow: `0 0 ${10 + (appSettings.ghostIntensity / 100) * 10}px rgba(124, 45, 255, ${0.6 + (appSettings.ghostIntensity / 100) * 0.4})`,
+                      fontWeight: 'bold',
+                      backgroundColor: `rgba(124, 45, 255, ${0.2 + (appSettings.ghostIntensity / 100) * 0.3})`,
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      fontSize: `${1 + (appSettings.ghostIntensity / 100) * 0.2}em`,
+                      transform: appSettings.ghostIntensity > 80 ? `translateX(${Math.sin(Date.now() * 0.01) * 2}px)` : 'none'
+                    }}
+                  >
+                    <motion.span
+                      animate={{
+                        scale: [1, 1 + (appSettings.ghostIntensity / 100) * 0.3, 1],
+                        rotate: [0, (appSettings.ghostIntensity / 100) * 10, -(appSettings.ghostIntensity / 100) * 10, 0]
+                      }}
+                      transition={{
+                        duration: Math.max(1.5, 3 - (appSettings.ghostIntensity / 100) * 1.5),
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                      style={{
+                        display: 'inline-block',
+                        filter: `brightness(${1 + (appSettings.ghostIntensity / 100)}) drop-shadow(0 0 ${(appSettings.ghostIntensity / 100) * 10}px rgba(124, 45, 255, 0.8))`
+                      }}
+                    >
+                      👻
+                    </motion.span>
+                    {' '}Haunted AI
+                  </motion.h1>
+
+                  {/* High-intensity particle effects around header */}
+                  {appSettings.ghostIntensity > 60 && (
+                    <div className="absolute inset-0 pointer-events-none">
+                      {[...Array(Math.floor((appSettings.ghostIntensity / 100) * 4))].map((_, i) => (
+                        <motion.div
+                          key={`header-particle-${i}`}
+                          className="absolute text-sm"
+                          style={{
+                            top: `${20 + Math.random() * 60}%`,
+                            left: `${Math.random() * 100}%`,
+                            color: `hsl(${280 + Math.random() * 40}, 90%, ${70 + (appSettings.ghostIntensity / 100) * 20}%)`,
+                            fontSize: `${0.5 + (appSettings.ghostIntensity / 100) * 0.5}rem`
+                          }}
+                          animate={{
+                            opacity: [0, appSettings.ghostIntensity / 100, 0],
+                            scale: [0, 1 + (appSettings.ghostIntensity / 100) * 0.5, 0],
+                            rotate: [0, 360],
+                            x: [(Math.random() - 0.5) * 30, (Math.random() - 0.5) * 60],
+                            y: [0, -20 - (appSettings.ghostIntensity / 100) * 10]
+                          }}
+                          transition={{
+                            duration: 3 - (appSettings.ghostIntensity / 100) * 1,
+                            repeat: Infinity,
+                            delay: Math.random() * 2,
+                            ease: "easeOut"
+                          }}
+                        >
+                          {['✨', '⭐', '💫', '🌟', '✦'][Math.floor(Math.random() * 5)]}
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Lightning effects for very high intensity */}
+                  {appSettings.ghostIntensity > 80 && (
+                    <motion.div
+                      className="absolute -top-2 -right-2"
+                      style={{ 
+                        fontSize: `${0.75 + (appSettings.ghostIntensity / 100) * 0.5}rem`,
+                        filter: `brightness(${1 + (appSettings.ghostIntensity / 100)}) drop-shadow(0 0 ${appSettings.ghostIntensity / 10}px rgba(255, 255, 0, 0.8))`
+                      }}
+                      animate={{
+                        opacity: [0, 1, 0],
+                        scale: [0.5, 1.2 + (appSettings.ghostIntensity / 100) * 0.3, 0.5],
+                        rotate: [0, 180, 360]
+                      }}
+                      transition={{
+                        duration: Math.max(0.3, 0.8 - (appSettings.ghostIntensity / 100) * 0.3),
+                        repeat: Infinity,
+                        repeatDelay: Math.max(1, 3 - (appSettings.ghostIntensity / 100) * 1.5)
+                      }}
+                    >
+                      ⚡
+                    </motion.div>
+                  )}
+                </div>
                 {currentTrack && (
                   <div className="text-purple-300 text-sm">
                     🎵 {currentTrack.name}
@@ -476,7 +591,8 @@ const App = () => {
           </AnimatePresence>
 
           {/* Chat Messages */}
-          <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${showAIFeatures ? 'ml-80' : ''} transition-all duration-300`}>
+          <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${showAIFeatures ? 'ml-80' : ''} transition-all duration-300 force-visible-text`}
+               style={{ color: '#ffffff', backgroundColor: 'rgba(0,0,0,0.1)' }}>
             <AnimatePresence>
               {messages.map((message, index) => (
                 <motion.div
@@ -486,34 +602,50 @@ const App = () => {
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
                   className={`flex ${message.isGhost ? 'justify-start' : 'justify-end'}`}
+                  style={{ color: '#ffffff' }}
                 >
-                  <div className={`max-w-md p-4 rounded-lg border backdrop-blur-sm relative ${
-                    message.isGhost
-                      ? 'bg-purple-900/30 border-purple-500/50 text-purple-100'
-                      : 'bg-blue-900/30 border-blue-500/50 text-blue-100'
-                  }`}>
-                    
-                    {message.isGhost && (
-                      <div className="flex items-center mb-2">
-                        <span className="text-lg mr-2">
-                          {appSettings.ghostPersonality.emoji}
-                        </span>
-                        <span className="text-sm text-purple-300">
-                          {appSettings.ghostPersonality.name}
-                        </span>
+                  <MessageEffects
+                    content={message.content}
+                    isGhost={message.isGhost}
+                    className={`max-w-md p-4 rounded-lg border backdrop-blur-sm relative ${
+                      message.isGhost
+                        ? 'bg-purple-900/30 border-purple-500/50'
+                        : 'bg-blue-900/30 border-blue-500/50'
+                    }`}
+                    style={{
+                      color: message.isGhost ? '#f1ebff' : '#dbeafe',
+                      borderColor: message.isGhost ? 'rgba(124, 45, 255, 0.5)' : 'rgba(59, 130, 246, 0.5)'
+                    }}
+                    ghostIntensity={appSettings.ghostIntensity}
+                    particleIntensity={appSettings.particleCount}
+                  >
+                    <div style={{ color: 'inherit' }}>
+                      {message.isGhost && (
+                        <div className="flex items-center mb-2" style={{ color: 'inherit' }}>
+                          <span className="text-lg mr-2">
+                            {appSettings.ghostPersonality.emoji}
+                          </span>
+                          <span className="text-sm" style={{ color: '#c8b0ff' }}>
+                            {appSettings.ghostPersonality.name}
+                          </span>
+                        </div>
+                      )}
+                      
+                      <TypewriterText 
+                        text={message.content}
+                        speed={message.isGhost ? 30 : 0}
+                        className={message.isGhost ? 'text-purple-100' : 'text-blue-100'}
+                        isGhost={message.isGhost}
+                        enableSound={appSettings.soundEnabled}
+                        ghostIntensity={appSettings.ghostIntensity}
+                        particleIntensity={appSettings.particleCount}
+                      />
+                      
+                      <div className="text-xs opacity-75 mt-2" style={{ color: 'inherit' }}>
+                        {new Date(message.timestamp).toLocaleTimeString()}
                       </div>
-                    )}
-                    
-                    <TypewriterText 
-                      text={message.content}
-                      speed={message.isGhost ? 30 : 0}
-                      className={message.isGhost ? 'text-purple-100' : 'text-blue-100'}
-                    />
-                    
-                    <div className="text-xs opacity-50 mt-2">
-                      {new Date(message.timestamp).toLocaleTimeString()}
                     </div>
-                  </div>
+                  </MessageEffects>
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -533,14 +665,16 @@ const App = () => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Speak to the spirits..."
-                className="flex-1 bg-gray-800/50 border border-purple-500/50 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
+                className="flex-1 bg-gray-800/50 border border-purple-500/50 rounded-lg px-4 py-2 placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
+                style={{ color: '#ffffff' }}
                 disabled={isTyping}
               />
               
               <button
                 type="submit"
                 disabled={(!input.trim() || isTyping)}
-                className="px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors duration-200"
+                className="px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg font-medium transition-colors duration-200"
+                style={{ color: '#ffffff' }}
               >
                 {isTyping ? '👻' : '📨'}
               </button>
