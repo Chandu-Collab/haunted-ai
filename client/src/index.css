@@ -4,12 +4,105 @@
 @tailwind components;
 @tailwind utilities;
 
+/* CRITICAL TEXT VISIBILITY FIXES - Must be at top */
+* {
+  color: inherit !important;
+}
+
+html, body {
+  color: #f8f5ff !important;
+  background-color: #0a0a0a !important;
+}
+
+/* ULTIMATE TEXT VISIBILITY FIX - Maximum specificity */
+html body div span p h1 h2 h3 h4 h5 h6,
+html body div * {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+/* Specific fixes for message content */
+.force-visible-text,
+.force-visible-text * {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+/* DEBUGGING: Temporary background for all text elements */
+div, span, p, h1, h2, h3, h4, h5, h6 {
+  color: #ffffff !important;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.8) !important;
+}
+
+/* Override all possible text invisibility issues */
+div, span, p, h1, h2, h3, h4, h5, h6, button, input, textarea, label, a {
+  color: inherit !important;
+}
+
+/* Specific component overrides */
+.text-transparent {
+  -webkit-text-fill-color: #c8b0ff !important;
+  color: #c8b0ff !important;
+}
+
+/* Message text fixes */
+[class*="text-purple"] {
+  color: #f1ebff !important;
+}
+
+[class*="text-blue"] {
+  color: #dbeafe !important;
+}
+
+/* Input and form fixes */
+input {
+  color: #ffffff !important;
+  background-color: rgba(0,0,0,0.3) !important;
+}
+
+button {
+  color: #ffffff !important;
+}
+
+/* Make sure no element has transparent or invisible text */
+[style*="color: transparent"], 
+[style*="opacity: 0"],
+.opacity-0 {
+  color: #f8f5ff !important;
+  opacity: 1 !important;
+}
+
 :root {
   --haunted-primary: #7c2dff;
   --haunted-secondary: #4c13b3;
   --haunted-accent: #e0d4ff;
   --haunted-dark: #0a0a0a;
   --haunted-light: #f8f5ff;
+}
+
+/* Force visibility utility class */
+.force-visible-text {
+  color: #f8f5ff !important;
+}
+
+.force-visible-text * {
+  color: inherit !important;
+}
+
+.force-visible-text input {
+  color: #ffffff !important;
+}
+
+.force-visible-text button {
+  color: #ffffff !important;
+}
+
+.force-visible-text [class*="text-purple"] {
+  color: #f1ebff !important;
+}
+
+.force-visible-text [class*="text-blue"] {
+  color: #dbeafe !important;
 }
 
 /* Theme variations */
@@ -68,6 +161,66 @@ body {
     linear-gradient(to bottom, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.95));
   background-attachment: fixed;
   position: relative;
+}
+
+/* Ensure text visibility */
+* {
+  color: inherit;
+}
+
+/* Force text visibility for all text elements */
+h1, h2, h3, h4, h5, h6, p, span, div, input, textarea, button {
+  color: inherit !important;
+}
+
+/* Global text visibility fixes */
+input, textarea {
+  color: #ffffff !important;
+}
+
+button {
+  color: #ffffff !important;
+}
+
+/* Specific overrides for message text */
+.text-purple-100 {
+  color: #f1ebff !important;
+}
+
+.text-blue-100 {
+  color: #dbeafe !important;
+}
+
+.text-white {
+  color: #ffffff !important;
+}
+
+.text-purple-300 {
+  color: #c8b0ff !important;
+}
+
+/* Message container text visibility */
+.message-container {
+  color: #f1ebff !important;
+}
+
+.message-container * {
+  color: inherit !important;
+}
+
+/* Ensure all elements inside messages are visible */
+[class*="bg-purple"] {
+  color: #f1ebff !important;
+}
+
+[class*="bg-blue"] {
+  color: #dbeafe !important;
+}
+
+/* Override any transparent text */
+.text-transparent {
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
 }
 
 /* Animated background fog effect */
@@ -207,7 +360,7 @@ body::before {
   border-color: var(--accent-primary);
 }
 
-/* Enhanced glitch effect */
+/* Enhanced glitch effect - DISABLED to prevent text corruption */
 .glitch {
   position: relative;
   display: inline-block;
@@ -215,7 +368,9 @@ body::before {
 
 .glitch::before,
 .glitch::after {
-  content: attr(data-text);
+  /* Disabled glitch effects */
+  display: none;
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
@@ -239,16 +394,18 @@ body::before {
   clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
 }
 
-/* Advanced glitch for ghost messages */
+/* Advanced glitch for ghost messages - DISABLED */
 .glitch-ghost {
   position: relative;
   display: inline-block;
-  animation: ghost-static 0.5s infinite;
+  /* animation: ghost-static 0.5s infinite; */ /* Disabled */
 }
 
 .glitch-ghost::before,
 .glitch-ghost::after {
-  content: attr(data-text);
+  /* Disabled glitch effects */
+  display: none;
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
@@ -302,7 +459,9 @@ body::before {
 
 .glitch::before,
 .glitch::after {
-  content: attr(data-text);
+  /* Disabled to prevent text corruption */
+  display: none;
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
@@ -336,6 +495,7 @@ body::before {
   box-shadow: 0 8px 25px rgba(124, 45, 255, 0.15);
 }
 
+/* Ghost message styling with forced visibility */
 .ghost-message {
   background: linear-gradient(135deg, 
     rgba(124, 45, 255, 0.1) 0%, 
@@ -343,6 +503,11 @@ body::before {
   border: 1px solid rgba(124, 45, 255, 0.3);
   position: relative;
   overflow: hidden;
+  color: #f1ebff !important;
+}
+
+.ghost-message * {
+  color: #f1ebff !important;
 }
 
 .ghost-message::before {
@@ -365,6 +530,11 @@ body::before {
     rgba(92, 22, 217, 0.2) 0%, 
     rgba(46, 10, 102, 0.3) 100%);
   border: 1px solid rgba(92, 22, 217, 0.4);
+  color: #dbeafe !important;
+}
+
+.user-message * {
+  color: #dbeafe !important;
 }
 
 /* Floating animation for interactive elements */
