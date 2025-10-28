@@ -43,9 +43,10 @@ interface SettingsProps {
     previousTrack: () => void;
     isSupported: boolean;
   };
+  availablePersonalities?: GhostPersonality[];
 }
 
-const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettingsChange, onSettingsClose, musicControls }) => {
+const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettingsChange, onSettingsClose, musicControls, availablePersonalities }) => {
   const [localSettings, setLocalSettings] = useState({
     ...settings,
     lightningEnabled: settings.lightningEnabled ?? true,
@@ -168,6 +169,7 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
             <PersonalitySelector
               selectedPersonality={localSettings.ghostPersonality}
               onPersonalityChange={(personality) => handleChange('ghostPersonality', personality)}
+              availablePersonalities={availablePersonalities}
             />
 
             {/* Particle Count */}
