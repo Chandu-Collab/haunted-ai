@@ -110,14 +110,15 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
 
   // Animation variants based on effects
   const getAnimationVariants = () => {
-    let initial: any = { opacity: 0, y: 20 };
-    let animate: any = { opacity: 1, y: 0 };
-    let transition: any = { duration: 0.3 };
+  let initial: any = { opacity: 0, y: 12 };
+  let animate: any = { opacity: 1, y: 0 };
+  // Make entry transitions snappier
+  let transition: any = { duration: 0.18 };
 
     if (effects.fadeFromDarkness) {
       initial = { opacity: 0, filter: 'brightness(0)' };
       animate = { opacity: 1, filter: 'brightness(1)' };
-      transition = { duration: 1 };
+      transition = { duration: 0.45 };
     }
 
     if (effects.glitch) {
@@ -157,9 +158,10 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
               opacity: [0, 0.3, 0]
             }}
             transition={{
-              duration: 0.8,
+              // faster glitch sweep and shorter gaps
+              duration: 0.6,
               repeat: Infinity,
-              repeatDelay: 3 + Math.random() * 5
+              repeatDelay: 1 + Math.random() * 2
             }}
           />
         </div>
@@ -178,11 +180,11 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
             scale: [0.5, 1.2 + (ghostIntensity / 100) * 0.3, 0.5],
             rotate: [0, 180, 360]
           }}
-          transition={{
-            duration: Math.max(0.3, 0.8 - (ghostIntensity / 100) * 0.3),
-            repeat: Infinity,
-            repeatDelay: Math.max(1, 3 - (ghostIntensity / 100) * 1.5)
-          }}
+            transition={{
+                duration: Math.max(0.18, 0.5 - (ghostIntensity / 100) * 0.18),
+                repeat: Infinity,
+                repeatDelay: Math.max(0.6, 1.5 - (ghostIntensity / 100) * 0.8)
+              }}
         >
           ⚡
         </motion.div>
@@ -208,9 +210,9 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
                 y: [0, -10 - (ghostIntensity / 100) * 10, 0]
               }}
               transition={{
-                duration: Math.max(1.5, 3 - (ghostIntensity / 100)),
+                duration: Math.max(0.8, 1.6 - (ghostIntensity / 100) * 0.6),
                 repeat: Infinity,
-                delay: i * (0.5 - (ghostIntensity / 100) * 0.2)
+                delay: i * Math.max(0.08, (0.3 - (ghostIntensity / 100) * 0.08))
               }}
             >
               ✨
@@ -233,7 +235,7 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
             scale: [1, 1 + (ghostIntensity / 100) * 0.2, 1]
           }}
           transition={{
-            duration: Math.max(2, 4 - (ghostIntensity / 100)),
+            duration: Math.max(0.9, 1.8 - (ghostIntensity / 100)),
             repeat: Infinity
           }}
         >
@@ -255,7 +257,7 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
             y: [0, -2 - (ghostIntensity / 100) * 3, 0]
           }}
           transition={{
-            duration: Math.max(0.8, 1.5 - (ghostIntensity / 100) * 0.5),
+            duration: Math.max(0.45, 0.9 - (ghostIntensity / 100) * 0.3),
             repeat: Infinity
           }}
         >
@@ -284,9 +286,9 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
                 y: [0, -20 - (ghostIntensity / 100) * 10]
               }}
               transition={{
-                duration: 2 - (ghostIntensity / 100) * 0.5,
+                duration: Math.max(0.9, 1.8 - (ghostIntensity / 100) * 0.6),
                 repeat: Infinity,
-                delay: Math.random() * 2,
+                delay: Math.random() * 0.8,
                 ease: "easeOut"
               }}
             >

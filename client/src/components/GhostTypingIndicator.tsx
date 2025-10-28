@@ -27,11 +27,12 @@ const GhostTypingIndicator: React.FC<GhostTypingIndicatorProps> = ({
           {/* Floating ghost emoji */}
           <motion.div
             animate={{ 
-              y: [0, -5, 0],
-              rotate: [0, 5, -5, 0]
+              y: [0, -4, 0],
+              rotate: [0, 4, -4, 0]
             }}
             transition={{ 
-              duration: 2,
+              // Faster, snappier float
+              duration: 0.9,
               repeat: Infinity,
               ease: "easeInOut"
             }}
@@ -51,9 +52,10 @@ const GhostTypingIndicator: React.FC<GhostTypingIndicatorProps> = ({
                   opacity: [0.4, 1, 0.4],
                 }}
                 transition={{
-                  duration: 1.2,
+                  // faster dot pulse
+                  duration: 0.6,
                   repeat: Infinity,
-                  delay: index * 0.2,
+                  delay: index * 0.12,
                   ease: "easeInOut"
                 }}
                 className="w-2 h-2 rounded-full bg-haunted-400"
@@ -68,7 +70,7 @@ const GhostTypingIndicator: React.FC<GhostTypingIndicatorProps> = ({
           <motion.span
             animate={{ opacity: [0.6, 1, 0.6] }}
             transition={{ 
-              duration: 2,
+              duration: 0.9,
               repeat: Infinity,
               ease: "easeInOut"
             }}
@@ -94,9 +96,10 @@ const GhostTypingIndicator: React.FC<GhostTypingIndicatorProps> = ({
               scale: [0.5, 1, 0.5]
             }}
             transition={{
-              duration: 3,
+              // faster floating particles
+              duration: 1.2,
               repeat: Infinity,
-              delay: index * 0.7,
+              delay: index * 0.25,
               ease: "easeInOut"
             }}
           />

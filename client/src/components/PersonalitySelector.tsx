@@ -6,12 +6,14 @@ interface PersonalitySelectorProps {
   selectedPersonality: GhostPersonality;
   onPersonalityChange: (personality: GhostPersonality) => void;
   className?: string;
+  availablePersonalities?: GhostPersonality[];
 }
 
 const PersonalitySelector: React.FC<PersonalitySelectorProps> = ({
   selectedPersonality,
   onPersonalityChange,
-  className = ''
+  className = '',
+  availablePersonalities
 }) => {
   return (
     <div className={`space-y-4 ${className}`}>
@@ -71,7 +73,7 @@ const PersonalitySelector: React.FC<PersonalitySelectorProps> = ({
 
       {/* Personality Grid */}
       <div className="grid grid-cols-2 gap-2">
-        {GHOST_PERSONALITIES.map((personality) => (
+        {(availablePersonalities ?? GHOST_PERSONALITIES).map((personality) => (
           <motion.button
             key={personality.id}
             onClick={() => onPersonalityChange(personality)}
