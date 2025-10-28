@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AppDataSource } from '../config/data-source';
 import { Message, IMessage } from '../entities/Message';
-import { getPersonalityById, DEFAULT_PERSONALITY, adaptResponseToMood, adaptToWeatherAndTime } from '../utils/enhancedGhostPersonalities';
+import { ENHANCED_GHOST_PERSONALITIES, getPersonalityById, DEFAULT_PERSONALITY, adaptResponseToMood, adaptToWeatherAndTime } from '../utils/enhancedGhostPersonalities';
 import SentimentAnalyzer, { MoodAnalysis, ContextualFactors } from '../utils/sentimentAnalyzer';
 import MemorySystem from '../utils/memorySystem';
 import WeatherService from '../utils/weatherService';
@@ -507,3 +507,28 @@ export {
   getMemoryContext,
   getCurrentWeather
 };
+
+// Return the list of enhanced personalities for client consumption
+const getPersonalities = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const list = ENHANCED_GHOST_PERSONALITIES.map(p => ({
+      id: p.id,
+      name: p.name,
+      emoji: p.emoji,
+      color: p.color,
+      description: p.description,
+      backstory: p.backstory,
+      responseStyle: p.responseStyle,
+      voiceSettings: p.voiceSettings,
+      specialAbilities: p.specialAbilities,
+      emotionalIntelligence: p.emotionalIntelligence
+    }));
+
+    res.json(list);
+  } catch (error) {
+    console.error('Error getting personalities:', error);
+    res.status(500).json({ error: 'Failed to fetch personalities' });
+  }
+};
+
+export { getPersonalities };

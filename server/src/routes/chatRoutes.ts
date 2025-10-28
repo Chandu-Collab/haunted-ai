@@ -8,6 +8,7 @@ import {
   analyzeImage,
   getMemoryContext,
   getCurrentWeather
+  ,getPersonalities
 } from '../controllers/chatController';
 
 const router = Router();
@@ -27,5 +28,7 @@ router.post('/story/choice', makeStoryChoice);
 router.post('/analyze-image', analyzeImage);
 router.get('/memory/:sessionId', getMemoryContext);
 router.get('/weather', getCurrentWeather);
+// Get available ghost personalities
+router.get('/personalities', getPersonalities);
 
 export default router;

@@ -14,7 +14,8 @@ interface TypewriterTextProps {
 
 const TypewriterText: React.FC<TypewriterTextProps> = ({
   text,
-  speed = 50,
+  // Lower default typing speed (ms per char) for snappier UI
+  speed = 18,
   onComplete,
   className = '',
   isGhost = false,
@@ -35,13 +36,14 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
     
     return {
       // Typing speed varies with ghost intensity (higher intensity = faster/more erratic)
-      baseSpeed: isGhost ? speed - (ghostPower * 20) : speed,
-      speedVariation: Math.floor(ghostPower * 30), // 0-30ms variation
+      // Reduce variation and make base speed faster overall
+      baseSpeed: isGhost ? Math.max(6, speed - (ghostPower * 12)) : Math.max(6, speed),
+      speedVariation: Math.floor(ghostPower * 10), // 0-10ms variation
       
       // Glitch chance increases with ghost intensity
       glitchChance: ghostPower * 0.3, // 0-30% chance per character
       
-      // Sound effects intensity
+  // Sound effects intensity
       soundIntensity: ghostPower,
       
       // Visual effects intensity
@@ -138,16 +140,17 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
       const currentChar = text[currentIndex];
       
       // Calculate dynamic speed with intensity variation
-      const dynamicSpeed = Math.max(10, effects.baseSpeed + (Math.random() - 0.5) * effects.speedVariation);
+  // Allow faster minimum to speed up long messages
+  const dynamicSpeed = Math.max(6, Math.round(effects.baseSpeed + (Math.random() - 0.5) * effects.speedVariation));
       
       const timer = setTimeout(async () => {
-        // Direct character addition without glitch effects for clean text
+          // Direct character addition without glitch effects for clean text
         setDisplayedText(prev => prev + currentChar);
         setCurrentIndex(prev => prev + 1);
         
         // Play typing sound with intensity
         await playTypingSound(isGhost);
-      }, dynamicSpeed);
+  }, dynamicSpeed);
 
       return () => clearTimeout(timer);
     } else if (!isComplete) {
@@ -183,13 +186,14 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
         <motion.span
           animate={{ 
             opacity: [1, 0],
-            scale: isGhost ? [1, 1 + effects.glowIntensity * 0.2] : [1, 1]
-          }}
-          transition={{ 
-            duration: isGhost ? 0.8 - (effects.soundIntensity * 0.3) : 0.8, 
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
+                scale: isGhost ? [1, 1 + effects.glowIntensity * 0.15] : [1, 1]
+              }}
+              transition={{ 
+                // Faster cursor blink for snappier feel
+                duration: isGhost ? Math.max(0.28, 0.6 - (effects.soundIntensity * 0.2)) : 0.5, 
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
           className={`inline-block w-0.5 h-5 ml-1`}
           style={{
             backgroundColor: isGhost ? '#7c2dff' : '#ffffff',
@@ -221,9 +225,10 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
                 rotate: [0, 360 * effects.glowIntensity]
               }}
               transition={{
-                duration: 2 - effects.soundIntensity,
+                // Shorter particle animation to reduce perceived slowness
+                duration: Math.max(0.8, 1.4 - effects.soundIntensity),
                 repeat: Infinity,
-                delay: Math.random() * 2,
+                delay: Math.random() * 0.6,
                 ease: "easeInOut"
               }}
             >
@@ -245,7 +250,8 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
             ]
           }}
           transition={{
-            duration: 3,
+            // Faster dramatic pulse
+            duration: Math.max(1.2, 2 - effects.soundIntensity),
             repeat: Infinity,
             ease: "easeInOut"
           }}

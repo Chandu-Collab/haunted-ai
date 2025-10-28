@@ -28,6 +28,7 @@ import useVoiceSynthesis from './hooks/useVoiceSynthesis';
 import useBackgroundMusic from './hooks/useBackgroundMusic';
 import { useAIAnalysis, AIAnalysis } from './hooks/useAIAnalysis';
 import { useImageAnalysis, ImageAnalysis } from './hooks/useImageAnalysis';
+import usePersonalities from './hooks/usePersonalities';
 
 // Utils
 import { GHOST_PERSONALITIES, type GhostPersonality } from './utils/ghostPersonalities';
@@ -98,7 +99,41 @@ const App = () => {
     weatherIntegrationEnabled: true,
     storyModeEnabled: true,
     emotionalAdaptationEnabled: true,
+    // Typing speed in ms per character for ghost messages (lower = faster)
+    typingSpeed: 6,
+    // If true, typewriter animation is enabled. If false, messages render instantly.
+    typingAnimationEnabled: true,
   });
+
+  // Fetch server-provided personalities and sync initial selection
+  const { personalities, isLoading: personalitiesLoading } = usePersonalities();
+
+  // When server personalities arrive, seed the selected personality (or restore from localStorage)
+  useEffect(() => {
+    if (!personalities || personalities.length === 0) return;
+
+    const storedId = localStorage.getItem('ghostPersonalityId');
+    if (storedId) {
+      const found = personalities.find(p => p.id === storedId) || GHOST_PERSONALITIES.find(p => p.id === storedId);
+      if (found) {
+        setAppSettings(prev => ({ ...prev, ghostPersonality: found }));
+        return;
+      }
+    }
+
+    // Default to first server personality if none stored
+    setAppSettings(prev => ({ ...prev, ghostPersonality: personalities[0] }));
+  }, [personalities]);
+
+  // Persist chosen personality id to localStorage so selection survives reloads
+  useEffect(() => {
+    try {
+      const id = appSettings.ghostPersonality?.id;
+      if (id) localStorage.setItem('ghostPersonalityId', id);
+    } catch (e) {
+      // ignore storage errors
+    }
+  }, [appSettings.ghostPersonality]);
 
   // Notification system
   const [notifications, setNotifications] = useState<Array<{
@@ -317,7 +352,8 @@ const App = () => {
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // Use instant scroll so messages and typewriter stay in sync visually
+  messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
   }, [messages]);
 
   // Music volume sync
@@ -586,6 +622,7 @@ const App = () => {
                   previousTrack: () => {},
                   isSupported: true
                 }}
+                availablePersonalities={personalities}
               />
             )}
           </AnimatePresence>
@@ -633,7 +670,8 @@ const App = () => {
                       
                       <TypewriterText 
                         text={message.content}
-                        speed={message.isGhost ? 30 : 0}
+                        // Use user-configurable typing speed when enabled, otherwise render instantly
+                        speed={message.isGhost ? (appSettings.typingAnimationEnabled ? appSettings.typingSpeed : 0) : 0}
                         className={message.isGhost ? 'text-purple-100' : 'text-blue-100'}
                         isGhost={message.isGhost}
                         enableSound={appSettings.soundEnabled}
