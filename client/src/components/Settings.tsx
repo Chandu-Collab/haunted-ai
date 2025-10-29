@@ -9,6 +9,7 @@ const SeanceMode = React.lazy(() => import('./SeanceMode'));
 const GhostGames = React.lazy(() => import('./GhostGames'));
 const SpellCasting = React.lazy(() => import('./SpellCasting'));
 const RoomExplorer = React.lazy(() => import('./RoomExplorer'));
+const AuthModal = React.lazy(() => import('./AuthModal'));
 import AchievementSystem from './AchievementSystem';
 import EnergyBar from './EnergyBar';
 import MessageEffects from './MessageEffects';
@@ -74,6 +75,7 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
   const [showGames, setShowGames] = useState(false);
   const [showSpell, setShowSpell] = useState(false);
   const [showRooms, setShowRooms] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
 
   const handleChange = (key: string, value: any) => {
     const newSettings = { ...localSettings, [key]: value };
@@ -350,6 +352,12 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
                 <label className="text-haunted-200 font-medium block mb-2">Achievements</label>
                 <AchievementSystem sessionId={sessionId} />
               </div>
+              <div className="mt-4">
+                <label className="text-haunted-200 font-medium block mb-2">Account</label>
+                <div className="flex space-x-2">
+                  <button onClick={() => setShowAuth(true)} className="px-3 py-2 bg-haunted-800 rounded">Sign in / Sign up</button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -368,11 +376,12 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
       </motion.div>
     {/* Feature modals (client-only, lazy-loaded into a portal) */}
     <React.Suspense fallback={null}>
-      <FortuneTelling isOpen={showFortune} onClose={() => setShowFortune(false)} sessionId={sessionId} />
-      <SeanceMode isOpen={showSeance} onClose={() => setShowSeance(false)} sessionId={sessionId} />
-      <GhostGames isOpen={showGames} onClose={() => setShowGames(false)} sessionId={sessionId} />
-      <SpellCasting isOpen={showSpell} onClose={() => setShowSpell(false)} sessionId={sessionId} />
-      <RoomExplorer isOpen={showRooms} onClose={() => setShowRooms(false)} sessionId={sessionId} />
+  <FortuneTelling key="fortune" isOpen={showFortune} onClose={() => setShowFortune(false)} sessionId={sessionId} />
+  <SeanceMode key="seance" isOpen={showSeance} onClose={() => setShowSeance(false)} sessionId={sessionId} />
+  <GhostGames key="games" isOpen={showGames} onClose={() => setShowGames(false)} sessionId={sessionId} />
+  <SpellCasting key="spell" isOpen={showSpell} onClose={() => setShowSpell(false)} sessionId={sessionId} />
+  <RoomExplorer key="rooms" isOpen={showRooms} onClose={() => setShowRooms(false)} sessionId={sessionId} />
+  <AuthModal key="auth" isOpen={showAuth} onClose={() => setShowAuth(false)} />
     </React.Suspense>
     </AnimatePresence>
   );
