@@ -15,7 +15,7 @@ export default function SeanceMode({ isOpen, onClose, sessionId }: Props) {
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+  <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div className="bg-haunted-900 border border-haunted-700 rounded-xl p-6 max-w-md w-full">
         <h3 className="text-lg font-bold ghost-text">🔔 Séance Mode</h3>
         <p className="mt-3 text-haunted-200">When active, the ghost will respond with ritual-like messages and special behaviors.</p>

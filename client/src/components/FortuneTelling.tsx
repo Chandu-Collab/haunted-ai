@@ -21,7 +21,7 @@ export default function FortuneTelling({ isOpen, onClose, sessionId }: Props) {
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-60 flex items-center justify-center pointer-events-auto">
+  <div className="fixed inset-0 z-[60] flex items-center justify-center pointer-events-auto">
         <motion.div className="bg-neutral-900 text-white rounded-lg p-6 w-96 shadow-lg">
           <h3 className="text-xl font-semibold mb-2">The Spirits Whisper</h3>
           <p className="mb-4">{fortune}</p>
