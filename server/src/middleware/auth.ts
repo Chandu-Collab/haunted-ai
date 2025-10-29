@@ -16,7 +16,7 @@ export const authenticateJWT = (req: Request, res: Response, next: NextFunction)
     return res.status(401).json({ error: 'Missing Authorization token' });
   }
 
-  const secret = process.env.JWT_SECRET || 'dev_secret_change_me';
+  const secret = process.env.JWT_SECRET || 'dev-secret';
   try {
     const decoded = jwt.verify(token, secret) as any;
     (req as AuthRequest).userId = decoded?.userId;

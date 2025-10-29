@@ -1,4 +1,6 @@
-import { useState, useRef, useEffect, useCallback, FormEvent } from 'react';
+import React, { useState, useRef, useEffect, useCallback, FormEvent } from 'react';
+import useAuth from './hooks/useAuth';
+const AuthModal = React.lazy(() => import('./components/AuthModal'));
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Enhanced Components
@@ -71,6 +73,7 @@ const App = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [sessionId] = useState(`session-${Math.random().toString(36).substring(2, 9)}`);
   const [showSettings, setShowSettings] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
   const [showAudioPrompt, setShowAudioPrompt] = useState(true);
   const [audioInitialized, setAudioInitialized] = useState(false);
   const [userName, setUserName] = useState<string>('');
@@ -362,6 +365,9 @@ const App = () => {
     setMusicVolume(appSettings.musicVolume / 100);
   }, [appSettings.musicVolume, setMusicVolume]);
 
+  const { user } = useAuth();
+
+  // Wrap original return
   return (
     <div className={`app min-h-screen relative overflow-hidden theme-${appSettings.theme} force-visible-text`}>
       <div className="bg-gradient-to-br from-gray-900 via-purple-900 to-black min-h-screen relative force-visible-text"
@@ -554,6 +560,15 @@ const App = () => {
                 >
                   ⚙️
                 </button>
+                {/* Auth / Account */}
+                {user ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="text-sm text-purple-200">{user.email}</div>
+                    <button onClick={() => { localStorage.removeItem('jwt'); localStorage.removeItem('haunted_user'); window.location.reload(); }} className="px-2 py-1 bg-haunted-800 rounded">Sign out</button>
+                  </div>
+                ) : (
+                  <button onClick={() => setShowAuth(true)} className="px-2 py-1 bg-haunted-800 rounded">Sign in</button>
+                )}
               </div>
             </div>
           </header>
@@ -633,7 +648,7 @@ const App = () => {
           <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${showAIFeatures ? 'ml-80' : ''} transition-all duration-300 force-visible-text`}
                style={{ color: '#ffffff', backgroundColor: 'rgba(0,0,0,0.1)' }}>
             <AnimatePresence>
-              {messages.map((message, index) => (
+        {messages.map((message, index) => (
                 <motion.div
                   key={message.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -685,7 +700,7 @@ const App = () => {
                         {new Date(message.timestamp).toLocaleTimeString()}
                       </div>
                       <div className="mt-2">
-                        <EmojiReactions messageId={message.id} sessionId={sessionId} />
+                        <EmojiReactions messageId={message.id} sessionId={sessionId} disabled={!user} />
                       </div>
                     </div>
                   </MessageEffects>
@@ -715,7 +730,7 @@ const App = () => {
               
               <button
                 type="submit"
-                disabled={(!input.trim() || isTyping)}
+                disabled={(!input.trim() || isTyping || !user)}
                 className="px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg font-medium transition-colors duration-200"
                 style={{ color: '#ffffff' }}
               >
@@ -727,21 +742,21 @@ const App = () => {
             <div className="flex mt-2 space-x-2 text-xs">
               <button
                 type="button"
-                onClick={() => setInput("Tell me about yourself")}
+                onClick={() => { if (user) setInput("Tell me about yourself"); else { setShowAuth(true); addNotification({ type: 'info', title: 'Sign in required', message: 'Please sign in to perform actions', duration: 2500 }); } }}
                 className="text-purple-400 hover:text-purple-200"
               >
                 About
               </button>
               <button
                 type="button"
-                onClick={() => setInput("Tell me a scary story")}
+                onClick={() => { if (user) setInput("Tell me a scary story"); else { setShowAuth(true); addNotification({ type: 'info', title: 'Sign in required', message: 'Please sign in to perform actions', duration: 2500 }); } }}
                 className="text-purple-400 hover:text-purple-200"
               >
                 Story
               </button>
               <button
                 type="button"
-                onClick={() => setInput("What can you see around me?")}
+                onClick={() => { if (user) setInput("What can you see around me?"); else { setShowAuth(true); addNotification({ type: 'info', title: 'Sign in required', message: 'Please sign in to perform actions', duration: 2500 }); } }}
                 className="text-purple-400 hover:text-purple-200"
               >
                 Vision
@@ -755,6 +770,10 @@ const App = () => {
           notifications={notifications}
           onRemove={removeNotification}
         />
+        {/* Auth Modal */}
+        <React.Suspense fallback={null}>
+          {AuthModal && <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />}
+        </React.Suspense>
       </div>
     </div>
   );

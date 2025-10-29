@@ -6,6 +6,7 @@ import cors from 'cors';
 import { connectDB } from './config/db';
 import chatRoutes from './routes/chatRoutes';
 import interactionRoutes from './routes/interactionRoutes';
+import authRoutes from './routes/authRoutes';
 import { AppDataSource } from './config/data-source';
 import { Message } from './entities/Message';
 
@@ -57,6 +58,8 @@ testConnection();
 app.use('/api/chat', chatRoutes);
 // Minimal interactions API (achievements / energy / rooms)
 app.use('/api/interactions', interactionRoutes);
+// Authentication routes (signup / login)
+app.use('/api/auth', authRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
