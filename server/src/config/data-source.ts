@@ -1,5 +1,6 @@
 import { DataSource } from "typeorm"
 import { Message } from "../entities/Message"
+import { Interaction } from "../entities/Interaction"
 // Environment variables are loaded centrally via `src/config/env.ts`.
 // Do not call dotenv.config() here to avoid ordering issues.
 
@@ -31,7 +32,7 @@ export const AppDataSource = new DataSource({
     database: process.env.DB_NAME || "haunted_ai",
     synchronize: true,
     logging: true,
-    entities: [Message],
+    entities: [Message, Interaction],
     subscribers: [],
     migrations: [],
 });

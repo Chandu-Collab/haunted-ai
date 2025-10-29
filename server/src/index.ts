@@ -5,6 +5,7 @@ import express from 'express';
 import cors from 'cors';
 import { connectDB } from './config/db';
 import chatRoutes from './routes/chatRoutes';
+import interactionRoutes from './routes/interactionRoutes';
 import { AppDataSource } from './config/data-source';
 import { Message } from './entities/Message';
 
@@ -15,7 +16,14 @@ const app = express();
 
 // Middleware: enable CORS for the configured client origin
 const CLIENT_ORIGIN = process.env.CLIENT_URL || 'http://localhost:5173';
-app.use(cors({ origin: CLIENT_ORIGIN, methods: ['GET', 'POST'] }));
+// Allow common HTTP methods and the Authorization header for authenticated requests.
+app.use(cors({
+  origin: CLIENT_ORIGIN,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  credentials: true,
+  optionsSuccessStatus: 204
+}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
@@ -47,6 +55,8 @@ testConnection();
 
 // Routes
 app.use('/api/chat', chatRoutes);
+// Minimal interactions API (achievements / energy / rooms)
+app.use('/api/interactions', interactionRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
+
 interface MessageEffectsProps {
   content: string;
   isGhost: boolean;
@@ -20,11 +21,13 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
   ghostIntensity = 100,
   particleIntensity = 60
 }) => {
-  // Analyze message content for emotions and keywords
-  const analyzeContent = (text: string) => {
-    const lowerText = text.toLowerCase();
-    
-    const effects = {
+  // Analyze message content for emotions and keywords (memoized so this only runs when inputs change)
+  const effects = React.useMemo(() => {
+    const text = (content || '').toLowerCase();
+    const intensityModifier = ghostIntensity / 100;
+    const baseChance = 0.1 + (intensityModifier * 0.2);
+
+    const result = {
       glitch: false,
       shake: false,
       tremble: false,
@@ -32,46 +35,25 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
       fadeFromDarkness: false
     };
 
-    // Intensity modifies effect probability
-    const intensityModifier = ghostIntensity / 100;
-    const baseChance = 0.1 + (intensityModifier * 0.2); // 10-30% base chance
-
-    // Glitch triggers (increased chance with intensity)
     const glitchWords = ['error', 'wrong', 'broken', 'corrupted', 'static', 'interference', 'disconnect'];
-    if (glitchWords.some(word => lowerText.includes(word)) || Math.random() < baseChance * intensityModifier) {
-      effects.glitch = true;
-    }
+    if (glitchWords.some(w => text.includes(w)) || Math.random() < baseChance * intensityModifier) result.glitch = true;
 
-    // Shake triggers (anger, excitement, fear) - more likely with high intensity
     const shakeWords = ['angry', 'furious', 'excited', 'scared', 'terrified', 'shocked', 'urgent', '!'];
-    const exclamationCount = (text.match(/!/g) || []).length;
-    if (shakeWords.some(word => lowerText.includes(word)) || exclamationCount >= 2 || (intensityModifier > 0.7 && Math.random() < 0.2)) {
-      effects.shake = true;
-    }
+    const exclamationCount = (content.match(/!/g) || []).length;
+    if (shakeWords.some(w => text.includes(w)) || exclamationCount >= 2 || (intensityModifier > 0.7 && Math.random() < 0.2)) result.shake = true;
 
-    // Tremble triggers (fear, uncertainty, weakness)
     const trembleWords = ['afraid', 'nervous', 'uncertain', 'weak', 'shaking', 'trembling', 'worried'];
-    const questionCount = (text.match(/\?/g) || []).length;
-    if (trembleWords.some(word => lowerText.includes(word)) || questionCount >= 2) {
-      effects.tremble = true;
-    }
+    const questionCount = (content.match(/\?/g) || []).length;
+    if (trembleWords.some(w => text.includes(w)) || questionCount >= 2) result.tremble = true;
 
-    // Color shift triggers (magical, supernatural, emotional) - more frequent with high intensity
     const colorShiftWords = ['magic', 'spell', 'energy', 'power', 'spirit', 'soul', 'emotion', 'feeling'];
-    if (colorShiftWords.some(word => lowerText.includes(word)) || (intensityModifier > 0.5 && Math.random() < baseChance * 2)) {
-      effects.colorShift = true;
-    }
+    if (colorShiftWords.some(w => text.includes(w)) || (intensityModifier > 0.5 && Math.random() < baseChance * 2)) result.colorShift = true;
 
-    // Fade from darkness (emergence, revelation, secrets)
     const darknessWords = ['shadow', 'dark', 'hidden', 'secret', 'reveal', 'emerge', 'appear', 'manifest'];
-    if (darknessWords.some(word => lowerText.includes(word))) {
-      effects.fadeFromDarkness = true;
-    }
+    if (darknessWords.some(w => text.includes(w))) result.fadeFromDarkness = true;
 
-    return effects;
-  };
-
-  const effects = analyzeContent(content);
+    return result;
+  }, [content, ghostIntensity]);
 
   // Build CSS classes based on effects
   const getEffectClasses = () => {
@@ -193,31 +175,41 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
       {/* Mystical sparkles for magical content - more sparkles with higher intensity */}
       {(effects.colorShift || /magic|spell|mystical|supernatural|spirit|soul/i.test(content)) && (
         <div className="absolute inset-0 pointer-events-none">
-          {[...Array(Math.max(3, Math.floor((ghostIntensity / 100) * 6)))].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute"
-              style={{
-                top: `${20 + i * 15}%`,
-                left: `${10 + i * 20}%`,
-                fontSize: `${0.5 + (ghostIntensity / 100) * 0.5}rem`,
-                filter: `brightness(${1 + (ghostIntensity / 100)}) hue-rotate(${i * 60}deg)`
-              }}
-              animate={{
-                opacity: [0, 1, 0],
-                scale: [0, 1 + (ghostIntensity / 100) * 0.5, 0],
-                rotate: [0, 180, 360],
-                y: [0, -10 - (ghostIntensity / 100) * 10, 0]
-              }}
-              transition={{
-                duration: Math.max(0.8, 1.6 - (ghostIntensity / 100) * 0.6),
-                repeat: Infinity,
-                delay: i * Math.max(0.08, (0.3 - (ghostIntensity / 100) * 0.08))
-              }}
-            >
-              ✨
-            </motion.div>
-          ))}
+          {React.useMemo(() => {
+            const count = Math.max(3, Math.floor((ghostIntensity / 100) * 6));
+            return Array.from({ length: count }).map((_, i) => {
+              const top = 20 + i * 15;
+              const left = 10 + i * 20;
+              const fontSize = `${0.5 + (ghostIntensity / 100) * 0.5}rem`;
+              const delay = i * Math.max(0.08, (0.3 - (ghostIntensity / 100) * 0.08));
+              return (
+                <motion.div
+                  key={i}
+                  className="absolute"
+                  style={{
+                    top: `${top}%`,
+                    left: `${left}%`,
+                    fontSize,
+                    filter: `brightness(${1 + (ghostIntensity / 100)}) hue-rotate(${i * 60}deg)`
+                  }}
+                  animate={{
+                    opacity: [0, 1, 0],
+                    scale: [0, 1 + (ghostIntensity / 100) * 0.5, 0],
+                    rotate: [0, 180, 360],
+                    y: [0, -10 - (ghostIntensity / 100) * 10, 0]
+                  }}
+                  transition={{
+                    duration: Math.max(0.8, 1.6 - (ghostIntensity / 100) * 0.6),
+                    repeat: Infinity,
+                    delay,
+                    ease: 'easeOut'
+                  }}
+                >
+                  ✨
+                </motion.div>
+              );
+            });
+          }, [content, ghostIntensity])}
         </div>
       )}
 
@@ -268,37 +260,51 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
       {/* High-intensity particle effects */}
       {isGhost && ghostIntensity > 70 && particleIntensity > 50 && (
         <div className="absolute inset-0 pointer-events-none">
-          {[...Array(Math.floor((particleIntensity / 100) * 4))].map((_, i) => (
-            <motion.div
-              key={`particle-${i}`}
-              className="absolute"
-              style={{
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                fontSize: `${0.3 + (ghostIntensity / 100) * 0.4}rem`,
-                color: `hsl(${280 + Math.random() * 40}, 90%, ${70 + (ghostIntensity / 100) * 20}%)`
-              }}
-              animate={{
-                opacity: [0, ghostIntensity / 100, 0],
-                scale: [0, 1 + (ghostIntensity / 100) * 0.5, 0],
-                rotate: [0, 360],
-                x: [(Math.random() - 0.5) * 20, (Math.random() - 0.5) * 40],
-                y: [0, -20 - (ghostIntensity / 100) * 10]
-              }}
-              transition={{
-                duration: Math.max(0.9, 1.8 - (ghostIntensity / 100) * 0.6),
-                repeat: Infinity,
-                delay: Math.random() * 0.8,
-                ease: "easeOut"
-              }}
-            >
-              {['💫', '⭐', '✦', '✧', '🌟'][Math.floor(Math.random() * 5)]}
-            </motion.div>
-          ))}
+          {React.useMemo(() => {
+            const count = Math.floor((particleIntensity / 100) * 4);
+            return Array.from({ length: count }).map((_, i) => {
+              const top = Math.random() * 100;
+              const left = Math.random() * 100;
+              const fontSize = `${0.3 + (ghostIntensity / 100) * 0.4}rem`;
+              const color = `hsl(${280 + Math.random() * 40}, 90%, ${70 + (ghostIntensity / 100) * 20}%)`;
+              const x = (Math.random() - 0.5) * 20;
+              const x2 = (Math.random() - 0.5) * 40;
+              const delay = Math.random() * 0.8;
+              const glyphs = ['💫', '⭐', '✦', '✧', '🌟'];
+              const glyph = glyphs[Math.floor(Math.random() * glyphs.length)];
+              return (
+                <motion.div
+                  key={`particle-${i}`}
+                  className="absolute"
+                  style={{
+                    top: `${top}%`,
+                    left: `${left}%`,
+                    fontSize,
+                    color
+                  }}
+                  animate={{
+                    opacity: [0, ghostIntensity / 100, 0],
+                    scale: [0, 1 + (ghostIntensity / 100) * 0.5, 0],
+                    rotate: [0, 360],
+                    x: [x, x2],
+                    y: [0, -20 - (ghostIntensity / 100) * 10]
+                  }}
+                  transition={{
+                    duration: Math.max(0.9, 1.8 - (ghostIntensity / 100) * 0.6),
+                    repeat: Infinity,
+                    delay,
+                    ease: 'easeOut'
+                  }}
+                >
+                  {glyph}
+                </motion.div>
+              );
+            });
+          }, [content, ghostIntensity, particleIntensity])}
         </div>
       )}
     </motion.div>
   );
 };
 
-export default MessageEffects;
+export default React.memo(MessageEffects);

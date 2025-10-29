@@ -1,8 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import VoiceControls from './VoiceControls';
 import MusicControls from './MusicControls';
 import PersonalitySelector from './PersonalitySelector';
+import EmojiReactions from './EmojiReactions';
+const FortuneTelling = React.lazy(() => import('./FortuneTelling'));
+const SeanceMode = React.lazy(() => import('./SeanceMode'));
+const GhostGames = React.lazy(() => import('./GhostGames'));
+const SpellCasting = React.lazy(() => import('./SpellCasting'));
+const RoomExplorer = React.lazy(() => import('./RoomExplorer'));
+import AchievementSystem from './AchievementSystem';
+import EnergyBar from './EnergyBar';
+import MessageEffects from './MessageEffects';
 import type { GhostPersonality } from '../utils/ghostPersonalities';
 
 interface Track {
@@ -44,9 +53,10 @@ interface SettingsProps {
     isSupported: boolean;
   };
   availablePersonalities?: GhostPersonality[];
+  sessionId?: string;
 }
 
-const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettingsChange, onSettingsClose, musicControls, availablePersonalities }) => {
+const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettingsChange, onSettingsClose, musicControls, availablePersonalities, sessionId }) => {
   const [localSettings, setLocalSettings] = useState({
     ...settings,
     lightningEnabled: settings.lightningEnabled ?? true,
@@ -58,16 +68,35 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
   const [hasChanges, setHasChanges] = useState(false);
   const [initialSettings] = useState(localSettings);
   const [selectedTrackIndex, setSelectedTrackIndex] = useState(0); // Track the selected music track
+  // Interactive feature modals
+  const [showFortune, setShowFortune] = useState(false);
+  const [showSeance, setShowSeance] = useState(false);
+  const [showGames, setShowGames] = useState(false);
+  const [showSpell, setShowSpell] = useState(false);
+  const [showRooms, setShowRooms] = useState(false);
 
   const handleChange = (key: string, value: any) => {
     const newSettings = { ...localSettings, [key]: value };
     setLocalSettings(newSettings);
-    onSettingsChange(newSettings);
-    
     // Track if any changes have been made
     console.log('🔧 Settings changed:', key, '=', value, 'hasChanges will be set to true');
     setHasChanges(true);
   };
+
+  // Debounce settings updates to avoid flooding parent with rapid updates
+  const debounceRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (debounceRef.current) {
+      window.clearTimeout(debounceRef.current);
+    }
+    // Wait before sending settings upstream (300ms)
+    debounceRef.current = window.setTimeout(() => {
+      onSettingsChange(localSettings);
+    }, 300) as unknown as number;
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    };
+  }, [localSettings]);
 
   const handleClose = () => {
     // Reset hasChanges when modal closes
@@ -90,6 +119,13 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
       setHasChanges(false);
     }
   }, [isOpen]);
+
+  // Memoized open handlers for modals to avoid creating new callbacks each render
+  const openFortune = useCallback(() => { console.log('open fortune'); setShowFortune(true); }, []);
+  const openSeance = useCallback(() => { console.log('open seance'); setShowSeance(true); }, []);
+  const openGames = useCallback(() => { console.log('open games'); setShowGames(true); }, []);
+  const openSpell = useCallback(() => { console.log('open spell'); setShowSpell(true); }, []);
+  const openExplore = useCallback(() => { console.log('open explore'); setShowRooms(true); }, []);
 
   if (!isOpen) return null;
 
@@ -295,6 +331,26 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
                 </div>
               </div>
             </div>
+
+            {/* Interactive Features */}
+            <div>
+              <label className="text-haunted-200 font-medium block mb-3">Interactive Play</label>
+        <div className="grid grid-cols-2 gap-2">
+          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={openFortune} className="p-3 bg-haunted-800 rounded">🔮 Fortune</motion.button>
+          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={openSeance} className="p-3 bg-haunted-800 rounded">🔔 Séance</motion.button>
+          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={openGames} className="p-3 bg-haunted-800 rounded">🧩 Games</motion.button>
+          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={openSpell} className="p-3 bg-haunted-800 rounded">✨ Spell</motion.button>
+          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={openExplore} className="p-3 bg-haunted-800 rounded">🗺️ Explore</motion.button>
+                <div className="p-3 bg-haunted-900 rounded">
+                  <div className="text-haunted-300 text-sm">Energy</div>
+                  <EnergyBar sessionId={sessionId} />
+                </div>
+              </div>
+              <div className="mt-3">
+                <label className="text-haunted-200 font-medium block mb-2">Achievements</label>
+                <AchievementSystem sessionId={sessionId} />
+              </div>
+            </div>
           </div>
 
           {/* Fixed Footer */}
@@ -310,6 +366,14 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
           </div>
         </motion.div>
       </motion.div>
+    {/* Feature modals (client-only, lazy-loaded into a portal) */}
+    <React.Suspense fallback={null}>
+      <FortuneTelling isOpen={showFortune} onClose={() => setShowFortune(false)} sessionId={sessionId} />
+      <SeanceMode isOpen={showSeance} onClose={() => setShowSeance(false)} sessionId={sessionId} />
+      <GhostGames isOpen={showGames} onClose={() => setShowGames(false)} sessionId={sessionId} />
+      <SpellCasting isOpen={showSpell} onClose={() => setShowSpell(false)} sessionId={sessionId} />
+      <RoomExplorer isOpen={showRooms} onClose={() => setShowRooms(false)} sessionId={sessionId} />
+    </React.Suspense>
     </AnimatePresence>
   );
 };

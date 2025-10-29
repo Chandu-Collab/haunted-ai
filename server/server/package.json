@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "haunted-ai-server": "file:.."
+  }
+}
