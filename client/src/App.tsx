@@ -13,6 +13,7 @@ import LightningFlash from './components/LightningFlash';
 import FloatingTextSpirits from './components/FloatingTextSpirits';
 import EyeTrackingCursor from './components/EyeTrackingCursor';
 import MessageEffects from './components/MessageEffects';
+import EmojiReactions from './components/EmojiReactions';
 import NotificationSystem from './components/NotificationSystem';
 import AudioInitPrompt from './components/AudioInitPrompt';
 
@@ -611,6 +612,7 @@ const App = () => {
                 settings={appSettings}
                 onSettingsChange={setAppSettings}
                 onClose={() => setShowSettings(false)}
+                sessionId={sessionId}
                 musicControls={{
                   isPlaying: isMusicPlaying,
                   currentTrack: currentTrack,
@@ -681,6 +683,9 @@ const App = () => {
                       
                       <div className="text-xs opacity-75 mt-2" style={{ color: 'inherit' }}>
                         {new Date(message.timestamp).toLocaleTimeString()}
+                      </div>
+                      <div className="mt-2">
+                        <EmojiReactions messageId={message.id} sessionId={sessionId} />
                       </div>
                     </div>
                   </MessageEffects>

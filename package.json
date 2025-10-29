@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "typecheck:client": "npx --prefix client tsc --noEmit -p client/tsconfig.json",
+    "typecheck:server": "npx --prefix server tsc --noEmit -p server/tsconfig.json",
+    "typecheck": "npm run typecheck:client && npm run typecheck:server"
   },
   "keywords": [],
   "author": "",
