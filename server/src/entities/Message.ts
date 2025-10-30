@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne } from "typeorm";
+import { Room } from './Room';
 
 @Entity('messages')
 export class Message {
@@ -52,6 +53,9 @@ export class Message {
         default: () => 'CURRENT_TIMESTAMP' 
     })
     timestamp: Date = new Date();
+
+    @ManyToOne(() => Room, room => room.messages, { nullable: true })
+    room?: Room;
 }
 
 export type IMessage = Omit<Message, 'id' | 'createdAt' | 'updatedAt'> & {

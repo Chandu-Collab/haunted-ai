@@ -1,10 +1,12 @@
+
 import React, { useState, useRef, useEffect, useCallback, FormEvent } from 'react';
+import GhostProfileManager from './components/GhostProfileManager';
+import GhostProfileSelector from './components/GhostProfileSelector';
+import RoomSelector from './components/RoomSelector';
 import { useTheme } from './context/ThemeContext';
 import useAuth from './hooks/useAuth';
 const AuthModal = React.lazy(() => import('./components/AuthModal'));
 import { motion, AnimatePresence } from 'framer-motion';
-
-// Enhanced Components
 import ParticleSystem from './components/ParticleSystem';
 import FloatingGhosts from './components/FloatingGhosts';
 import FloatingGhostOrbs from './components/FloatingGhostOrbs';
@@ -58,6 +60,30 @@ interface EnhancedMessage extends Message {
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const App = () => {
+  const [showGhostManager, setShowGhostManager] = useState(false);
+  const [showGhostSelector, setShowGhostSelector] = useState(false);
+  const [currentRoom, setCurrentRoom] = useState<{ id: number; name: string } | null>(null);
+  const [showRoomSelector, setShowRoomSelector] = useState(false);
+  // Room join handler
+  const { user, getToken } = useAuth();
+  const handleJoinRoom = async (room: { id: number; name: string }) => {
+    if (!user) return;
+    setShowRoomSelector(false);
+    try {
+      const res = await fetch(`${API_URL}/api/rooms/join`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {})
+        },
+        body: JSON.stringify({ roomId: room.id, userId: user.id })
+      });
+      if (!res.ok) throw new Error('Failed to join room');
+      setCurrentRoom(room);
+    } catch (e) {
+      alert('Failed to join room. Please try again.');
+    }
+  };
   const {
     environment,
     timeOfDay,
@@ -374,7 +400,7 @@ const App = () => {
     setMusicVolume(appSettings.musicVolume / 100);
   }, [appSettings.musicVolume, setMusicVolume]);
 
-  const { user } = useAuth();
+  // const { user } = useAuth();
 
   // Compose theme classes for environments, time, season, accessibility
   const themeClasses = [
@@ -441,7 +467,7 @@ const App = () => {
   <div className="relative z-10 flex flex-col h-screen force-visible-text px-2 sm:px-4 md:px-8" style={{ color: '#ffffff' }}>
           
           {/* Header with Enhanced Controls */}
-      <header className="p-2 sm:p-4 bg-black/30 backdrop-blur-sm border-b border-purple-500/30 force-visible-text sticky top-0 z-20"
+  <header className="p-2 sm:p-4 bg-black/30 backdrop-blur-sm border-b border-purple-500/30 force-visible-text sticky top-0 z-20"
       style={{ color: '#ffffff' }} role="banner">
     <div className="flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-0" style={{ color: '#ffffff' }}>
               <div className="flex items-center gap-2 sm:gap-4" style={{ color: '#ffffff' }}>
@@ -553,6 +579,53 @@ const App = () => {
                     </motion.div>
                   )}
                 </div>
+                {/* Room Selector Button */}
+                <button
+                  onClick={() => setShowRoomSelector(true)}
+                  className="p-2 bg-purple-900/20 hover:bg-purple-800/30 border border-purple-500/50 rounded-lg text-purple-300 transition-colors duration-200"
+                  title="Select Room"
+                  aria-label="Select Room"
+                  tabIndex={0}
+                  style={{ marginRight: 8 }}
+                >
+                  🗺️ Room
+                </button>
+                {/* Ghost Selector Button */}
+                <button
+                  onClick={() => setShowGhostManager(true)}
+                  className="p-2 bg-purple-900/20 hover:bg-purple-800/30 border border-purple-500/50 rounded-lg text-purple-300 transition-colors duration-200"
+                  title="Manage Ghosts"
+                  aria-label="Manage Ghosts"
+                  tabIndex={0}
+                  style={{ marginRight: 8 }}
+                >
+                  🛠️ Manage Ghosts
+                </button>
+          {/* Ghost Manager Modal */}
+          {showGhostManager && (
+            <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 min-h-screen">
+              <div className="relative w-full max-w-lg bg-haunted-900 rounded-xl border border-haunted-700 shadow-lg overflow-y-auto my-auto" style={{ maxHeight: '90vh' }}>
+                <GhostProfileManager />
+                <button className="absolute top-4 right-4 p-2 bg-haunted-700 rounded text-white" onClick={() => setShowGhostManager(false)}>Close</button>
+              </div>
+            </div>
+          )}
+                <button
+                  onClick={() => setShowGhostSelector(true)}
+                  className="p-2 bg-purple-900/20 hover:bg-purple-800/30 border border-purple-500/50 rounded-lg text-purple-300 transition-colors duration-200"
+                  title="Select Ghost"
+                  aria-label="Select Ghost"
+                  tabIndex={0}
+                  style={{ marginRight: 8 }}
+                >
+                  👻 Ghost
+                </button>
+                {appSettings.ghostPersonality && (
+                  <span className="text-purple-300 text-sm ml-2">Ghost: {appSettings.ghostPersonality.name}</span>
+                )}
+                {currentRoom && (
+                  <span className="text-purple-300 text-sm ml-2">Room: {currentRoom.name}</span>
+                )}
                 {currentTrack && (
                   <div className="text-purple-300 text-sm">
                     🎵 {currentTrack.name}
@@ -684,6 +757,43 @@ const App = () => {
             )}
           </AnimatePresence>
 
+          {/* Ghost Selector Modal */}
+          {showGhostSelector && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60">
+              <GhostProfileSelector
+                onSelect={ghost => {
+                  // Map GhostProfile to GhostPersonality type
+                  const mapped = {
+                    id: ghost.id,
+                    name: ghost.name,
+                    emoji: ghost.emoji,
+                    color: ghost.color || '#8a4fff',
+                    description: ghost.backstory,
+                    backstory: ghost.backstory,
+                    voiceSettings: { rate: 1, pitch: 1, volume: 1 },
+                    systemPrompt: ghost.backstory,
+                    responseStyle: {
+                      tone: 'spooky',
+                      vocabulary: 'mysterious',
+                      length: 'medium' as 'medium',
+                    },
+                    specialAbilities: [],
+                  };
+                  setAppSettings(prev => ({ ...prev, ghostPersonality: mapped }));
+                  setShowGhostSelector(false);
+                }}
+                currentGhostId={appSettings.ghostPersonality?.id}
+              />
+              <button className="absolute top-4 right-4 p-2 bg-haunted-700 rounded text-white" onClick={() => setShowGhostSelector(false)}>Close</button>
+            </div>
+          )}
+          {/* Room Selector Modal */}
+          {showRoomSelector && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60">
+              <RoomSelector onJoin={handleJoinRoom} currentRoomId={currentRoom?.id} />
+              <button className="absolute top-4 right-4 p-2 bg-haunted-700 rounded text-white" onClick={() => setShowRoomSelector(false)}>Close</button>
+            </div>
+          )}
           {/* Chat Messages */}
     <div className={`flex-1 overflow-y-auto p-2 sm:p-4 space-y-4 ${showAIFeatures ? 'ml-80' : ''} transition-all duration-300 force-visible-text`}
       style={{ color: '#ffffff', backgroundColor: 'rgba(0,0,0,0.1)' }}>

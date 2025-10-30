@@ -1,17 +1,21 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToMany } from 'typeorm'
+import { Room } from './Room';
 
 @Entity()
 export class User {
   @PrimaryGeneratedColumn('uuid')
-  id!: string
+  id!: string;
 
   @Column({ unique: true })
-  email!: string
+  email!: string;
 
   // Stored as salt:hash (hex) for simplicity
   @Column()
-  passwordHash!: string
+  passwordHash!: string;
 
   @CreateDateColumn()
-  createdAt!: Date
+  createdAt!: Date;
+
+  @ManyToMany(() => Room, room => room.users)
+  rooms!: Room[];
 }

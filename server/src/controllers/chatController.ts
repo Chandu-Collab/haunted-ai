@@ -1,3 +1,33 @@
+// Search messages by keyword, room, and/or user
+import { Like } from 'typeorm';
+
+export const searchMessages = async (req: Request, res: Response) => {
+  try {
+    const { q, roomId, userId, sessionId } = req.query;
+    const messageRepository = AppDataSource.getRepository(Message);
+    const where: any = {};
+    if (q) {
+      where.content = Like(`%${q}%`);
+    }
+    if (roomId) {
+      where.room = { id: roomId };
+    }
+    if (sessionId) {
+      where.sessionId = sessionId;
+    }
+    // Optionally, filter by user if you store userId on Message
+    // if (userId) { where.user = { id: userId }; }
+    const messages = await messageRepository.find({
+      where,
+      order: { createdAt: 'DESC' },
+      take: 50
+    });
+    res.json(messages);
+  } catch (error) {
+    console.error('Error searching messages:', error);
+    res.status(500).json({ error: 'Failed to search messages' });
+  }
+};
 import type { Request, Response } from 'express';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AppDataSource } from '../config/data-source';

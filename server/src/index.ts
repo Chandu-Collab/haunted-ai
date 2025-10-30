@@ -7,6 +7,8 @@ import { connectDB } from './config/db';
 import chatRoutes from './routes/chatRoutes';
 import interactionRoutes from './routes/interactionRoutes';
 import authRoutes from './routes/authRoutes';
+import roomRoutes from './routes/roomRoutes';
+import ghostProfileRoutes from './routes/ghostProfileRoutes';
 import { AppDataSource } from './config/data-source';
 import { Message } from './entities/Message';
 
@@ -56,6 +58,8 @@ testConnection();
 
 // Routes
 app.use('/api/chat', chatRoutes);
+app.use('/api/rooms', roomRoutes);
+app.use('/api/ghosts', ghostProfileRoutes);
 // Minimal interactions API (achievements / energy / rooms)
 app.use('/api/interactions', interactionRoutes);
 // Authentication routes (signup / login)
