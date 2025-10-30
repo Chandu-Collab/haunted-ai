@@ -1,0 +1,74 @@
+/* Environment-specific backgrounds and effects */
+.main-bg-container.env-graveyard {
+  background-image: url('/audio/effects/graveyard-bg.jpg'), linear-gradient(to bottom, #23232b 80%, #0a0a0a 100%);
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+.main-bg-container.env-mansion {
+  background-image: url('/audio/effects/mansion-bg.jpg'), linear-gradient(to bottom, #2e1a1a 80%, #0a0a0a 100%);
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+.main-bg-container.env-forest {
+  background-image: url('/audio/effects/forest-bg.jpg'), linear-gradient(to bottom, #1a2e1a 80%, #0a0a0a 100%);
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+.main-bg-container.env-catacombs {
+  background-image: url('/audio/effects/catacombs-bg.jpg'), linear-gradient(to bottom, #23232b 80%, #0a0a0a 100%);
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+/* Time-based overlays */
+.main-bg-container.time-day {
+  filter: brightness(1.1) contrast(1.05);
+}
+.main-bg-container.time-night {
+  filter: brightness(0.7) contrast(1.2);
+}
+
+/* Seasonal overlays */
+.main-bg-container.season-halloween {
+  box-shadow: 0 0 80px 10px #ff7518 inset;
+}
+.main-bg-container.season-winter {
+  box-shadow: 0 0 80px 10px #b3e0ff inset;
+}
+.main-bg-container.season-spring {
+  box-shadow: 0 0 80px 10px #aaffc3 inset;
+}
+
+/* High contrast mode */
+.high-contrast {
+  filter: contrast(2) brightness(1.2) grayscale(0.1) !important;
+  outline: 3px solid #fff !important;
+}
+
+/* Custom color scheme for ghost personalities */
+.main-bg-container {
+  --ghost-primary: #8a4fff;
+  --ghost-accent: #8a4fff;
+}
+.main-bg-container .ghost-message {
+  border-color: var(--ghost-primary, #8a4fff) !important;
+  background: linear-gradient(135deg, rgba(138, 79, 255, 0.1) 0%, var(--ghost-primary, #8a4fff) 100%) !important;
+}
+.main-bg-container .ghost-title {
+  color: var(--ghost-primary, #8a4fff) !important;
+  text-shadow: 0 0 10px var(--ghost-primary, #8a4fff), 0 0 20px var(--ghost-accent, #8a4fff);
+}
+
+/* Font size controls */
+.font-size-large {
+  font-size: 1.25em !important;
+}
+.font-size-x-large {
+  font-size: 1.5em !important;
+}
+
+/* Motion reduction */
+.motion-reduced * {
+  animation: none !important;
+  transition: none !important;
+}
