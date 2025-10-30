@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, FormEvent } from 'react';
+import { useTheme } from './context/ThemeContext';
 import useAuth from './hooks/useAuth';
 const AuthModal = React.lazy(() => import('./components/AuthModal'));
 import { motion, AnimatePresence } from 'framer-motion';
@@ -57,6 +58,14 @@ interface EnhancedMessage extends Message {
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const App = () => {
+  const {
+    environment,
+    timeOfDay,
+    season,
+    highContrast,
+    fontSize,
+    motionReduced
+  } = useTheme();
   // Helper to generate a stable unique id for messages when backend id is missing
   const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
@@ -367,10 +376,24 @@ const App = () => {
 
   const { user } = useAuth();
 
+  // Compose theme classes for environments, time, season, accessibility
+  const themeClasses = [
+    `theme-${appSettings.theme}`,
+    `env-${environment}`,
+    `time-${timeOfDay}`,
+    `season-${season}`,
+    highContrast ? 'high-contrast' : '',
+    fontSize !== 'normal' ? `font-size-${fontSize}` : '',
+    motionReduced ? 'motion-reduced' : '',
+    'force-visible-text',
+  ].filter(Boolean).join(' ');
+
   // Wrap original return
   return (
-    <div className={`app min-h-screen relative overflow-hidden theme-${appSettings.theme} force-visible-text`}>
-      <div className="bg-gradient-to-br from-gray-900 via-purple-900 to-black min-h-screen relative force-visible-text"
+    <div className={`app min-h-screen relative overflow-hidden font-sans`}
+      style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
+      {/* Apply theme/environment/time/season classes to the main background container for full effect */}
+      <div className={`main-bg-container ${themeClasses} min-h-screen relative force-visible-text`}
            style={{ color: '#f8f5ff' }}>
         
         {/* Enhanced Background Effects */}
@@ -407,13 +430,13 @@ const App = () => {
         </AnimatePresence>
 
         {/* Main Content */}
-        <div className="relative z-10 flex flex-col h-screen force-visible-text" style={{ color: '#ffffff' }}>
+  <div className="relative z-10 flex flex-col h-screen force-visible-text px-2 sm:px-4 md:px-8" style={{ color: '#ffffff' }}>
           
           {/* Header with Enhanced Controls */}
-          <header className="p-4 bg-black/30 backdrop-blur-sm border-b border-purple-500/30 force-visible-text" 
-                  style={{ color: '#ffffff' }}>
-            <div className="flex justify-between items-center" style={{ color: '#ffffff' }}>
-              <div className="flex items-center space-x-4" style={{ color: '#ffffff' }}>
+      <header className="p-2 sm:p-4 bg-black/30 backdrop-blur-sm border-b border-purple-500/30 force-visible-text sticky top-0 z-20"
+      style={{ color: '#ffffff' }} role="banner">
+    <div className="flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-0" style={{ color: '#ffffff' }}>
+              <div className="flex items-center gap-2 sm:gap-4" style={{ color: '#ffffff' }}>
                 <div className="relative">
                   <motion.h1 
                     className="text-2xl font-bold"
@@ -529,7 +552,7 @@ const App = () => {
                 )}
               </div>
               
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 {/* AI Features Toggle */}
                 <button
                   onClick={() => setShowAIFeatures(!showAIFeatures)}
@@ -539,6 +562,9 @@ const App = () => {
                       : 'bg-purple-900/20 border-purple-500/50 text-purple-300 hover:bg-purple-800/30'
                   }`}
                   title="AI Features Panel"
+                  aria-label="Toggle AI Features Panel"
+                  tabIndex={0}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setShowAIFeatures(v => !v); }}
                 >
                   🧠
                 </button>
@@ -548,6 +574,9 @@ const App = () => {
                   onClick={() => isMusicPlaying ? pauseMusic() : playMusic()}
                   className="p-2 bg-purple-900/20 hover:bg-purple-800/30 border border-purple-500/50 rounded-lg text-purple-300 transition-colors duration-200"
                   title={isMusicPlaying ? 'Pause Music' : 'Play Music'}
+                  aria-label={isMusicPlaying ? 'Pause Music' : 'Play Music'}
+                  tabIndex={0}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') isMusicPlaying ? pauseMusic() : playMusic(); }}
                 >
                   {isMusicPlaying ? '⏸️' : '▶️'}
                 </button>
@@ -557,6 +586,9 @@ const App = () => {
                   onClick={() => setShowSettings(!showSettings)}
                   className="p-2 bg-purple-900/20 hover:bg-purple-800/30 border border-purple-500/50 rounded-lg text-purple-300 transition-colors duration-200"
                   title="Settings"
+                  aria-label="Open Settings"
+                  tabIndex={0}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setShowSettings(v => !v); }}
                 >
                   ⚙️
                 </button>
@@ -567,7 +599,7 @@ const App = () => {
                     <button onClick={() => { localStorage.removeItem('jwt'); localStorage.removeItem('haunted_user'); window.location.reload(); }} className="px-2 py-1 bg-haunted-800 rounded">Sign out</button>
                   </div>
                 ) : (
-                  <button onClick={() => setShowAuth(true)} className="px-2 py-1 bg-haunted-800 rounded">Sign in</button>
+                  <button onClick={() => setShowAuth(true)} className="px-2 py-1 bg-haunted-800 rounded" aria-label="Sign in" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setShowAuth(true); }}>Sign in</button>
                 )}
               </div>
             </div>
@@ -645,8 +677,8 @@ const App = () => {
           </AnimatePresence>
 
           {/* Chat Messages */}
-          <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${showAIFeatures ? 'ml-80' : ''} transition-all duration-300 force-visible-text`}
-               style={{ color: '#ffffff', backgroundColor: 'rgba(0,0,0,0.1)' }}>
+    <div className={`flex-1 overflow-y-auto p-2 sm:p-4 space-y-4 ${showAIFeatures ? 'ml-80' : ''} transition-all duration-300 force-visible-text`}
+      style={{ color: '#ffffff', backgroundColor: 'rgba(0,0,0,0.1)' }}>
             <AnimatePresence>
         {messages.map((message, index) => (
                 <motion.div
@@ -716,8 +748,8 @@ const App = () => {
           </div>
 
           {/* Enhanced Input Form */}
-          <form onSubmit={handleSubmit} className={`p-4 bg-black/30 backdrop-blur-sm border-t border-purple-500/30 ${showAIFeatures ? 'ml-80' : ''} transition-all duration-300`}>
-            <div className="flex space-x-2">
+          <form onSubmit={handleSubmit} className={`p-2 sm:p-4 bg-black/30 backdrop-blur-sm border-t border-purple-500/30 ${showAIFeatures ? 'ml-80' : ''} transition-all duration-300`} aria-label="Chat input form" role="form">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 value={input}
@@ -726,6 +758,8 @@ const App = () => {
                 className="flex-1 bg-gray-800/50 border border-purple-500/50 rounded-lg px-4 py-2 placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
                 style={{ color: '#ffffff' }}
                 disabled={isTyping}
+                aria-label="Message input"
+                tabIndex={0}
               />
               
               <button
@@ -733,6 +767,8 @@ const App = () => {
                 disabled={(!input.trim() || isTyping || !user)}
                 className="px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg font-medium transition-colors duration-200"
                 style={{ color: '#ffffff' }}
+                aria-label="Send message"
+                tabIndex={0}
               >
                 {isTyping ? '👻' : '📨'}
               </button>
