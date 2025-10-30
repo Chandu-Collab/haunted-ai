@@ -45,6 +45,20 @@
   outline: 3px solid #fff !important;
 }
 
+/* Custom color scheme for ghost personalities */
+.main-bg-container {
+  --ghost-primary: #8a4fff;
+  --ghost-accent: #8a4fff;
+}
+.main-bg-container .ghost-message {
+  border-color: var(--ghost-primary, #8a4fff) !important;
+  background: linear-gradient(135deg, rgba(138, 79, 255, 0.1) 0%, var(--ghost-primary, #8a4fff) 100%) !important;
+}
+.main-bg-container .ghost-title {
+  color: var(--ghost-primary, #8a4fff) !important;
+  text-shadow: 0 0 10px var(--ghost-primary, #8a4fff), 0 0 20px var(--ghost-accent, #8a4fff);
+}
+
 /* Font size controls */
 .font-size-large {
   font-size: 1.25em !important;

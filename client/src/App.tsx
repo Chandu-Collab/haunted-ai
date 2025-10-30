@@ -389,12 +389,20 @@ const App = () => {
   ].filter(Boolean).join(' ');
 
   // Wrap original return
+  // Custom color scheme for ghost personality
+  const ghostColor = appSettings.ghostPersonality?.color || '#8a4fff';
+  const ghostColorStyle = {
+    '--ghost-primary': ghostColor,
+    '--ghost-accent': ghostColor,
+    color: '#f8f5ff',
+  } as React.CSSProperties;
+
   return (
     <div className={`app min-h-screen relative overflow-hidden font-sans`}
       style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
       {/* Apply theme/environment/time/season classes to the main background container for full effect */}
       <div className={`main-bg-container ${themeClasses} min-h-screen relative force-visible-text`}
-           style={{ color: '#f8f5ff' }}>
+           style={ghostColorStyle}>
         
         {/* Enhanced Background Effects */}
         {appSettings.particleCount > 0 && (
