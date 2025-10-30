@@ -9,9 +9,13 @@
   color: inherit !important;
 }
 
+
 html, body {
   color: #f8f5ff !important;
   background-color: #0a0a0a !important;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  font-size: 16px;
 }
 
 /* ULTIMATE TEXT VISIBILITY FIX - Maximum specificity */
@@ -32,6 +36,8 @@ html body div * {
 div, span, p, h1, h2, h3, h4, h5, h6 {
   color: #ffffff !important;
   text-shadow: 1px 1px 2px rgba(0,0,0,0.8) !important;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Override all possible text invisibility issues */
@@ -55,9 +61,17 @@ div, span, p, h1, h2, h3, h4, h5, h6, button, input, textarea, label, a {
 }
 
 /* Input and form fixes */
-input {
+input, textarea, button {
   color: #ffffff !important;
   background-color: rgba(0,0,0,0.3) !important;
+  font-size: 1em;
+  border-radius: 0.5em;
+  padding: 0.5em 1em;
+  outline: none;
+  transition: box-shadow 0.2s;
+}
+input:focus, textarea:focus, button:focus {
+  box-shadow: 0 0 0 2px #8a4fff;
 }
 
 button {

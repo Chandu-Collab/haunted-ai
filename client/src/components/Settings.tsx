@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useTheme, Environment, TimeOfDay, Season } from '../context/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import VoiceControls from './VoiceControls';
 import MusicControls from './MusicControls';
@@ -129,6 +130,21 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
   const openSpell = useCallback(() => { console.log('open spell'); setShowSpell(true); }, []);
   const openExplore = useCallback(() => { console.log('open explore'); setShowRooms(true); }, []);
 
+  const {
+    environment,
+    setEnvironment,
+    timeOfDay,
+    setTimeOfDay,
+    season,
+    setSeason,
+    highContrast,
+    setHighContrast,
+    fontSize,
+    setFontSize,
+    motionReduced,
+    setMotionReduced
+  } = useTheme();
+
   if (!isOpen) return null;
 
   return (
@@ -244,7 +260,7 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
             {/* Theme Selection */}
             <div>
               <label className="text-haunted-200 font-medium block mb-2">Theme</label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2 mb-2">
                 {(['dark', 'darker', 'midnight'] as const).map(theme => (
                   <button
                     key={theme}
@@ -258,6 +274,88 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
                     {theme}
                   </button>
                 ))}
+              </div>
+              {/* Environment Selection */}
+              <label className="text-haunted-200 font-medium block mb-2 mt-4">Environment</label>
+              <div className="grid grid-cols-4 gap-2 mb-2">
+                {(['graveyard', 'mansion', 'forest', 'catacombs'] as Environment[]).map(env => (
+                  <button
+                    key={env}
+                    onClick={() => setEnvironment(env)}
+                    className={`p-2 rounded-lg border text-xs capitalize transition-all ${
+                      environment === env
+                        ? 'border-haunted-500 bg-haunted-800/50 text-haunted-100'
+                        : 'border-haunted-700/50 bg-haunted-900/50 text-haunted-300 hover:border-haunted-600'
+                    }`}
+                  >
+                    {env}
+                  </button>
+                ))}
+              </div>
+              {/* Time of Day Selection */}
+              <label className="text-haunted-200 font-medium block mb-2 mt-4">Time of Day</label>
+              <div className="grid grid-cols-2 gap-2 mb-2">
+                {(['day', 'night'] as TimeOfDay[]).map(t => (
+                  <button
+                    key={t}
+                    onClick={() => setTimeOfDay(t)}
+                    className={`p-2 rounded-lg border text-xs capitalize transition-all ${
+                      timeOfDay === t
+                        ? 'border-haunted-500 bg-haunted-800/50 text-haunted-100'
+                        : 'border-haunted-700/50 bg-haunted-900/50 text-haunted-300 hover:border-haunted-600'
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+              {/* Season Selection */}
+              <label className="text-haunted-200 font-medium block mb-2 mt-4">Season</label>
+              <div className="grid grid-cols-4 gap-2 mb-2">
+                {(['default', 'halloween', 'winter', 'spring'] as Season[]).map(s => (
+                  <button
+                    key={s}
+                    onClick={() => setSeason(s)}
+                    className={`p-2 rounded-lg border text-xs capitalize transition-all ${
+                      season === s
+                        ? 'border-haunted-500 bg-haunted-800/50 text-haunted-100'
+                        : 'border-haunted-700/50 bg-haunted-900/50 text-haunted-300 hover:border-haunted-600'
+                    }`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+              {/* Accessibility Controls */}
+              <label className="text-haunted-200 font-medium block mb-2 mt-4">Accessibility</label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                <button
+                  onClick={() => setHighContrast(!highContrast)}
+                  className={`p-2 rounded-lg border text-xs transition-all ${
+                    highContrast ? 'border-yellow-400 bg-yellow-900/50 text-yellow-100' : 'border-haunted-700/50 bg-haunted-900/50 text-haunted-300 hover:border-haunted-600'
+                  }`}
+                  aria-pressed={highContrast}
+                >
+                  High Contrast
+                </button>
+                <button
+                  onClick={() => setMotionReduced(!motionReduced)}
+                  className={`p-2 rounded-lg border text-xs transition-all ${
+                    motionReduced ? 'border-blue-400 bg-blue-900/50 text-blue-100' : 'border-haunted-700/50 bg-haunted-900/50 text-haunted-300 hover:border-haunted-600'
+                  }`}
+                  aria-pressed={motionReduced}
+                >
+                  Reduce Motion
+                </button>
+                <button
+                  onClick={() => setFontSize(fontSize === 'normal' ? 'large' : fontSize === 'large' ? 'x-large' : 'normal')}
+                  className={`p-2 rounded-lg border text-xs transition-all ${
+                    fontSize !== 'normal' ? 'border-green-400 bg-green-900/50 text-green-100' : 'border-haunted-700/50 bg-haunted-900/50 text-haunted-300 hover:border-haunted-600'
+                  }`}
+                  aria-pressed={fontSize !== 'normal'}
+                >
+                  Font Size: {fontSize}
+                </button>
               </div>
             </div>
 
