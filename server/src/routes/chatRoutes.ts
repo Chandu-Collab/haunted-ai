@@ -1,3 +1,4 @@
+import { searchMessages } from '../controllers/chatController';
 import { Router } from 'express';
 import { 
   getChatHistory, 
@@ -12,6 +13,9 @@ import {
 } from '../controllers/chatController';
 
 const router = Router();
+
+// Search messages by keyword, room, or session
+router.get('/search', searchMessages);
 
 // Get chat history for a session
 router.get('/history/:sessionId', getChatHistory);
