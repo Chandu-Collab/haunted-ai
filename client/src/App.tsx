@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, FormEvent } from 'react';
+import useRooms from './hooks/useRooms';
 import GhostProfileManager from './components/GhostProfileManager';
 import GhostProfileSelector from './components/GhostProfileSelector';
 import RoomSelector from './components/RoomSelector';
@@ -60,9 +61,11 @@ interface EnhancedMessage extends Message {
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const App = () => {
+  const { rooms, fetchRooms } = useRooms();
   const [showGhostManager, setShowGhostManager] = useState(false);
   const [showGhostSelector, setShowGhostSelector] = useState(false);
-  const [currentRoom, setCurrentRoom] = useState<{ id: number; name: string } | null>(null);
+  const [currentRoom, setCurrentRoom] = useState<{ id: number; name: string; decorations?: any } | null>(null);
+  const [roomWallpaper, setRoomWallpaper] = useState<string | null>(null);
   const [showRoomSelector, setShowRoomSelector] = useState(false);
   // Room join handler
   const { user, getToken } = useAuth();
@@ -79,11 +82,35 @@ const App = () => {
         body: JSON.stringify({ roomId: room.id, userId: user.id })
       });
       if (!res.ok) throw new Error('Failed to join room');
-      setCurrentRoom(room);
+      // Fetch the latest room info (with decorations)
+      await fetchRooms();
+      const updatedRoom = rooms.find(r => r.id === room.id);
+      setCurrentRoom(updatedRoom || room);
     } catch (e) {
       alert('Failed to join room. Please try again.');
     }
   };
+
+  // Fetch decorations for current room and set wallpaper
+  useEffect(() => {
+    if (currentRoom && currentRoom.id) {
+      // Try to get the latest room info from rooms list
+      const updatedRoom = rooms.find(r => r.id === currentRoom.id);
+      const decorations = updatedRoom?.decorations || currentRoom.decorations;
+      if (decorations && decorations.wallpaper) {
+        let url = decorations.wallpaper;
+        if (url && !url.startsWith('http')) {
+          // Prepend backend URL if not absolute
+          url = `${API_URL.replace(/\/api.*/, '')}${url}`;
+        }
+        setRoomWallpaper(url);
+      } else {
+        setRoomWallpaper(null);
+      }
+    } else {
+      setRoomWallpaper(null);
+    }
+  }, [currentRoom, rooms]);
   const {
     environment,
     timeOfDay,
@@ -427,8 +454,18 @@ const App = () => {
     <div className={`app min-h-screen relative overflow-hidden font-sans`}
       style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
       {/* Apply theme/environment/time/season classes to the main background container for full effect */}
-      <div className={`main-bg-container ${themeClasses} min-h-screen relative force-visible-text`}
-           style={ghostColorStyle}>
+      <div
+        className={`main-bg-container ${themeClasses} min-h-screen relative force-visible-text`}
+        style={{
+          ...ghostColorStyle,
+          ...(roomWallpaper ? {
+            backgroundImage: `url('${roomWallpaper}')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          } : {})
+        }}
+      >
         
         {/* Enhanced Background Effects */}
         {appSettings.particleCount > 0 && (
