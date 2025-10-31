@@ -19,6 +19,7 @@ import useAuth from '../hooks/useAuth';
 import AvatarUpload from './AvatarUpload';
 import NicknameInput from './NicknameInput';
 import RoomDecoration from './RoomDecoration';
+import GhostAppearanceCustomizer from './GhostAppearanceCustomizer';
 
 interface Track {
   name: string;
@@ -468,6 +469,9 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
             <AvatarUpload />
             {/* Nickname Input */}
             <NicknameInput />
+
+            {/* Ghost Appearance Customization */}
+            <GhostAppearanceCustomizer />
 
             {/* Room Decoration */}
             {typeof currentRoomId === 'number' && currentRoomId > 0 && (

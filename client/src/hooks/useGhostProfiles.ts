@@ -6,6 +6,11 @@ export interface GhostProfile {
   backstory: string;
   emoji: string;
   color?: string;
+  appearance?: {
+    color?: string;
+    emoji?: string;
+    [key: string]: any;
+  };
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
