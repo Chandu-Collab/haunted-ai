@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import useMessageSearch from '../hooks/useMessageSearch';
+import useGhostProfiles from '../hooks/useGhostProfiles';
 
 interface MessageSearchProps {
   roomId?: string;
@@ -9,6 +10,7 @@ interface MessageSearchProps {
 const MessageSearch: React.FC<MessageSearchProps> = ({ roomId, sessionId }) => {
   const [query, setQuery] = useState('');
   const { results, loading, error, searchMessages } = useMessageSearch();
+  const { ghosts } = useGhostProfiles();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,12 +55,23 @@ const MessageSearch: React.FC<MessageSearchProps> = ({ roomId, sessionId }) => {
       {loading && <div className="text-purple-300">Searching...</div>}
       {error && <div className="text-red-400">{error}</div>}
       <ul className="space-y-2 mt-2 max-h-64 overflow-y-auto">
-        {results.map(msg => (
-          <li key={msg.id} className="p-2 rounded bg-haunted-900 border border-haunted-700">
-            <div className="text-xs text-purple-400 mb-1">{msg.createdAt ? new Date(msg.createdAt).toLocaleString() : ''}</div>
-            <div className={msg.isGhost ? 'text-purple-200' : 'text-blue-200'}>{msg.content}</div>
-          </li>
-        ))}
+        {results.map(msg => {
+          let ghostAppearance = null;
+          if (msg.isGhost && ghosts.length > 0) {
+            // Try to find a matching ghost profile (by name, id, or fallback)
+            // Adjust this logic if your message has a ghostId or similar
+            ghostAppearance = ghosts[0].appearance || { color: ghosts[0].color, emoji: ghosts[0].emoji };
+          }
+          return (
+            <li key={msg.id} className="p-2 rounded bg-haunted-900 border border-haunted-700">
+              <div className="text-xs text-purple-400 mb-1">{msg.createdAt ? new Date(msg.createdAt).toLocaleString() : ''}</div>
+              {msg.isGhost && ghostAppearance ? (
+                <span className="text-3xl mr-2" style={{ color: ghostAppearance.color }}>{ghostAppearance.emoji}</span>
+              ) : null}
+              <span className={msg.isGhost ? 'text-purple-200' : 'text-blue-200'}>{msg.content}</span>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
