@@ -1,3 +1,36 @@
+// Update user personal rituals (greeting/goodbye)
+export async function updatePersonalRituals(req: Request, res: Response) {
+  try {
+    const userId = req.body.userId;
+    const { greeting, goodbye } = req.body;
+    if (!userId) return res.status(400).json({ error: 'User ID required' });
+    const repo = AppDataSource.getRepository(User);
+    const user = await repo.findOneBy({ id: userId });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (greeting !== undefined) user.greeting = greeting;
+    if (goodbye !== undefined) user.goodbye = goodbye;
+    await repo.save(user);
+    return res.json({ success: true, greeting: user.greeting, goodbye: user.goodbye });
+  } catch (err) {
+    console.error('updatePersonalRituals error', err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+// Get user personal rituals (greeting/goodbye)
+export async function getPersonalRituals(req: Request, res: Response) {
+  try {
+    const userId = req.query.userId as string;
+    if (!userId) return res.status(400).json({ error: 'User ID required' });
+    const repo = AppDataSource.getRepository(User);
+    const user = await repo.findOneBy({ id: userId });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    return res.json({ greeting: user.greeting, goodbye: user.goodbye });
+  } catch (err) {
+    console.error('getPersonalRituals error', err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
 
 import type { Request, Response } from 'express';
 import { AppDataSource } from '../config/data-source';

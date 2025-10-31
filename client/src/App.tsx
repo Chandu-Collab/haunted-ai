@@ -36,6 +36,7 @@ import useBackgroundMusic from './hooks/useBackgroundMusic';
 import { useAIAnalysis, AIAnalysis } from './hooks/useAIAnalysis';
 import { useImageAnalysis, ImageAnalysis } from './hooks/useImageAnalysis';
 import usePersonalities from './hooks/usePersonalities';
+import usePersonalRituals from './hooks/usePersonalRituals';
 
 // Utils
 import { GHOST_PERSONALITIES, type GhostPersonality } from './utils/ghostPersonalities';
@@ -69,9 +70,25 @@ const App = () => {
   const [showRoomSelector, setShowRoomSelector] = useState(false);
   // Room join handler
   const { user, getToken } = useAuth();
+  const { rituals, loading: ritualsLoading, fetchRituals } = usePersonalRituals();
+  // Track previous room for leave ritual
+  const prevRoomRef = useRef<{ id: number; name: string } | null>(null);
+
   const handleJoinRoom = async (room: { id: number; name: string }) => {
     if (!user) return;
     setShowRoomSelector(false);
+    // If leaving a room, show goodbye ritual
+    if (prevRoomRef.current && rituals && rituals.goodbye) {
+      setMessages(prev => [
+        ...prev,
+        {
+          id: `goodbye-${Date.now()}`,
+          content: rituals.goodbye,
+          isGhost: true,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    }
     try {
       const res = await fetch(`${API_URL}/api/rooms/join`, {
         method: 'POST',
@@ -86,10 +103,44 @@ const App = () => {
       await fetchRooms();
       const updatedRoom = rooms.find(r => r.id === room.id);
       setCurrentRoom(updatedRoom || room);
+      // After joining, show greeting ritual
+      if (rituals && rituals.greeting) {
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `greeting-${Date.now()}`,
+            content: rituals.greeting,
+            isGhost: true,
+            timestamp: new Date().toISOString(),
+          },
+        ]);
+      }
+      prevRoomRef.current = room;
     } catch (e) {
       alert('Failed to join room. Please try again.');
     }
   };
+
+  // On mount, fetch rituals
+  useEffect(() => {
+    fetchRituals();
+  }, [user]);
+
+  // On leave (when currentRoom becomes null), show goodbye ritual
+  useEffect(() => {
+    if (currentRoom === null && prevRoomRef.current && rituals && rituals.goodbye) {
+      setMessages(prev => [
+        ...prev,
+        {
+          id: `goodbye-${Date.now()}`,
+          content: rituals.goodbye,
+          isGhost: true,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+      prevRoomRef.current = null;
+    }
+  }, [currentRoom, rituals]);
 
   // Fetch decorations for current room and set wallpaper
   useEffect(() => {
@@ -661,7 +712,17 @@ const App = () => {
                   <span className="text-purple-300 text-sm ml-2">Ghost: {appSettings.ghostPersonality.name}</span>
                 )}
                 {currentRoom && (
-                  <span className="text-purple-300 text-sm ml-2">Room: {currentRoom.name}</span>
+                  <>
+                    <span className="text-purple-300 text-sm ml-2">Room: {currentRoom.name}</span>
+                    <button
+                      onClick={() => setCurrentRoom(null)}
+                      className="ml-2 px-2 py-1 bg-haunted-700 rounded text-white text-xs hover:bg-haunted-600 border border-purple-500/50"
+                      title="Leave Room"
+                      aria-label="Leave Room"
+                    >
+                      Leave Room
+                    </button>
+                  </>
                 )}
                 {currentTrack && (
                   <div className="text-purple-300 text-sm">

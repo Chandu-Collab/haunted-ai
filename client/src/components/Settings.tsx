@@ -20,6 +20,7 @@ import AvatarUpload from './AvatarUpload';
 import NicknameInput from './NicknameInput';
 import RoomDecoration from './RoomDecoration';
 import GhostAppearanceCustomizer from './GhostAppearanceCustomizer';
+import PersonalRituals from './PersonalRituals';
 
 interface Track {
   name: string;
@@ -472,6 +473,9 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
 
             {/* Ghost Appearance Customization */}
             <GhostAppearanceCustomizer />
+
+            {/* Personal Rituals */}
+            <PersonalRituals />
 
             {/* Room Decoration */}
             {typeof currentRoomId === 'number' && currentRoomId > 0 && (
