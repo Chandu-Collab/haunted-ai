@@ -67,6 +67,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AppDataSource } from '../config/data-source';
 import { Message, IMessage } from '../entities/Message';
 import { ENHANCED_GHOST_PERSONALITIES, getPersonalityById, DEFAULT_PERSONALITY, adaptResponseToMood, adaptToWeatherAndTime } from '../utils/enhancedGhostPersonalities';
+import { getAIProvider } from '../ai/providerFactory';
 import SentimentAnalyzer, { MoodAnalysis, ContextualFactors } from '../utils/sentimentAnalyzer';
 import MemorySystem from '../utils/memorySystem';
 import WeatherService from '../utils/weatherService';
@@ -80,8 +81,9 @@ const weatherService = new WeatherService();
 const storytellingSystem = new StorytellingSystem();
 const imageAnalysisService = new ImageAnalysisService();
 
-// Initialize Google's Generative AI with your API key
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
+
+// Default AI provider (can be switched per request)
+const DEFAULT_AI_PROVIDER = process.env.AI_PROVIDER || 'gemini';
 
 // Enhanced ghost response generation with full AI capabilities
 const generateGhostResponse = async (
@@ -89,7 +91,8 @@ const generateGhostResponse = async (
   messageHistory: IMessage[] = [], 
   personalityId?: string,
   sessionId?: string,
-  imageBase64?: string
+  imageBase64?: string,
+  aiProviderName?: string
 ): Promise<{ response: string; moodAnalysis: MoodAnalysis; contextualFactors: ContextualFactors }> => {
   try {
     // Get the selected personality or use default
@@ -142,43 +145,20 @@ const generateGhostResponse = async (
       enhancedPrompt += imageAnalysisPrompt;
     }
 
-    // Get the Gemini model
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-pro-latest',
-      generationConfig: {
-        maxOutputTokens: activePersonality.responseStyle.lengthPreference === 'brief' ? 150 : 
-                        activePersonality.responseStyle.lengthPreference === 'moderate' ? 250 : 350,
-        temperature: 0.8,
-      }
+
+    // Use selected AI provider
+    const providerName = aiProviderName || DEFAULT_AI_PROVIDER;
+  const aiProvider = getAIProvider(providerName as any);
+    // Compose prompt (could be improved to include more context)
+    const prompt = `${enhancedPrompt}\n${userMessage}`;
+    const responseText = await aiProvider.generateResponse(prompt, {
+      personalityId,
+      sessionId,
+      messageHistory,
+      imageBase64,
+      moodAnalysis,
+      contextualFactors
     });
-
-    // Build conversation history with system prompt in first message
-    const chatHistory = [
-      {
-        role: 'user' as const,
-        parts: [{ text: enhancedPrompt }]
-      },
-      {
-        role: 'model' as const,
-        parts: [{ text: 'I understand. I am ready to respond as this character.' }]
-      },
-      ...messageHistory.slice(-6).map(msg => ({
-        role: msg.isGhost ? 'model' as const : 'user' as const,
-        parts: [{ text: msg.content }]
-      }))
-    ];
-
-    // Start a chat session
-    const chat = model.startChat({ history: chatHistory });
-
-    // Send the message and get the response
-    console.log('Sending message to Gemini...');
-    const result = await chat.sendMessage(userMessage);
-    const response = await result.response;
-    const responseText = await extractResponseText(response);
-    
-    console.log('Raw Gemini response:', responseText);
-    console.log('Response length:', responseText?.length || 0);
 
     // If the model returned nothing or only ellipses, return a fallback response
     if (!responseText || responseText.trim().length < 3 || /^\.*$/.test(responseText.trim())) {
