@@ -1,4 +1,6 @@
 import { Readable } from 'stream';
+import pkg from 'bad-words';
+const Filter = pkg.Filter || pkg;
 // Export chat logs as a spooky story (text file)
 export const exportChatLog = async (req: Request, res: Response) => {
   try {
@@ -355,6 +357,12 @@ const getChatHistory = async (req: Request, res: Response): Promise<void> => {
 const sendMessage = async (req: Request, res: Response): Promise<void> => {
   try {
     const { content, sessionId, personalityId, imageBase64 } = req.body;
+    // Content Filtering: Prevent inappropriate content
+    const filter = new Filter();
+    if (filter.isProfane(content)) {
+      res.status(400).json({ error: 'Inappropriate language detected. Please keep it appropriate!' });
+      return;
+    }
     
     // Analyze user message mood first
     const userMoodAnalysis = sentimentAnalyzer.analyzeMood(content);
