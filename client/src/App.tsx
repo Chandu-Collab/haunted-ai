@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useCallback, FormEvent } from 'react';
 import GhostProfileManager from './components/GhostProfileManager';
 import GhostProfileSelector from './components/GhostProfileSelector';
@@ -21,6 +20,7 @@ import MessageEffects from './components/MessageEffects';
 import EmojiReactions from './components/EmojiReactions';
 import NotificationSystem from './components/NotificationSystem';
 import AudioInitPrompt from './components/AudioInitPrompt';
+import MessageSearch from './components/MessageSearch';
 
 // New AI Components
 import MoodVisualizer from './components/MoodVisualizer';
@@ -753,6 +753,7 @@ const App = () => {
                   isSupported: true
                 }}
                 availablePersonalities={personalities}
+                currentRoomId={currentRoom?.id}
               />
             )}
           </AnimatePresence>
@@ -797,6 +798,11 @@ const App = () => {
           {/* Chat Messages */}
     <div className={`flex-1 overflow-y-auto p-2 sm:p-4 space-y-4 ${showAIFeatures ? 'ml-80' : ''} transition-all duration-300 force-visible-text`}
       style={{ color: '#ffffff', backgroundColor: 'rgba(0,0,0,0.1)' }}>
+            {/* Message Search and Export Bar */}
+        <div className="w-full flex justify-center mt-4">
+          <MessageSearch roomId={currentRoom?.id?.toString()} sessionId={sessionId} />
+        </div>
+
             <AnimatePresence>
         {messages.map((message, index) => (
                 <motion.div
@@ -846,8 +852,29 @@ const App = () => {
                         particleIntensity={appSettings.particleCount}
                       />
                       
-                      <div className="text-xs opacity-75 mt-2" style={{ color: 'inherit' }}>
-                        {new Date(message.timestamp).toLocaleTimeString()}
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-xs opacity-75" style={{ color: 'inherit' }}>
+                          {new Date(message.timestamp).toLocaleTimeString()}
+                        </span>
+                        {message.isGhost && (
+                          <button
+                            className="ml-2 px-2 py-1 bg-purple-700 rounded text-white text-xs hover:bg-purple-600"
+                            title="Share this ghost moment"
+                            onClick={() => {
+                              if (navigator.share) {
+                                navigator.share({
+                                  title: 'Ghost Moment',
+                                  text: message.content
+                                });
+                              } else {
+                                navigator.clipboard.writeText(message.content);
+                                alert('Ghost moment copied to clipboard!');
+                              }
+                            }}
+                          >
+                            Share
+                          </button>
+                        )}
                       </div>
                       <div className="mt-2">
                         <EmojiReactions messageId={message.id} sessionId={sessionId} disabled={!user} />

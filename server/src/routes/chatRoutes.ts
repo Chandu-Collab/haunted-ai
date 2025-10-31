@@ -1,6 +1,7 @@
-import { searchMessages } from '../controllers/chatController';
+
 import { Router } from 'express';
 import { 
+  searchMessages,
   getChatHistory, 
   sendMessage, 
   startStory, 
@@ -8,11 +9,14 @@ import {
   getAvailableStories,
   analyzeImage,
   getMemoryContext,
-  getCurrentWeather
-  ,getPersonalities
+  getCurrentWeather,
+  getPersonalities,
+  exportChatLog
 } from '../controllers/chatController';
 
+
 const router = Router();
+
 
 // Search messages by keyword, room, or session
 router.get('/search', searchMessages);
@@ -32,7 +36,12 @@ router.post('/story/choice', makeStoryChoice);
 router.post('/analyze-image', analyzeImage);
 router.get('/memory/:sessionId', getMemoryContext);
 router.get('/weather', getCurrentWeather);
+
 // Get available ghost personalities
 router.get('/personalities', getPersonalities);
+
+// Export chat log as a spooky story
+router.get('/export', exportChatLog);
+
 
 export default router;
