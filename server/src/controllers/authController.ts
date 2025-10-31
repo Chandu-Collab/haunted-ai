@@ -1,8 +1,78 @@
-import type { Request, Response } from 'express'
-import { AppDataSource } from '../config/data-source'
-import { User } from '../entities/User'
-import crypto from 'crypto'
-import jwt from 'jsonwebtoken'
+// Update user personal rituals (greeting/goodbye)
+export async function updatePersonalRituals(req: Request, res: Response) {
+  try {
+    const userId = req.body.userId;
+    const { greeting, goodbye } = req.body;
+    if (!userId) return res.status(400).json({ error: 'User ID required' });
+    const repo = AppDataSource.getRepository(User);
+    const user = await repo.findOneBy({ id: userId });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (greeting !== undefined) user.greeting = greeting;
+    if (goodbye !== undefined) user.goodbye = goodbye;
+    await repo.save(user);
+    return res.json({ success: true, greeting: user.greeting, goodbye: user.goodbye });
+  } catch (err) {
+    console.error('updatePersonalRituals error', err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+// Get user personal rituals (greeting/goodbye)
+export async function getPersonalRituals(req: Request, res: Response) {
+  try {
+    const userId = req.query.userId as string;
+    if (!userId) return res.status(400).json({ error: 'User ID required' });
+    const repo = AppDataSource.getRepository(User);
+    const user = await repo.findOneBy({ id: userId });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    return res.json({ greeting: user.greeting, goodbye: user.goodbye });
+  } catch (err) {
+    console.error('getPersonalRituals error', err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+import type { Request, Response } from 'express';
+import { AppDataSource } from '../config/data-source';
+import { User } from '../entities/User';
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+
+// Update user nickname
+export async function updateNickname(req: Request, res: Response) {
+  try {
+    const userId = req.body.userId;
+    const { nickname } = req.body;
+    if (!userId || !nickname) return res.status(400).json({ error: 'User ID and nickname required' });
+    const repo = AppDataSource.getRepository(User);
+    const user = await repo.findOneBy({ id: userId });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    user.nickname = nickname;
+    await repo.save(user);
+    return res.json({ success: true, nickname });
+  } catch (err) {
+    console.error('updateNickname error', err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+// Update user avatar
+export async function updateAvatar(req: Request, res: Response) {
+  try {
+    const userId = req.body.userId;
+    const { avatarUrl } = req.body;
+    if (!userId || !avatarUrl) return res.status(400).json({ error: 'User ID and avatarUrl required' });
+    const repo = AppDataSource.getRepository(User);
+    const user = await repo.findOneBy({ id: userId });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    user.avatarUrl = avatarUrl;
+    await repo.save(user);
+    return res.json({ success: true, avatarUrl });
+  } catch (err) {
+    console.error('updateAvatar error', err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret'
 

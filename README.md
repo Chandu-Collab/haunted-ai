@@ -1,3 +1,42 @@
+## Performance & Scalability
+
+### Load Balancing & Clustering
+
+#### PM2 (Node.js Clustering)
+
+To run multiple Node.js processes for better CPU utilization:
+
+```bash
+npm install -g pm2
+pm2 start dist/index.js -i max # or specify number of instances
+```
+
+#### Nginx (Recommended for Production)
+
+Use Nginx as a reverse proxy to distribute traffic across your Node.js instances:
+
+```
+upstream haunted_ai_backend {
+	server 127.0.0.1:5000;
+	server 127.0.0.1:5001;
+	# Add more servers as needed
+}
+
+server {
+	listen 80;
+	server_name yourdomain.com;
+
+	location / {
+		proxy_pass http://haunted_ai_backend;
+		proxy_set_header Host $host;
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto $scheme;
+	}
+}
+```
+
+This setup helps handle multiple concurrent users and improves reliability.
 # Haunted AI Chatbot 👻
 
 A spooky AI chatbot that becomes increasingly personal and unsettling the more you talk to it. Built with React, Node.js, and OpenAI's GPT-3.5.

@@ -1,9 +1,19 @@
+
 import { Router } from 'express'
-import { signup, login } from '../controllers/authController'
+import { signup, login, updateAvatar, updateNickname, updatePersonalRituals, getPersonalRituals } from '../controllers/authController'
 
 const router = Router()
 
-router.post('/signup', signup)
-router.post('/login', login)
+// Personal rituals (greeting/goodbye)
+router.post('/rituals', updatePersonalRituals)
+router.get('/rituals', getPersonalRituals)
+
+
+
+
+// Avatar upload/update
+router.post('/avatar', updateAvatar)
+
+router.post('/nickname', updateNickname)
 
 export default router

@@ -16,4 +16,8 @@ export class GhostProfile {
 
   @Column({ nullable: true })
   color?: string;
+
+  // Appearance customization (JSON: color, emoji, accessories, etc.)
+  @Column({ type: 'json', nullable: true })
+  appearance?: Record<string, any>;
 }

@@ -15,6 +15,12 @@ import AchievementSystem from './AchievementSystem';
 import EnergyBar from './EnergyBar';
 import MessageEffects from './MessageEffects';
 import type { GhostPersonality } from '../utils/ghostPersonalities';
+import useAuth from '../hooks/useAuth';
+import AvatarUpload from './AvatarUpload';
+import NicknameInput from './NicknameInput';
+import RoomDecoration from './RoomDecoration';
+import GhostAppearanceCustomizer from './GhostAppearanceCustomizer';
+import PersonalRituals from './PersonalRituals';
 
 interface Track {
   name: string;
@@ -56,9 +62,10 @@ interface SettingsProps {
   };
   availablePersonalities?: GhostPersonality[];
   sessionId?: string;
+  currentRoomId?: number;
 }
 
-const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettingsChange, onSettingsClose, musicControls, availablePersonalities, sessionId }) => {
+const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettingsChange, onSettingsClose, musicControls, availablePersonalities, sessionId, currentRoomId }) => {
   const [localSettings, setLocalSettings] = useState({
     ...settings,
     lightningEnabled: settings.lightningEnabled ?? true,
@@ -458,6 +465,22 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
                 </div>
               </div>
             </div>
+
+            {/* Avatar Upload */}
+            <AvatarUpload />
+            {/* Nickname Input */}
+            <NicknameInput />
+
+            {/* Ghost Appearance Customization */}
+            <GhostAppearanceCustomizer />
+
+            {/* Personal Rituals */}
+            <PersonalRituals />
+
+            {/* Room Decoration */}
+            {typeof currentRoomId === 'number' && currentRoomId > 0 && (
+              <RoomDecoration roomId={currentRoomId} />
+            )}
           </div>
 
           {/* Fixed Footer */}

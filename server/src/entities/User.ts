@@ -9,9 +9,26 @@ export class User {
   @Column({ unique: true })
   email!: string;
 
+
   // Stored as salt:hash (hex) for simplicity
   @Column()
   passwordHash!: string;
+
+  // Avatar image URL
+  @Column({ nullable: true })
+  avatarUrl?: string;
+
+  // Preferred nickname
+  @Column({ nullable: true })
+  nickname?: string;
+
+
+  // Custom greeting and goodbye for personal rituals
+  @Column({ nullable: true })
+  greeting?: string;
+
+  @Column({ nullable: true })
+  goodbye?: string;
 
   @CreateDateColumn()
   createdAt!: Date;

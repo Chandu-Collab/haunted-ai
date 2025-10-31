@@ -16,4 +16,8 @@ export class Room {
 
   @OneToMany(() => Message, message => message.room)
   messages!: Message[];
+
+  // Room decoration settings (JSON)
+  @Column({ type: 'json', nullable: true })
+  decorations?: Record<string, any>;
 }

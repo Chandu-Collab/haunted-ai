@@ -1,5 +1,5 @@
-
 import React, { useState, useRef, useEffect, useCallback, FormEvent } from 'react';
+import useRooms from './hooks/useRooms';
 import GhostProfileManager from './components/GhostProfileManager';
 import GhostProfileSelector from './components/GhostProfileSelector';
 import RoomSelector from './components/RoomSelector';
@@ -21,6 +21,7 @@ import MessageEffects from './components/MessageEffects';
 import EmojiReactions from './components/EmojiReactions';
 import NotificationSystem from './components/NotificationSystem';
 import AudioInitPrompt from './components/AudioInitPrompt';
+import MessageSearch from './components/MessageSearch';
 
 // New AI Components
 import MoodVisualizer from './components/MoodVisualizer';
@@ -35,6 +36,7 @@ import useBackgroundMusic from './hooks/useBackgroundMusic';
 import { useAIAnalysis, AIAnalysis } from './hooks/useAIAnalysis';
 import { useImageAnalysis, ImageAnalysis } from './hooks/useImageAnalysis';
 import usePersonalities from './hooks/usePersonalities';
+import usePersonalRituals from './hooks/usePersonalRituals';
 
 // Utils
 import { GHOST_PERSONALITIES, type GhostPersonality } from './utils/ghostPersonalities';
@@ -60,15 +62,33 @@ interface EnhancedMessage extends Message {
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const App = () => {
+  const { rooms, fetchRooms } = useRooms();
   const [showGhostManager, setShowGhostManager] = useState(false);
   const [showGhostSelector, setShowGhostSelector] = useState(false);
-  const [currentRoom, setCurrentRoom] = useState<{ id: number; name: string } | null>(null);
+  const [currentRoom, setCurrentRoom] = useState<{ id: number; name: string; decorations?: any } | null>(null);
+  const [roomWallpaper, setRoomWallpaper] = useState<string | null>(null);
   const [showRoomSelector, setShowRoomSelector] = useState(false);
   // Room join handler
   const { user, getToken } = useAuth();
+  const { rituals, loading: ritualsLoading, fetchRituals } = usePersonalRituals();
+  // Track previous room for leave ritual
+  const prevRoomRef = useRef<{ id: number; name: string } | null>(null);
+
   const handleJoinRoom = async (room: { id: number; name: string }) => {
     if (!user) return;
     setShowRoomSelector(false);
+    // If leaving a room, show goodbye ritual
+    if (prevRoomRef.current && rituals && rituals.goodbye) {
+      setMessages(prev => [
+        ...prev,
+        {
+          id: `goodbye-${Date.now()}`,
+          content: rituals.goodbye,
+          isGhost: true,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    }
     try {
       const res = await fetch(`${API_URL}/api/rooms/join`, {
         method: 'POST',
@@ -79,11 +99,69 @@ const App = () => {
         body: JSON.stringify({ roomId: room.id, userId: user.id })
       });
       if (!res.ok) throw new Error('Failed to join room');
-      setCurrentRoom(room);
+      // Fetch the latest room info (with decorations)
+      await fetchRooms();
+      const updatedRoom = rooms.find(r => r.id === room.id);
+      setCurrentRoom(updatedRoom || room);
+      // After joining, show greeting ritual
+      if (rituals && rituals.greeting) {
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `greeting-${Date.now()}`,
+            content: rituals.greeting,
+            isGhost: true,
+            timestamp: new Date().toISOString(),
+          },
+        ]);
+      }
+      prevRoomRef.current = room;
     } catch (e) {
       alert('Failed to join room. Please try again.');
     }
   };
+
+  // On mount, fetch rituals
+  useEffect(() => {
+    fetchRituals();
+  }, [user]);
+
+  // On leave (when currentRoom becomes null), show goodbye ritual
+  useEffect(() => {
+    if (currentRoom === null && prevRoomRef.current && rituals && rituals.goodbye) {
+      setMessages(prev => [
+        ...prev,
+        {
+          id: `goodbye-${Date.now()}`,
+          content: rituals.goodbye,
+          isGhost: true,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+      prevRoomRef.current = null;
+    }
+  }, [currentRoom, rituals]);
+
+  // Fetch decorations for current room and set wallpaper
+  useEffect(() => {
+    if (currentRoom && currentRoom.id) {
+      // Try to get the latest room info from rooms list
+      const updatedRoom = rooms.find(r => r.id === currentRoom.id);
+      const decorations = updatedRoom?.decorations || currentRoom.decorations;
+      if (decorations && decorations.wallpaper) {
+        let url = decorations.wallpaper;
+        if (url && !url.startsWith('http')) {
+          // Prepend backend URL if not absolute
+          url = `${API_URL.replace(/\/api.*/, '')}${url}`;
+        }
+        setRoomWallpaper(url);
+      } else {
+        setRoomWallpaper(null);
+      }
+    } else {
+      setRoomWallpaper(null);
+    }
+  }, [currentRoom, rooms]);
   const {
     environment,
     timeOfDay,
@@ -427,8 +505,18 @@ const App = () => {
     <div className={`app min-h-screen relative overflow-hidden font-sans`}
       style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
       {/* Apply theme/environment/time/season classes to the main background container for full effect */}
-      <div className={`main-bg-container ${themeClasses} min-h-screen relative force-visible-text`}
-           style={ghostColorStyle}>
+      <div
+        className={`main-bg-container ${themeClasses} min-h-screen relative force-visible-text`}
+        style={{
+          ...ghostColorStyle,
+          ...(roomWallpaper ? {
+            backgroundImage: `url('${roomWallpaper}')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          } : {})
+        }}
+      >
         
         {/* Enhanced Background Effects */}
         {appSettings.particleCount > 0 && (
@@ -624,7 +712,17 @@ const App = () => {
                   <span className="text-purple-300 text-sm ml-2">Ghost: {appSettings.ghostPersonality.name}</span>
                 )}
                 {currentRoom && (
-                  <span className="text-purple-300 text-sm ml-2">Room: {currentRoom.name}</span>
+                  <>
+                    <span className="text-purple-300 text-sm ml-2">Room: {currentRoom.name}</span>
+                    <button
+                      onClick={() => setCurrentRoom(null)}
+                      className="ml-2 px-2 py-1 bg-haunted-700 rounded text-white text-xs hover:bg-haunted-600 border border-purple-500/50"
+                      title="Leave Room"
+                      aria-label="Leave Room"
+                    >
+                      Leave Room
+                    </button>
+                  </>
                 )}
                 {currentTrack && (
                   <div className="text-purple-300 text-sm">
@@ -753,6 +851,7 @@ const App = () => {
                   isSupported: true
                 }}
                 availablePersonalities={personalities}
+                currentRoomId={currentRoom?.id}
               />
             )}
           </AnimatePresence>
@@ -797,6 +896,11 @@ const App = () => {
           {/* Chat Messages */}
     <div className={`flex-1 overflow-y-auto p-2 sm:p-4 space-y-4 ${showAIFeatures ? 'ml-80' : ''} transition-all duration-300 force-visible-text`}
       style={{ color: '#ffffff', backgroundColor: 'rgba(0,0,0,0.1)' }}>
+            {/* Message Search and Export Bar */}
+        <div className="w-full flex justify-center mt-4">
+          <MessageSearch roomId={currentRoom?.id?.toString()} sessionId={sessionId} />
+        </div>
+
             <AnimatePresence>
         {messages.map((message, index) => (
                 <motion.div
@@ -846,8 +950,29 @@ const App = () => {
                         particleIntensity={appSettings.particleCount}
                       />
                       
-                      <div className="text-xs opacity-75 mt-2" style={{ color: 'inherit' }}>
-                        {new Date(message.timestamp).toLocaleTimeString()}
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-xs opacity-75" style={{ color: 'inherit' }}>
+                          {new Date(message.timestamp).toLocaleTimeString()}
+                        </span>
+                        {message.isGhost && (
+                          <button
+                            className="ml-2 px-2 py-1 bg-purple-700 rounded text-white text-xs hover:bg-purple-600"
+                            title="Share this ghost moment"
+                            onClick={() => {
+                              if (navigator.share) {
+                                navigator.share({
+                                  title: 'Ghost Moment',
+                                  text: message.content
+                                });
+                              } else {
+                                navigator.clipboard.writeText(message.content);
+                                alert('Ghost moment copied to clipboard!');
+                              }
+                            }}
+                          >
+                            Share
+                          </button>
+                        )}
                       </div>
                       <div className="mt-2">
                         <EmojiReactions messageId={message.id} sessionId={sessionId} disabled={!user} />

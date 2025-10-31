@@ -2,20 +2,57 @@ import 'reflect-metadata';
 // Load environment variables early (ensures other modules see process.env)
 import './config/env';
 import express from 'express';
+import path from 'path';
 import cors from 'cors';
 import { connectDB } from './config/db';
 import chatRoutes from './routes/chatRoutes';
 import interactionRoutes from './routes/interactionRoutes';
 import authRoutes from './routes/authRoutes';
 import roomRoutes from './routes/roomRoutes';
+import roomWallpaperRoutes from './routes/roomWallpaperRoutes';
 import ghostProfileRoutes from './routes/ghostProfileRoutes';
 import { AppDataSource } from './config/data-source';
 import { Message } from './entities/Message';
+
+import { connectRedis } from './utils/redisClient';
+
+import rateLimit from 'express-rate-limit';
 
 // Environment variables are loaded by `src/config/env` above.
 
 // Initialize Express app
 const app = express();
+
+// Analytics middleware
+import { analyticsMiddleware, getAnalytics } from './middleware/analytics';
+
+// Rate Limiting: Prevent spam and abuse
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // limit each IP to 200 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20, // stricter limit for auth endpoints
+  message: 'Too many authentication attempts from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+const chatLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 30, // limit chat messages per minute per IP
+  message: 'You are sending messages too quickly. Please slow down.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply general rate limiter and analytics middleware to all API routes
+app.use('/api/', generalLimiter, analyticsMiddleware);
+
+// Serve uploaded files (room wallpapers, avatars, etc.)
+app.use('/uploads', express.static(path.join(__dirname, '../../public/uploads')));
 
 // Middleware: enable CORS for the configured client origin
 const CLIENT_ORIGIN = process.env.CLIENT_URL || 'http://localhost:5173';
@@ -32,6 +69,9 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Database connection
 connectDB();
+
+// Redis connection
+connectRedis();
 
 // Test database connection (use connectDB which is idempotent)
 const testConnection = async () => {
@@ -57,18 +97,22 @@ const testConnection = async () => {
 testConnection();
 
 // Routes
-app.use('/api/chat', chatRoutes);
+app.use('/api/chat', chatLimiter, chatRoutes);
 app.use('/api/rooms', roomRoutes);
+app.use('/api/rooms', roomWallpaperRoutes);
 app.use('/api/ghosts', ghostProfileRoutes);
 // Minimal interactions API (achievements / energy / rooms)
 app.use('/api/interactions', interactionRoutes);
 // Authentication routes (signup / login)
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', database: AppDataSource.isInitialized ? 'connected' : 'disconnected' });
 });
+
+// Analytics dashboard endpoint (basic JSON)
+app.get('/admin/analytics', getAnalytics);
 
 // Start server
 const PORT = process.env.PORT || 5000;
