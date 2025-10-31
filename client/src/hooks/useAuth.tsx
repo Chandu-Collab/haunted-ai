@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
-type User = { id: string; email: string } | null
+type User = { id: string; email: string; avatarUrl?: string; nickname?: string } | null
 
 type AuthContextType = {
   user: User
@@ -8,6 +8,8 @@ type AuthContextType = {
   signup: (email: string, password: string) => Promise<any>
   logout: () => void
   getToken: () => string | null
+  updateAvatar: (avatarUrl: string) => Promise<any>
+  updateNickname: (nickname: string) => Promise<any>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -61,6 +63,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return data
   }
 
+  // Update avatar
+  const updateAvatar = async (avatarUrl: string) => {
+    if (!user) throw new Error('Not logged in')
+    const resp = await fetch(`${API_URL}/api/auth/avatar`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {})
+      },
+      body: JSON.stringify({ userId: user.id, avatarUrl })
+    })
+    if (!resp.ok) throw new Error((await resp.json()).error || 'Avatar update failed')
+    const data = await resp.json()
+    // Update user in local state and storage
+    const updatedUser = { ...user, avatarUrl }
+    setUser(updatedUser)
+    localStorage.setItem('haunted_user', JSON.stringify(updatedUser))
+    return data
+  }
+
+  // Update nickname
+  const updateNickname = async (nickname: string) => {
+    if (!user) throw new Error('Not logged in')
+    const resp = await fetch(`${API_URL}/api/auth/nickname`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {})
+      },
+      body: JSON.stringify({ userId: user.id, nickname })
+    })
+    if (!resp.ok) throw new Error((await resp.json()).error || 'Nickname update failed')
+    const data = await resp.json()
+    // Update user in local state and storage
+    const updatedUser = { ...user, nickname }
+    setUser(updatedUser)
+    localStorage.setItem('haunted_user', JSON.stringify(updatedUser))
+    return data
+  }
+
   // keep user in sync if another tab changes localStorage
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
@@ -73,7 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, getToken }}>
+    <AuthContext.Provider value={{ user, login, signup, logout, getToken, updateAvatar, updateNickname }}>
       {children}
     </AuthContext.Provider>
   )

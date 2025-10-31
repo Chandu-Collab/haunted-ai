@@ -1,3 +1,35 @@
+import { Readable } from 'stream';
+// Export chat logs as a spooky story (text file)
+export const exportChatLog = async (req: Request, res: Response) => {
+  try {
+    const { roomId, sessionId } = req.query;
+    const messageRepository = AppDataSource.getRepository(Message);
+    const where: any = {};
+    if (roomId) {
+      where.room = { id: roomId };
+    }
+    if (sessionId) {
+      where.sessionId = sessionId;
+    }
+    const messages = await messageRepository.find({
+      where,
+      order: { createdAt: 'ASC' }
+    });
+    let story = `👻 Spooky Chat Log\n\n`;
+    for (const msg of messages) {
+      const who = msg.isGhost ? 'Ghost' : 'You';
+      const time = msg.createdAt ? new Date(msg.createdAt).toLocaleString() : '';
+      story += `[${time}] ${who}: ${msg.content}\n`;
+    }
+    res.setHeader('Content-Disposition', 'attachment; filename="spooky_chat_log.txt"');
+    res.setHeader('Content-Type', 'text/plain');
+    const stream = Readable.from([story]);
+    stream.pipe(res);
+  } catch (error) {
+    console.error('Error exporting chat log:', error);
+    res.status(500).json({ error: 'Failed to export chat log' });
+  }
+};
 // Search messages by keyword, room, and/or user
 import { Like } from 'typeorm';
 
