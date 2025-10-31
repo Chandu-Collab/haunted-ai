@@ -1,7 +1,12 @@
+
 import { Router } from 'express'
-import { signup, login, updateAvatar, updateNickname } from '../controllers/authController'
+import { signup, login, updateAvatar, updateNickname, updatePersonalRituals, getPersonalRituals } from '../controllers/authController'
 
 const router = Router()
+
+// Personal rituals (greeting/goodbye)
+router.post('/rituals', updatePersonalRituals)
+router.get('/rituals', getPersonalRituals)
 
 
 

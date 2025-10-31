@@ -22,6 +22,14 @@ export class User {
   @Column({ nullable: true })
   nickname?: string;
 
+
+  // Custom greeting and goodbye for personal rituals
+  @Column({ nullable: true })
+  greeting?: string;
+
+  @Column({ nullable: true })
+  goodbye?: string;
+
   @CreateDateColumn()
   createdAt!: Date;
 
