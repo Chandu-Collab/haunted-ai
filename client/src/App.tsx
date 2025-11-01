@@ -31,7 +31,7 @@ import WeatherDisplay from './components/WeatherDisplay';
 
 // Enhanced Hooks
 import useAudio from './hooks/useAudio';
-import useVoiceSynthesis from './hooks/useVoiceSynthesis';
+import useVoiceSynthesis, { VoiceEffect } from './hooks/useVoiceSynthesis';
 import useBackgroundMusic from './hooks/useBackgroundMusic';
 import { useAIAnalysis, AIAnalysis } from './hooks/useAIAnalysis';
 import { useImageAnalysis, ImageAnalysis } from './hooks/useImageAnalysis';
@@ -220,6 +220,9 @@ const App = () => {
     typingAnimationEnabled: true,
   });
 
+  // Voice effect for ghost messages (sync with Settings)
+  const [voiceEffect, setVoiceEffect] = useState<'none' | 'echo' | 'reverb' | 'whisper' | 'robot'>('none');
+
   // Fetch server-provided personalities and sync initial selection
   const { personalities, isLoading: personalitiesLoading } = usePersonalities();
 
@@ -264,7 +267,19 @@ const App = () => {
 
   // Hooks
   const { playSyntheticSound } = useAudio();
-  const { speak: speakText, isSpeaking } = useVoiceSynthesis();
+  const { speak: speakText, isSpeaking, voices } = useVoiceSynthesis();
+  // Helper to get effect for current personality
+  const getEffectForPersonality = (personality): VoiceEffect => {
+    if (personality.id.includes('banshee')) return 'whisper';
+    if (personality.id.includes('robot')) return 'robot';
+    if (personality.id.includes('echo')) return 'echo';
+    if (personality.id.includes('reverb')) return 'reverb';
+    return 'none';
+  };
+  // Helper to get a matching voice for the personality
+  const getVoiceForPersonality = (personality) => {
+    return voices.find(v => v.name.toLowerCase().includes(personality.name.toLowerCase())) || null;
+  };
   const { 
     isPlaying: isMusicPlaying,
     play: playMusic,
@@ -376,6 +391,7 @@ const App = () => {
             rate: personality.voiceSettings.rate,
             pitch: personality.voiceSettings.pitch,
             volume: personality.voiceSettings.volume,
+            effect: voiceEffect
           });
         }
       }
@@ -892,10 +908,9 @@ const App = () => {
             {showSettings && (
               <Settings
                 isOpen={showSettings}
+                onClose={() => setShowSettings(false)}
                 settings={appSettings}
                 onSettingsChange={setAppSettings}
-                onClose={() => setShowSettings(false)}
-                sessionId={sessionId}
                 musicControls={{
                   isPlaying: isMusicPlaying,
                   currentTrack: currentTrack,
@@ -909,6 +924,8 @@ const App = () => {
                 }}
                 availablePersonalities={personalities}
                 currentRoomId={currentRoom?.id}
+                voiceEffect={voiceEffect}
+                setVoiceEffect={setVoiceEffect}
               />
             )}
           </AnimatePresence>
@@ -1012,23 +1029,43 @@ const App = () => {
                           {new Date(message.timestamp).toLocaleTimeString()}
                         </span>
                         {message.isGhost && (
-                          <button
-                            className="ml-2 px-2 py-1 bg-purple-700 rounded text-white text-xs hover:bg-purple-600"
-                            title="Share this ghost moment"
-                            onClick={() => {
-                              if (navigator.share) {
-                                navigator.share({
-                                  title: 'Ghost Moment',
-                                  text: message.content
-                                });
-                              } else {
-                                navigator.clipboard.writeText(message.content);
-                                alert('Ghost moment copied to clipboard!');
-                              }
-                            }}
-                          >
-                            Share
-                          </button>
+                          <>
+                            <button
+                              className="ml-2 px-2 py-1 bg-purple-700 rounded text-white text-xs hover:bg-purple-600"
+                              title="Share this ghost moment"
+                              onClick={() => {
+                                if (navigator.share) {
+                                  navigator.share({
+                                    title: 'Ghost Moment',
+                                    text: message.content
+                                  });
+                                } else {
+                                  navigator.clipboard.writeText(message.content);
+                                  alert('Ghost moment copied to clipboard!');
+                                }
+                              }}
+                            >
+                              Share
+                            </button>
+                            <button
+                              className="ml-2 px-2 py-1 bg-purple-800 rounded text-white text-xs hover:bg-purple-600"
+                              title="Speak Again"
+                              onClick={() => {
+                                speakText(
+                                  message.content,
+                                  {
+                                    rate: appSettings.ghostPersonality.voiceSettings.rate,
+                                    pitch: appSettings.ghostPersonality.voiceSettings.pitch,
+                                    volume: appSettings.ghostPersonality.voiceSettings.volume,
+                                    effect: voiceEffect,
+                                    voice: getVoiceForPersonality(appSettings.ghostPersonality)
+                                  }
+                                );
+                              }}
+                            >
+                              🔊 Speak Again
+                            </button>
+                          </>
                         )}
                       </div>
                       <div className="mt-2">

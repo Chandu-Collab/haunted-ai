@@ -1,4 +1,5 @@
 import React from 'react';
+import useVoiceSynthesis, { VoiceEffect } from '../hooks/useVoiceSynthesis';
 import { motion } from 'framer-motion';
 import { GHOST_PERSONALITIES, type GhostPersonality } from '../utils/ghostPersonalities';
 
@@ -15,6 +16,20 @@ const PersonalitySelector: React.FC<PersonalitySelectorProps> = ({
   className = '',
   availablePersonalities
 }) => {
+  const { preview, voices } = useVoiceSynthesis();
+  // Find a matching voice for the ghost if possible
+  const getVoiceForPersonality = (personality) => {
+    // Optionally, match by name or gender, fallback to null
+    return voices.find(v => v.name.toLowerCase().includes(personality.name.toLowerCase())) || null;
+  };
+  // Optionally, map ghost id to a default effect
+  const getEffectForPersonality = (personality): VoiceEffect => {
+    if (personality.id.includes('banshee')) return 'whisper';
+    if (personality.id.includes('robot')) return 'robot';
+    if (personality.id.includes('echo')) return 'echo';
+    if (personality.id.includes('reverb')) return 'reverb';
+    return 'none';
+  };
   return (
     <div className={`space-y-4 ${className}`}>
       <div className="flex items-center justify-between">
@@ -74,9 +89,8 @@ const PersonalitySelector: React.FC<PersonalitySelectorProps> = ({
       {/* Personality Grid */}
       <div className="grid grid-cols-2 gap-2">
         {(availablePersonalities ?? GHOST_PERSONALITIES).map((personality) => (
-          <motion.button
+          <motion.div
             key={personality.id}
-            onClick={() => onPersonalityChange(personality)}
             className={`p-3 rounded-lg border text-left transition-all relative overflow-hidden ${
               selectedPersonality.id === personality.id
                 ? 'border-opacity-80 bg-opacity-20'
@@ -109,12 +123,28 @@ const PersonalitySelector: React.FC<PersonalitySelectorProps> = ({
               >
                 {personality.name}
               </span>
+              <button
+                type="button"
+                className="ml-auto px-2 py-1 bg-haunted-700 hover:bg-haunted-600 rounded text-white text-xs"
+                title={`Preview ${personality.name}'s voice`}
+                onClick={e => {
+                  e.stopPropagation();
+                  preview(
+                    `Greetings, I am ${personality.name}. ${personality.description}`,
+                    {
+                      voiceSettings: personality.voiceSettings,
+                      effect: getEffectForPersonality(personality),
+                      voice: getVoiceForPersonality(personality)
+                    }
+                  );
+                }}
+              >
+                🔊 Preview Voice
+              </button>
             </div>
-            
             <p className="text-xs text-haunted-400 line-clamp-2">
               {personality.description}
             </p>
-
             {/* Personality traits indicator */}
             <div className="mt-2 flex items-center space-x-1">
               <div 
@@ -125,7 +155,7 @@ const PersonalitySelector: React.FC<PersonalitySelectorProps> = ({
                 {personality.responseStyle.tone}
               </span>
             </div>
-          </motion.button>
+          </motion.div>
         ))}
       </div>
 

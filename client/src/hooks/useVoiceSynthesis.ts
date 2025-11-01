@@ -1,14 +1,18 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 
+
+export type VoiceEffect = 'none' | 'echo' | 'reverb' | 'whisper' | 'robot';
 interface VoiceOptions {
   voice?: SpeechSynthesisVoice;
   rate?: number;
   pitch?: number;
   volume?: number;
+  effect?: VoiceEffect;
 }
 
 interface UseVoiceSynthesis {
   speak: (text: string, options?: VoiceOptions) => Promise<void>;
+  preview: (text: string, personality: { voiceSettings: { rate: number; pitch: number; volume: number }, effect?: VoiceEffect, voice?: SpeechSynthesisVoice }) => Promise<void>;
   stop: () => void;
   isSpeaking: boolean;
   isSupported: boolean;
@@ -26,6 +30,7 @@ export const useVoiceSynthesis = (): UseVoiceSynthesis => {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  // For effects, we can use Web Audio API overlays for echo/reverb/robot, but for now, simulate with pitch/rate/volume and text
 
   // Check browser support and load voices
   useEffect(() => {
@@ -136,84 +141,69 @@ export const useVoiceSynthesis = (): UseVoiceSynthesis => {
   }, []);
 
   const speak = useCallback(async (text: string, options: VoiceOptions = {}): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      // Quick support check
+    return new Promise((resolve) => {
       if (!isSupported || typeof window === 'undefined' || !('speechSynthesis' in window) || !window.speechSynthesis) {
         console.warn('Speech synthesis not available, isSupported:', isSupported);
         resolve();
         return;
       }
-
-      // Stop any current speech
       speechSynthesis.cancel();
-
-      // Clean up text for better speech
-      const cleanText = text
-        .replace(/\*([^*]+)\*/g, '$1') // Remove asterisks for actions
-        .replace(/\n+/g, '. ') // Replace newlines with pauses
-        .replace(/\.\.\./g, '... ') // Add space after ellipses
+      let cleanText = text
+        .replace(/\*([^*]+)\*/g, '$1')
+        .replace(/\n+/g, '. ')
+        .replace(/\.\.\./g, '... ')
         .trim();
-
       if (!cleanText) {
         resolve();
         return;
       }
-
+      // Simulate effects by modifying text or utterance
+      let effect = options.effect || 'none';
+      if (effect === 'whisper') {
+        cleanText = 'psst... ' + cleanText;
+      } else if (effect === 'robot') {
+        cleanText = cleanText.split('').join(' ');
+      } else if (effect === 'echo') {
+        cleanText = cleanText + '. ... ' + cleanText.split(' ').slice(-4).join(' ') + '...';
+      } else if (effect === 'reverb') {
+        cleanText = cleanText + '... ...';
+      }
       const utterance = new SpeechSynthesisUtterance(cleanText);
       utteranceRef.current = utterance;
-
-      // Configure voice options
       if (options.voice || selectedVoice) {
         utterance.voice = options.voice || selectedVoice;
       }
-
-      // Ghost-like speech settings
-      utterance.rate = options.rate || 0.8; // Slightly slower for spookiness
-      utterance.pitch = options.pitch || 0.7; // Lower pitch for ghost effect
+      utterance.rate = options.rate || 0.8;
+      utterance.pitch = options.pitch || 0.7;
       utterance.volume = options.volume || 0.8;
-
-      console.log('Starting speech synthesis:', {
-        text: cleanText.substring(0, 50) + '...',
-        voice: utterance.voice?.name || 'default',
-        rate: utterance.rate,
-        pitch: utterance.pitch,
-        volume: utterance.volume,
-        isSupported
-      });
-
-      // Event handlers
-      utterance.onstart = () => {
-        console.log('Speech synthesis started');
-        setIsSpeaking(true);
-      };
-
-      utterance.onend = () => {
-        console.log('Speech synthesis ended');
-        setIsSpeaking(false);
-        utteranceRef.current = null;
-        resolve();
-      };
-
-      utterance.onerror = (event) => {
-        console.error('Speech synthesis error:', event.error, event);
-        setIsSpeaking(false);
-        utteranceRef.current = null;
-        // Don't reject - voice is optional
-        resolve();
-      };
-
-      // Start speaking
+      // Slightly adjust for effect
+      if (effect === 'whisper') utterance.volume = 0.4;
+      if (effect === 'robot') utterance.rate = 0.7;
+      if (effect === 'echo') utterance.rate = 0.9;
+      if (effect === 'reverb') utterance.rate = 0.7;
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => { setIsSpeaking(false); utteranceRef.current = null; resolve(); };
+      utterance.onerror = () => { setIsSpeaking(false); utteranceRef.current = null; resolve(); };
       try {
         speechSynthesis.speak(utterance);
-        console.log('Speech synthesis utterance queued');
       } catch (error) {
-        console.error('Failed to start speech synthesis:', error);
         setIsSpeaking(false);
         utteranceRef.current = null;
-        resolve(); // Don't reject - voice is optional
+        resolve();
       }
     });
   }, [isSupported, selectedVoice]);
+
+  // Preview method for personality selector
+  const preview = useCallback(async (text: string, personality: { voiceSettings: { rate: number; pitch: number; volume: number }, effect?: VoiceEffect, voice?: SpeechSynthesisVoice }) => {
+    return speak(text, {
+      rate: personality.voiceSettings.rate,
+      pitch: personality.voiceSettings.pitch,
+      volume: personality.voiceSettings.volume,
+      effect: personality.effect,
+      voice: personality.voice
+    });
+  }, [speak]);
 
   const stop = useCallback(() => {
     if (isSupported && speechSynthesis.speaking) {
@@ -225,6 +215,7 @@ export const useVoiceSynthesis = (): UseVoiceSynthesis => {
 
   return {
     speak,
+    preview,
     stop,
     isSpeaking,
     isSupported,
