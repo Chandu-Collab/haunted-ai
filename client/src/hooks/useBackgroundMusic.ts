@@ -708,10 +708,38 @@ export const useBackgroundMusic = (): UseBackgroundMusic => {
       return;
     }
 
-    // DISABLE ALL MANUAL CONTINUOUS PLAYBACK - only settings music allowed
-    console.log('🎵 Manual continuous playback disabled - use playSettingsMusic() instead');
-    return;
-  }, [isSupported]);
+    let selectedTrack = track || SUPERNATURAL_TRACKS[currentTrackIndex];
+    setCurrentTrack(selectedTrack);
+
+    // Clear any existing audio
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    clearGlobalAudio();
+
+    let audio: HTMLAudioElement | null = null;
+    try {
+      audio = new Audio(selectedTrack.url);
+      await new Promise((resolve, reject) => {
+        if (!audio) return reject(new Error('Audio creation failed'));
+        audio.addEventListener('canplay', resolve);
+        audio.addEventListener('error', reject);
+        audio.load();
+        setTimeout(() => reject(new Error('Audio load timeout')), 2000);
+      });
+    } catch {
+      audio = createSyntheticAmbientAudio(selectedTrack.name);
+    }
+    if (!audio) return;
+    audioRef.current = audio;
+    globalAudioInstance = audio;
+    audio.loop = options.loop ?? true;
+    audio.volume = options.volume ?? volume;
+    audio.play();
+    setIsPlaying(true);
+    setCurrentTrack(selectedTrack);
+  }, [isSupported, currentTrackIndex, volume, createSyntheticAmbientAudio]);
 
   const pause = useCallback(() => {
     console.log('Background music pause called, audioRef exists:', !!audioRef.current, 'paused:', audioRef.current?.paused);
@@ -777,18 +805,14 @@ export const useBackgroundMusic = (): UseBackgroundMusic => {
   const nextTrack = useCallback(() => {
     const nextIndex = (currentTrackIndex + 1) % SUPERNATURAL_TRACKS.length;
     setCurrentTrackIndex(nextIndex);
-    
-    // Manual track switching disabled - only settings music plays
-    console.log('🎵 Manual track switching disabled - only 15-second settings music allowed');
-  }, [currentTrackIndex]);
+    play(SUPERNATURAL_TRACKS[nextIndex]);
+  }, [currentTrackIndex, play]);
 
   const previousTrack = useCallback(() => {
     const prevIndex = currentTrackIndex === 0 ? SUPERNATURAL_TRACKS.length - 1 : currentTrackIndex - 1;
     setCurrentTrackIndex(prevIndex);
-    
-    // Manual track switching disabled - only settings music plays  
-    console.log('🎵 Manual track switching disabled - only 15-second settings music allowed');
-  }, [currentTrackIndex]);
+    play(SUPERNATURAL_TRACKS[prevIndex]);
+  }, [currentTrackIndex, play]);
 
   // Cleanup on unmount
   useEffect(() => {

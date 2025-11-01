@@ -23,26 +23,36 @@ import rateLimit from 'express-rate-limit';
 // Initialize Express app
 const app = express();
 
+// Middleware: enable CORS for the configured client origin (FIRST)
+const CLIENT_ORIGIN = process.env.CLIENT_URL || 'http://localhost:5173';
+app.use(cors({
+  origin: CLIENT_ORIGIN,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  credentials: true,
+  optionsSuccessStatus: 204
+}));
+
 // Analytics middleware
 import { analyticsMiddleware, getAnalytics } from './middleware/analytics';
 
 // Rate Limiting: Prevent spam and abuse
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, // limit each IP to 200 requests per windowMs
+  max: 1000, // increased for development
   standardHeaders: true,
   legacyHeaders: false,
 });
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20, // stricter limit for auth endpoints
+  max: 100, // increased for development
   message: 'Too many authentication attempts from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
 });
 const chatLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 30, // limit chat messages per minute per IP
+  max: 100, // increased for development
   message: 'You are sending messages too quickly. Please slow down.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -53,17 +63,6 @@ app.use('/api/', generalLimiter, analyticsMiddleware);
 
 // Serve uploaded files (room wallpapers, avatars, etc.)
 app.use('/uploads', express.static(path.join(__dirname, '../../public/uploads')));
-
-// Middleware: enable CORS for the configured client origin
-const CLIENT_ORIGIN = process.env.CLIENT_URL || 'http://localhost:5173';
-// Allow common HTTP methods and the Authorization header for authenticated requests.
-app.use(cors({
-  origin: CLIENT_ORIGIN,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-  credentials: true,
-  optionsSuccessStatus: 204
-}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 

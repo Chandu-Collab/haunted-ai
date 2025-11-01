@@ -104,7 +104,7 @@ export default function useGhostInteractions(sessionId?: string) {
       } catch (e) {
         // ignore for now
       }
-    }, 800);
+    }, 2000); // Increased debounce to 2000ms
 
     return () => {
       if (syncRef.current.timer) window.clearTimeout(syncRef.current.timer as number);
