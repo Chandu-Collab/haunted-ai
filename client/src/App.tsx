@@ -31,12 +31,13 @@ import WeatherDisplay from './components/WeatherDisplay';
 
 // Enhanced Hooks
 import useAudio from './hooks/useAudio';
-import useVoiceSynthesis from './hooks/useVoiceSynthesis';
+import useVoiceSynthesis, { VoiceEffect } from './hooks/useVoiceSynthesis';
 import useBackgroundMusic from './hooks/useBackgroundMusic';
 import { useAIAnalysis, AIAnalysis } from './hooks/useAIAnalysis';
 import { useImageAnalysis, ImageAnalysis } from './hooks/useImageAnalysis';
 import usePersonalities from './hooks/usePersonalities';
 import usePersonalRituals from './hooks/usePersonalRituals';
+import PersonalitySelector from './components/PersonalitySelector';
 
 // Utils
 import { GHOST_PERSONALITIES, type GhostPersonality } from './utils/ghostPersonalities';
@@ -121,10 +122,7 @@ const App = () => {
     }
   };
 
-  // On mount, fetch rituals
-  useEffect(() => {
-    fetchRituals();
-  }, [user]);
+  // Rituals are fetched by usePersonalRituals hook; no need to fetch again here
 
   // On leave (when currentRoom becomes null), show goodbye ritual
   useEffect(() => {
@@ -222,6 +220,9 @@ const App = () => {
     typingAnimationEnabled: true,
   });
 
+  // Voice effect for ghost messages (sync with Settings)
+  const [voiceEffect, setVoiceEffect] = useState<'none' | 'echo' | 'reverb' | 'whisper' | 'robot'>('none');
+
   // Fetch server-provided personalities and sync initial selection
   const { personalities, isLoading: personalitiesLoading } = usePersonalities();
 
@@ -266,14 +267,31 @@ const App = () => {
 
   // Hooks
   const { playSyntheticSound } = useAudio();
-  const { speak: speakText, isSpeaking } = useVoiceSynthesis();
+  const { speak: speakText, isSpeaking, voices } = useVoiceSynthesis();
+  // Helper to get effect for current personality
+  const getEffectForPersonality = (personality): VoiceEffect => {
+    if (personality.id.includes('banshee')) return 'whisper';
+    if (personality.id.includes('robot')) return 'robot';
+    if (personality.id.includes('echo')) return 'echo';
+    if (personality.id.includes('reverb')) return 'reverb';
+    return 'none';
+  };
+  // Helper to get a matching voice for the personality
+  const getVoiceForPersonality = (personality) => {
+    return voices.find(v => v.name.toLowerCase().includes(personality.name.toLowerCase())) || null;
+  };
   const { 
-    isPlaying: isMusicPlaying, 
-    play: playMusic, 
-    pause: pauseMusic, 
+    isPlaying: isMusicPlaying,
+    play: playMusic,
+    pause: pauseMusic,
+    stop,
     setVolume: setMusicVolume,
     volume: musicVolume,
     currentTrack,
+    tracks,
+    nextTrack,
+    previousTrack,
+    isSupported
   } = useBackgroundMusic();
 
   const { currentAnalysis: aiAnalysis, updateAnalysis } = useAIAnalysis();
@@ -289,6 +307,16 @@ const App = () => {
     setNotifications(prev => prev.filter(n => n.id !== id));
   }, []);
 
+  // Personality selector modal state
+  const [showPersonalitySelector, setShowPersonalitySelector] = useState(false);
+
+  // Handler for personality change
+  const handlePersonalityChange = (personality) => {
+    setAppSettings(prev => ({ ...prev, ghostPersonality: personality }));
+    setShowPersonalitySelector(false);
+    addNotification({ type: 'info', title: `Ghost personality changed to ${personality.name}` });
+  };
+
   // Enhanced message sending with AI features
   const sendMessage = useCallback(async (messageContent: string, imageBase64?: string) => {
     if (!messageContent.trim() && !imageBase64) return;
@@ -298,6 +326,7 @@ const App = () => {
       content: messageContent || '📷 [Shared an image]',
       isGhost: false,
       timestamp: new Date().toISOString(),
+      personalityId: appSettings.ghostPersonality.id
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -362,6 +391,7 @@ const App = () => {
             rate: personality.voiceSettings.rate,
             pitch: personality.voiceSettings.pitch,
             volume: personality.voiceSettings.volume,
+            effect: voiceEffect
           });
         }
       }
@@ -501,57 +531,100 @@ const App = () => {
     color: '#f8f5ff',
   } as React.CSSProperties;
 
-  return (
-    <div className={`app min-h-screen relative overflow-hidden font-sans`}
-      style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
-      {/* Apply theme/environment/time/season classes to the main background container for full effect */}
-      <div
-        className={`main-bg-container ${themeClasses} min-h-screen relative force-visible-text`}
-        style={{
-          ...ghostColorStyle,
-          ...(roomWallpaper ? {
-            backgroundImage: `url('${roomWallpaper}')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-          } : {})
-        }}
+  // Floating Personality Selector Button
+  const floatingSelector = (
+    <div style={{ position: 'fixed', bottom: 32, right: 32, zIndex: 50 }}>
+      <button
+        className="px-4 py-2 bg-purple-700 rounded-full text-white shadow-lg hover:bg-purple-800"
+        onClick={() => setShowPersonalitySelector(true)}
+        title="Change Ghost Personality"
       >
-        
-        {/* Enhanced Background Effects */}
-        {appSettings.particleCount > 0 && (
-          <ParticleSystem 
-            particleCount={appSettings.particleCount}
-            intensity={appSettings.particleCount} // Use particleCount as intensity (0-100)
-          />
-        )}
-        
-        {/* Floating Ghost Orbs - Enhanced particle effect */}
-        <FloatingGhostOrbs 
-          orbCount={Math.floor(appSettings.particleCount / 6)} 
-          intensity={appSettings.ghostIntensity}
-        />
-        
-        {appSettings.fogEnabled && <FogEffect />}
-        {appSettings.lightningEnabled && <LightningFlash />}
-        {appSettings.eyeTrackingEnabled && <EyeTrackingCursor />}
-        {appSettings.textSpiritsEnabled && <FloatingTextSpirits messages={messages} />}
-        
-        <FloatingGhosts 
-          intensity={appSettings.ghostIntensity} 
-        />
+        <span className="mr-2">{appSettings.ghostPersonality.emoji}</span>
+        {appSettings.ghostPersonality.name}
+      </button>
+    </div>
+  );
 
-        {/* Audio Initialization Prompt */}
-        <AnimatePresence>
-          {showAudioPrompt && (
-            <AudioInitPrompt 
-              onInitialize={handleAudioInit} 
-              isVisible={showAudioPrompt}
+  return (
+    <>
+      {floatingSelector}
+      {showPersonalitySelector && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center">
+          <div className="bg-haunted-900 rounded-xl p-6 shadow-xl max-w-lg w-full">
+            <h2 className="text-lg font-bold mb-4 text-purple-200">Choose a Ghost Personality</h2>
+            <PersonalitySelector
+              selectedPersonality={appSettings.ghostPersonality}
+              onPersonalityChange={handlePersonalityChange}
+              availablePersonalities={personalities}
+            />
+            <button
+              className="mt-4 px-4 py-2 bg-haunted-700 rounded text-white hover:bg-haunted-600"
+              onClick={() => setShowPersonalitySelector(false)}
+            >Close</button>
+          </div>
+        </div>
+      )}
+      <div className={`app min-h-screen relative overflow-hidden font-sans`}
+        style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
+        {/* Apply theme/environment/time/season classes to the main background container for full effect */}
+        <div
+          className={`main-bg-container ${themeClasses} min-h-screen relative force-visible-text`}
+          style={{
+            ...ghostColorStyle,
+            ...(roomWallpaper ? {
+              backgroundImage: `url('${roomWallpaper}')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+            } : {})
+          }}
+        >
+          
+          {/* Enhanced Background Effects */}
+          {appSettings.particleCount > 0 && (
+            <ParticleSystem 
+              particleCount={appSettings.particleCount}
+              intensity={appSettings.particleCount} // Use particleCount as intensity (0-100)
             />
           )}
-        </AnimatePresence>
+          
+          {/* Floating Ghost Orbs - Enhanced particle effect */}
+          <FloatingGhostOrbs 
+            orbCount={Math.floor(appSettings.particleCount / 6)} 
+            intensity={appSettings.ghostIntensity}
+          />
+          
+          {appSettings.fogEnabled && <FogEffect />}
+          {appSettings.lightningEnabled && <LightningFlash />}
+          {appSettings.eyeTrackingEnabled && <EyeTrackingCursor />}
+          {appSettings.textSpiritsEnabled && <FloatingTextSpirits messages={messages} />}
+          
+          <FloatingGhosts 
+            intensity={appSettings.ghostIntensity} 
+          />
 
-        {/* Main Content */}
+          {/* Audio Initialization Prompt */}
+          <AnimatePresence>
+            {showAudioPrompt && (
+              <AudioInitPrompt 
+                onInitialize={handleAudioInit} 
+                isVisible={showAudioPrompt}
+                onContinueSilently={() => {
+                  setAppSettings(prev => ({ ...prev, musicEnabled: false }));
+                  setShowAudioPrompt(false);
+                  setAudioInitialized(true);
+                  addNotification({
+                    type: 'info',
+                    title: 'Audio Disabled',
+                    message: 'You are continuing without haunted music.',
+                    duration: 3000
+                  });
+                }}
+              />
+            )}
+          </AnimatePresence>
+
+          {/* Main Content */}
   <div className="relative z-10 flex flex-col h-screen force-visible-text px-2 sm:px-4 md:px-8" style={{ color: '#ffffff' }}>
           
           {/* Header with Enhanced Controls */}
@@ -835,23 +908,24 @@ const App = () => {
             {showSettings && (
               <Settings
                 isOpen={showSettings}
+                onClose={() => setShowSettings(false)}
                 settings={appSettings}
                 onSettingsChange={setAppSettings}
-                onClose={() => setShowSettings(false)}
-                sessionId={sessionId}
                 musicControls={{
                   isPlaying: isMusicPlaying,
                   currentTrack: currentTrack,
-                  tracks: [],
+                  tracks: tracks,
                   play: playMusic,
                   pause: pauseMusic,
-                  stop: () => {},
-                  nextTrack: () => {},
-                  previousTrack: () => {},
-                  isSupported: true
+                  stop,
+                  nextTrack,
+                  previousTrack,
+                  isSupported
                 }}
                 availablePersonalities={personalities}
                 currentRoomId={currentRoom?.id}
+                voiceEffect={voiceEffect}
+                setVoiceEffect={setVoiceEffect}
               />
             )}
           </AnimatePresence>
@@ -955,23 +1029,43 @@ const App = () => {
                           {new Date(message.timestamp).toLocaleTimeString()}
                         </span>
                         {message.isGhost && (
-                          <button
-                            className="ml-2 px-2 py-1 bg-purple-700 rounded text-white text-xs hover:bg-purple-600"
-                            title="Share this ghost moment"
-                            onClick={() => {
-                              if (navigator.share) {
-                                navigator.share({
-                                  title: 'Ghost Moment',
-                                  text: message.content
-                                });
-                              } else {
-                                navigator.clipboard.writeText(message.content);
-                                alert('Ghost moment copied to clipboard!');
-                              }
-                            }}
-                          >
-                            Share
-                          </button>
+                          <>
+                            <button
+                              className="ml-2 px-2 py-1 bg-purple-700 rounded text-white text-xs hover:bg-purple-600"
+                              title="Share this ghost moment"
+                              onClick={() => {
+                                if (navigator.share) {
+                                  navigator.share({
+                                    title: 'Ghost Moment',
+                                    text: message.content
+                                  });
+                                } else {
+                                  navigator.clipboard.writeText(message.content);
+                                  alert('Ghost moment copied to clipboard!');
+                                }
+                              }}
+                            >
+                              Share
+                            </button>
+                            <button
+                              className="ml-2 px-2 py-1 bg-purple-800 rounded text-white text-xs hover:bg-purple-600"
+                              title="Speak Again"
+                              onClick={() => {
+                                speakText(
+                                  message.content,
+                                  {
+                                    rate: appSettings.ghostPersonality.voiceSettings.rate,
+                                    pitch: appSettings.ghostPersonality.voiceSettings.pitch,
+                                    volume: appSettings.ghostPersonality.voiceSettings.volume,
+                                    effect: voiceEffect,
+                                    voice: getVoiceForPersonality(appSettings.ghostPersonality)
+                                  }
+                                );
+                              }}
+                            >
+                              🔊 Speak Again
+                            </button>
+                          </>
                         )}
                       </div>
                       <div className="mt-2">
@@ -1055,7 +1149,7 @@ const App = () => {
         </React.Suspense>
       </div>
     </div>
-  );
-};
+  </>);
+}
 
 export default App;

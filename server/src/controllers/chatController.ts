@@ -1,6 +1,4 @@
 import { Readable } from 'stream';
-import pkg from 'bad-words';
-const Filter = pkg.Filter || pkg;
 // Export chat logs as a spooky story (text file)
 export const exportChatLog = async (req: Request, res: Response) => {
   try {
@@ -146,9 +144,8 @@ const generateGhostResponse = async (
     }
 
 
-    // Use selected AI provider
-    const providerName = aiProviderName || DEFAULT_AI_PROVIDER;
-  const aiProvider = getAIProvider(providerName as any);
+    // Always use Gemini provider
+    const aiProvider = getAIProvider('gemini');
     // Compose prompt (could be improved to include more context)
     const prompt = `${enhancedPrompt}\n${userMessage}`;
     const responseText = await aiProvider.generateResponse(prompt, {
@@ -160,22 +157,11 @@ const generateGhostResponse = async (
       contextualFactors
     });
 
-    // If the model returned nothing or only ellipses, return a fallback response
+    // If the model returned nothing or only ellipses, return a minimal error message (no generic fallback)
     if (!responseText || responseText.trim().length < 3 || /^\.*$/.test(responseText.trim())) {
-      console.log('Empty response detected, using personality fallback');
-      
-      const personalityFallbacks = {
-        friendly: "Hello there! I can sense your presence, though my ethereal connection seems a bit unstable tonight. How are you feeling?",
-        mysterious: "Your words reach me through the shadows... though the veil between worlds grows thick...",
-        spooky: "OOOOOH! I hear you calling to me from beyond! Though my haunting powers flicker tonight... MWAHAHAHA!",
-        wise: "Greetings, seeker. Even ancient spirits must sometimes gather their cosmic energies before speaking.",
-        playful: "Hey there! My ghostly WiFi seems to be acting up, but I'm still here to chat! Hehe!"
-      };
-      
-      const fallbackResponse = personalityFallbacks[personalityId as keyof typeof personalityFallbacks] || personalityFallbacks.friendly;
-      
+      console.log('Empty response detected, returning minimal error message');
       return {
-        response: fallbackResponse,
+        response: "...The ghost is unable to respond right now. Please try rephrasing your question...",
         moodAnalysis,
         contextualFactors
       };
@@ -337,12 +323,7 @@ const getChatHistory = async (req: Request, res: Response): Promise<void> => {
 const sendMessage = async (req: Request, res: Response): Promise<void> => {
   try {
     const { content, sessionId, personalityId, imageBase64 } = req.body;
-    // Content Filtering: Prevent inappropriate content
-    const filter = new Filter();
-    if (filter.isProfane(content)) {
-      res.status(400).json({ error: 'Inappropriate language detected. Please keep it appropriate!' });
-      return;
-    }
+    // Profanity filter temporarily disabled due to ESM import issues
     
     // Analyze user message mood first
     const userMoodAnalysis = sentimentAnalyzer.analyzeMood(content);
@@ -367,38 +348,40 @@ const sendMessage = async (req: Request, res: Response): Promise<void> => {
       take: 8
     });
     
-    // Generate enhanced ghost response
+    // Generate ghost response fully adapted to selected personality
+    // This uses the personality's systemPrompt, mood adaptation, and context
     const ghostResponseData = await generateGhostResponse(
-      content, 
-      recentMessages.reverse(), 
+      content,
+      recentMessages.reverse(),
       personalityId,
       sessionId,
       imageBase64
     );
-    
-    // Save ghost response with analysis
+
+    // Save ghost response with all analysis and personality context
     await saveMessage(
-      ghostResponseData.response, 
-      true, 
+      ghostResponseData.response,
+      true,
       sessionId,
       personalityId,
       ghostResponseData.moodAnalysis,
       ghostResponseData.contextualFactors
     );
-    
+
     // Get updated message history
     const messages = await messageRepository.find({
       where: { sessionId },
       order: { createdAt: 'ASC' }
     });
-    
-    // Return enhanced response
+
+    // Return enhanced response, including personality context
     res.json({
       messages,
       analysis: {
         userMood: userMoodAnalysis,
         ghostMood: ghostResponseData.moodAnalysis,
-        context: ghostResponseData.contextualFactors
+        context: ghostResponseData.contextualFactors,
+        personality: personalityId
       }
     });
   } catch (error) {

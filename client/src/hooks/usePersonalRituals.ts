@@ -30,7 +30,13 @@ export default function usePersonalRituals() {
   }, [user]);
 
   useEffect(() => {
-    fetchRituals();
+    let debounceTimeout: number;
+    debounceTimeout = window.setTimeout(() => {
+      fetchRituals();
+    }, 2000); // Increased debounce to 2000ms
+    return () => {
+      if (debounceTimeout) window.clearTimeout(debounceTimeout);
+    };
   }, [fetchRituals]);
 
   return { rituals, loading, error, fetchRituals };
