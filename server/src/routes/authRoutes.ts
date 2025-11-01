@@ -4,12 +4,13 @@ import { signup, login, updateAvatar, updateNickname, updatePersonalRituals, get
 
 const router = Router()
 
+// Authentication
+router.post('/login', login)
+router.post('/signup', signup)
+
 // Personal rituals (greeting/goodbye)
 router.post('/rituals', updatePersonalRituals)
 router.get('/rituals', getPersonalRituals)
-
-
-
 
 // Avatar upload/update
 router.post('/avatar', updateAvatar)

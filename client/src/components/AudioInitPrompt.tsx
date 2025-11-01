@@ -1,12 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface AudioInitPromptProps {
   onInitialize: () => Promise<void>;
   isVisible: boolean;
+  onContinueSilently: () => void;
 }
 
-const AudioInitPrompt: React.FC<AudioInitPromptProps> = ({ onInitialize, isVisible }) => {
+const AudioInitPrompt: React.FC<AudioInitPromptProps> = ({ onInitialize, isVisible, onContinueSilently }) => {
   const [isInitializing, setIsInitializing] = useState(false);
 
   const handleInitialize = async () => {
@@ -61,7 +63,7 @@ const AudioInitPrompt: React.FC<AudioInitPromptProps> = ({ onInitialize, isVisib
               </button>
               
               <button
-                onClick={() => {/* This will be handled by parent */}}
+                onClick={onContinueSilently}
                 className="w-full text-haunted-400 hover:text-haunted-200 py-2 text-sm transition-colors"
               >
                 Continue silently (audio disabled)
