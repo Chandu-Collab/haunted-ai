@@ -1,7 +1,10 @@
+// Voice effect type for settings
+type VoiceEffectOption = 'none' | 'echo' | 'reverb' | 'whisper' | 'robot';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTheme, Environment, TimeOfDay, Season } from '../context/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import VoiceControls from './VoiceControls';
+import { VoiceEffect } from '../hooks/useVoiceSynthesis';
 import MusicControls from './MusicControls';
 import PersonalitySelector from './PersonalitySelector';
 import EmojiReactions from './EmojiReactions';
@@ -63,9 +66,11 @@ interface SettingsProps {
   availablePersonalities?: GhostPersonality[];
   sessionId?: string;
   currentRoomId?: number;
+  voiceEffect: VoiceEffectOption;
+  setVoiceEffect: React.Dispatch<React.SetStateAction<VoiceEffectOption>>;
 }
 
-const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettingsChange, onSettingsClose, musicControls, availablePersonalities, sessionId, currentRoomId }) => {
+const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettingsChange, onSettingsClose, musicControls, availablePersonalities, sessionId, currentRoomId, voiceEffect, setVoiceEffect }) => {
   const [localSettings, setLocalSettings] = useState({
     ...settings,
     lightningEnabled: settings.lightningEnabled ?? true,
@@ -203,11 +208,30 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
               </button>
             </div>
 
+
             {/* Voice Controls */}
             <VoiceControls
               isEnabled={localSettings.voiceEnabled}
               onToggle={(enabled) => handleChange('voiceEnabled', enabled)}
             />
+            {/* Voice Effect Selector */}
+            {localSettings.voiceEnabled && (
+              <div className="mt-2">
+                <label className="text-haunted-200 font-medium block mb-2">Ghost Voice Effect</label>
+                <select
+                  value={voiceEffect}
+                  onChange={e => setVoiceEffect(e.target.value as VoiceEffectOption)}
+                  className="w-full bg-haunted-800/60 border border-haunted-700/50 rounded-lg px-3 py-2 text-haunted-100 text-sm focus:outline-none focus:ring-2 focus:ring-haunted-500/50"
+                >
+                  <option value="none">None (Normal Ghost)</option>
+                  <option value="whisper">Whisper</option>
+                  <option value="echo">Echo</option>
+                  <option value="reverb">Reverb</option>
+                  <option value="robot">Robot</option>
+                </select>
+                <div className="text-xs text-haunted-400 mt-1">Try different effects for extra spooky voices!</div>
+              </div>
+            )}
 
             {/* Music Controls */}
             <MusicControls
