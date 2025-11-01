@@ -52,19 +52,19 @@ const MusicControls: React.FC<MusicControlsProps> = ({
   const setCurrentVolume = externalVolumeChange || (() => {});
 
   const handlePlayPause = async () => {
-    // Disabled - only settings music should play (15 seconds)
-    console.log('🎵 Manual playback disabled - only 15-second settings music allowed');
     if (isPlaying) {
       pause();
+    } else {
+      await play(tracks[selectedTrackIndex], { loop: true });
     }
-    // Don't start any new music manually
   };
 
   const handleTrackChange = async (index: number) => {
     setSelectedTrackIndex(index);
-    onTrackSelect?.(index); // Notify parent component of track selection
-    console.log(`🎵 Track selected: ${tracks[index].name} (will play for 15s when settings change)`);
-    // Just update selection - no playback until settings change
+    onTrackSelect?.(index);
+    if (isPlaying) {
+      await play(tracks[index], { loop: true });
+    }
   };
 
   if (!isSupported) {
@@ -132,16 +132,16 @@ const MusicControls: React.FC<MusicControlsProps> = ({
             </div>
           )}
 
-          {/* Track Selection - ENABLED for Settings Music */}
+          {/* Track Selection - ENABLED for Continuous Music */}
           <div>
             <label className="text-haunted-300 text-sm block mb-2">
-              Ambient Track (For 15s Settings Music)
+              Ambient Track (Continuous Playback)
             </label>
             <select
               value={selectedTrackIndex}
               onChange={(e) => handleTrackChange(parseInt(e.target.value))}
               className="w-full bg-haunted-800/60 border border-haunted-700/50 rounded-lg px-3 py-2 text-haunted-100 text-sm focus:outline-none focus:ring-2 focus:ring-haunted-500/50"
-              title="Select which track plays for 15-second settings music"
+              title="Select which track to play continuously"
             >
               {tracks.map((track, index) => (
                 <option key={index} value={index}>
@@ -150,7 +150,7 @@ const MusicControls: React.FC<MusicControlsProps> = ({
               ))}
             </select>
             <p className="text-xs text-haunted-400 mt-1">
-              🎵 Selected track will play for 15s when closing settings
+              🎵 Selected track will play until you pause or switch
             </p>
           </div>
 
@@ -170,13 +170,12 @@ const MusicControls: React.FC<MusicControlsProps> = ({
             />
           </div>
 
-          {/* Playback Controls - DISABLED */}
+          {/* Playback Controls - ENABLED */}
           <div className="flex items-center justify-center space-x-3">
             <button
               onClick={previousTrack}
-              disabled
-              className="p-2 bg-haunted-800/40 text-haunted-600 rounded-lg cursor-not-allowed opacity-50"
-              title="Manual Controls Disabled"
+              className="p-2 bg-haunted-800/40 text-haunted-100 rounded-lg hover:bg-haunted-700/40"
+              title="Previous Track"
             >
               ⏮️
             </button>
@@ -184,7 +183,7 @@ const MusicControls: React.FC<MusicControlsProps> = ({
             <button
               onClick={handlePlayPause}
               className="p-3 bg-haunted-600/60 hover:bg-haunted-500/60 rounded-lg transition-colors flex items-center justify-center min-w-[3rem]"
-              title={isPlaying ? "Stop Current Music" : "Manual Play Disabled"}
+              title={isPlaying ? "Pause Music" : "Play Music"}
             >
               <motion.span
                 key={isPlaying ? 'pause' : 'play'}
@@ -192,15 +191,14 @@ const MusicControls: React.FC<MusicControlsProps> = ({
                 animate={{ scale: 1 }}
                 className="text-lg"
               >
-                {isPlaying ? '⏸️' : '🚫'}
+                {isPlaying ? '⏸️' : '▶️'}
               </motion.span>
             </button>
 
             <button
               onClick={nextTrack}
-              disabled
-              className="p-2 bg-haunted-800/40 text-haunted-600 rounded-lg cursor-not-allowed opacity-50"
-              title="Manual Controls Disabled"
+              className="p-2 bg-haunted-800/40 text-haunted-100 rounded-lg hover:bg-haunted-700/40"
+              title="Next Track"
             >
               ⏭️
             </button>
@@ -208,7 +206,7 @@ const MusicControls: React.FC<MusicControlsProps> = ({
             <button
               onClick={stop}
               className="p-2 bg-haunted-700/60 hover:bg-haunted-600/60 rounded-lg transition-colors"
-              title="Stop Current Music"
+              title="Stop Music"
             >
               ⏹️
             </button>
@@ -219,19 +217,12 @@ const MusicControls: React.FC<MusicControlsProps> = ({
             <p className="mb-1">
               <strong>Tracks:</strong> {tracks.length} terrifying horror ambiences
             </p>
-            <p className="mb-2">
-              🎭 Settings-triggered music ONLY - 15 seconds when you change settings
-            </p>
             <p className="mb-2 text-haunted-300">
-              <strong>Manual Controls:</strong> Disabled - Music plays automatically for 15 seconds when closing settings after changes
-            </p>
-            <p className="mb-2 text-haunted-300">
-              <strong>No Continuous Music:</strong> No background loops, no manual playback - only brief settings feedback
+              <strong>Manual Controls:</strong> Enabled - Play, pause, switch, and stop music as you wish
             </p>
             <p className="mb-2 text-haunted-300">
               <strong>Featured Horror Tracks:</strong> Nightmare Asylum, Demon's Lair, Torture Chamber, Blood Moon Rising, Purgatory Gates & more!
             </p>
-            
             {/* Track Categories */}
             <div className="border-t border-haunted-700/30 pt-2">
               <p className="font-semibold text-haunted-300 mb-1">Horror Categories:</p>
@@ -240,31 +231,6 @@ const MusicControls: React.FC<MusicControlsProps> = ({
                 <span className="text-purple-400">🔮 Demonic</span>
                 <span className="text-blue-400">🌙 Atmospheric</span>
                 <span className="text-orange-400">🔥 Intense</span>
-              </div>
-            </div>
-            
-            {/* Debug Controls */}
-            <div className="border-t border-haunted-700/30 pt-2 space-y-1">
-              <p className="font-semibold text-haunted-300">Manual Controls:</p>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => {
-                    console.log('🎵 Manual pause test');
-                    pause();
-                  }}
-                  className="px-2 py-1 bg-haunted-700/60 hover:bg-haunted-600/60 rounded text-xs"
-                >
-                  Force Pause
-                </button>
-                <button
-                  onClick={() => {
-                    console.log('🎵 Manual continuous play test');
-                    handlePlayPause();
-                  }}
-                  className="px-2 py-1 bg-haunted-700/60 hover:bg-haunted-600/60 rounded text-xs"
-                >
-                  Manual Play
-                </button>
               </div>
             </div>
           </div>

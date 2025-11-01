@@ -9,6 +9,7 @@ const PersonalRituals: React.FC = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+  let debounceTimeout: number;
     const fetchRituals = async () => {
       if (!user) return;
       setLoading(true);
@@ -25,7 +26,12 @@ const PersonalRituals: React.FC = () => {
         setLoading(false);
       }
     };
-    fetchRituals();
+    if (user) {
+      debounceTimeout = setTimeout(fetchRituals, 500); // 500ms debounce
+    }
+    return () => {
+      if (debounceTimeout) clearTimeout(debounceTimeout);
+    };
   }, [user]);
 
   const handleSave = async () => {

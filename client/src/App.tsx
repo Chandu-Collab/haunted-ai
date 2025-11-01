@@ -121,10 +121,7 @@ const App = () => {
     }
   };
 
-  // On mount, fetch rituals
-  useEffect(() => {
-    fetchRituals();
-  }, [user]);
+  // Rituals are fetched by usePersonalRituals hook; no need to fetch again here
 
   // On leave (when currentRoom becomes null), show goodbye ritual
   useEffect(() => {
@@ -268,12 +265,17 @@ const App = () => {
   const { playSyntheticSound } = useAudio();
   const { speak: speakText, isSpeaking } = useVoiceSynthesis();
   const { 
-    isPlaying: isMusicPlaying, 
-    play: playMusic, 
-    pause: pauseMusic, 
+    isPlaying: isMusicPlaying,
+    play: playMusic,
+    pause: pauseMusic,
+    stop,
     setVolume: setMusicVolume,
     volume: musicVolume,
     currentTrack,
+    tracks,
+    nextTrack,
+    previousTrack,
+    isSupported
   } = useBackgroundMusic();
 
   const { currentAnalysis: aiAnalysis, updateAnalysis } = useAIAnalysis();
@@ -842,13 +844,13 @@ const App = () => {
                 musicControls={{
                   isPlaying: isMusicPlaying,
                   currentTrack: currentTrack,
-                  tracks: [],
+                  tracks: tracks,
                   play: playMusic,
                   pause: pauseMusic,
-                  stop: () => {},
-                  nextTrack: () => {},
-                  previousTrack: () => {},
-                  isSupported: true
+                  stop,
+                  nextTrack,
+                  previousTrack,
+                  isSupported
                 }}
                 availablePersonalities={personalities}
                 currentRoomId={currentRoom?.id}
