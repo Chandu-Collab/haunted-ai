@@ -15,7 +15,14 @@ import {
 } from '../controllers/chatController';
 
 
+
+
+
 const router = Router();
+
+import { getAIGreeting } from '../controllers/greetingController';
+// AI-generated spooky greeting
+router.get('/greeting', getAIGreeting);
 
 
 // Search messages by keyword, room, or session

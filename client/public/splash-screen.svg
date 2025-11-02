@@ -1,0 +1,28 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#f3d6ff" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#8a4fff" stop-opacity="0.25"/>
+    </radialGradient>
+  </defs>
+  <circle cx="128" cy="128" r="120" fill="url(#glow)"/>
+  <!-- Ghost body (full, rounded, wavy) -->
+  <path d="M56 180 Q80 170 100 200 Q120 210 128 195 Q136 210 156 200 Q176 170 200 180 Q200 110 128 50 Q56 110 56 180Z" fill="#fff" stroke="#e0e0e0" stroke-width="2"/>
+  <!-- Ghost outline for depth -->
+  <path d="M56 180 Q80 170 100 200 Q120 210 128 195 Q136 210 156 200 Q176 170 200 180" fill="none" stroke="#bdbdbd" stroke-width="2" opacity="0.3"/>
+  <!-- Blush -->
+  <ellipse cx="98" cy="135" rx="10" ry="6" fill="#ffb6c1" opacity="0.7"/>
+  <ellipse cx="158" cy="135" rx="10" ry="6" fill="#ffb6c1" opacity="0.7"/>
+  <!-- Eyes -->
+  <ellipse cx="108" cy="120" rx="13" ry="16" fill="#222"/>
+  <ellipse cx="148" cy="120" rx="13" ry="16" fill="#222"/>
+  <!-- Eye shine -->
+  <ellipse cx="112" cy="116" rx="3" ry="5" fill="#fff"/>
+  <ellipse cx="152" cy="116" rx="3" ry="5" fill="#fff"/>
+  <!-- Smile -->
+  <ellipse cx="128" cy="140" rx="16" ry="10" fill="#fff"/>
+  <path d="M116 142 Q128 155 140 142" stroke="#222" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <ellipse cx="128" cy="146" rx="6" ry="3" fill="#ff7675"/>
+  <!-- Shadow -->
+  <ellipse cx="128" cy="220" rx="40" ry="12" fill="#8a4fff" opacity="0.18"/>
+</svg>
