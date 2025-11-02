@@ -112,21 +112,30 @@ const generateGhostResponse = async (
     
     // Build enhanced system prompt
     let enhancedPrompt = activePersonality.systemPrompt;
-    
+
+    // Add explicit user intent and question type if detected
+    const userIntent = sentimentAnalyzer.detectIntent(userMessage);
+    if (userIntent) {
+      enhancedPrompt += `\nThe user intent is: ${userIntent.intent}.`;
+      if (userIntent.questionType) {
+        enhancedPrompt += `\nThe user is asking a ${userIntent.questionType} question.`;
+      }
+    }
+
     // Add mood adaptation
     enhancedPrompt += adaptResponseToMood(activePersonality, moodAnalysis);
-    
+
     // Add weather and time context
     enhancedPrompt += adaptToWeatherAndTime(activePersonality, contextualFactors.timeOfDay, weather);
-    
+
     // Add memory context
     if (sessionId) {
       enhancedPrompt += memorySystem.generateMemoryPrompt(sessionId);
     }
-    
+
     // Add weather context
     enhancedPrompt += weatherService.generateWeatherPrompt(weather);
-    
+
     // Check for active story
     if (sessionId) {
       const activeStory = storytellingSystem.getCurrentStory(sessionId);

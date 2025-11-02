@@ -270,11 +270,9 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
       {isGhost && ghostIntensity > 70 && particleIntensity > 50 && (
         <div className="absolute inset-0 pointer-events-none">
           {React.useMemo(() => {
-            // Use a deterministic seed based on content and intensities to keep the array stable between renders
             const count = Math.floor((particleIntensity / 100) * 4);
             const seed = `${content}|${ghostIntensity}|${particleIntensity}`;
             function seededRandom(seed: string, i: number) {
-              // Simple hash for deterministic pseudo-random
               let h = 5381;
               for (let j = 0; j < seed.length; j++) h = ((h << 5) + h) + seed.charCodeAt(j);
               h += i * 9973;
@@ -288,8 +286,6 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
               const x = (seededRandom(seed + 'x', i) - 0.5) * 20;
               const x2 = (seededRandom(seed + 'x2', i) - 0.5) * 40;
               const delay = seededRandom(seed + 'd', i) * 0.8;
-              const glyphs = ['💫', '⭐', '✦', '✧', '🌟'];
-              const glyph = glyphs[Math.floor(seededRandom(seed + 'g', i) * glyphs.length)];
               return (
                 <motion.div
                   key={`particle-${i}`}
@@ -301,20 +297,19 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
                     color
                   }}
                   animate={{
-                    opacity: [0, ghostIntensity / 100, 0],
+                    opacity: [0, 1, 0],
                     scale: [0, 1 + (ghostIntensity / 100) * 0.5, 0],
-                    rotate: [0, 360],
                     x: [x, x2],
-                    y: [0, -20 - (ghostIntensity / 100) * 10]
+                    y: [0, -10 - (ghostIntensity / 100) * 10, 0]
                   }}
                   transition={{
-                    duration: Math.max(0.9, 1.8 - (ghostIntensity / 100) * 0.6),
+                    duration: Math.max(0.8, 1.6 - (ghostIntensity / 100) * 0.6),
                     repeat: Infinity,
                     delay,
                     ease: 'easeOut'
                   }}
                 >
-                  {glyph}
+                  ✨
                 </motion.div>
               );
             });
