@@ -1,7 +1,10 @@
 import { Router } from 'express';
 import { generateRiddle, getFortune } from '../controllers/gameController';
+import { castSpellAI } from '../controllers/spellController';
 
 const router = Router();
+// POST /api/games/spell - generate a spell result using Gemini
+router.post('/spell', castSpellAI);
 
 
 // POST /api/games/riddle - generate a riddle using Gemini

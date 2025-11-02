@@ -261,17 +261,26 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
       {isGhost && ghostIntensity > 70 && particleIntensity > 50 && (
         <div className="absolute inset-0 pointer-events-none">
           {React.useMemo(() => {
+            // Use a deterministic seed based on content and intensities to keep the array stable between renders
             const count = Math.floor((particleIntensity / 100) * 4);
+            const seed = `${content}|${ghostIntensity}|${particleIntensity}`;
+            function seededRandom(seed: string, i: number) {
+              // Simple hash for deterministic pseudo-random
+              let h = 5381;
+              for (let j = 0; j < seed.length; j++) h = ((h << 5) + h) + seed.charCodeAt(j);
+              h += i * 9973;
+              return Math.abs(Math.sin(h) * 10000) % 1;
+            }
             return Array.from({ length: count }).map((_, i) => {
-              const top = Math.random() * 100;
-              const left = Math.random() * 100;
+              const top = seededRandom(seed, i) * 100;
+              const left = seededRandom(seed + 'l', i) * 100;
               const fontSize = `${0.3 + (ghostIntensity / 100) * 0.4}rem`;
-              const color = `hsl(${280 + Math.random() * 40}, 90%, ${70 + (ghostIntensity / 100) * 20}%)`;
-              const x = (Math.random() - 0.5) * 20;
-              const x2 = (Math.random() - 0.5) * 40;
-              const delay = Math.random() * 0.8;
+              const color = `hsl(${280 + seededRandom(seed + 'c', i) * 40}, 90%, ${70 + (ghostIntensity / 100) * 20}%)`;
+              const x = (seededRandom(seed + 'x', i) - 0.5) * 20;
+              const x2 = (seededRandom(seed + 'x2', i) - 0.5) * 40;
+              const delay = seededRandom(seed + 'd', i) * 0.8;
               const glyphs = ['💫', '⭐', '✦', '✧', '🌟'];
-              const glyph = glyphs[Math.floor(Math.random() * glyphs.length)];
+              const glyph = glyphs[Math.floor(seededRandom(seed + 'g', i) * glyphs.length)];
               return (
                 <motion.div
                   key={`particle-${i}`}
