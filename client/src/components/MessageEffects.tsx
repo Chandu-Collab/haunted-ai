@@ -176,12 +176,21 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
       {(effects.colorShift || /magic|spell|mystical|supernatural|spirit|soul/i.test(content)) && (
         <div className="absolute inset-0 pointer-events-none">
           {React.useMemo(() => {
+            // Use a deterministic seed based on content and ghostIntensity to keep the array stable between renders
             const count = Math.max(3, Math.floor((ghostIntensity / 100) * 6));
+            const seed = `${content}|${ghostIntensity}|sparkle`;
+            function seededRandom(seed: string, i: number) {
+              let h = 5381;
+              for (let j = 0; j < seed.length; j++) h = ((h << 5) + h) + seed.charCodeAt(j);
+              h += i * 9973;
+              return Math.abs(Math.sin(h) * 10000) % 1;
+            }
             return Array.from({ length: count }).map((_, i) => {
               const top = 20 + i * 15;
               const left = 10 + i * 20;
               const fontSize = `${0.5 + (ghostIntensity / 100) * 0.5}rem`;
               const delay = i * Math.max(0.08, (0.3 - (ghostIntensity / 100) * 0.08));
+              const hue = 60 * i + Math.floor(seededRandom(seed, i) * 30);
               return (
                 <motion.div
                   key={i}
@@ -190,7 +199,7 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
                     top: `${top}%`,
                     left: `${left}%`,
                     fontSize,
-                    filter: `brightness(${1 + (ghostIntensity / 100)}) hue-rotate(${i * 60}deg)`
+                    filter: `brightness(${1 + (ghostIntensity / 100)}) hue-rotate(${hue}deg)`
                   }}
                   animate={{
                     opacity: [0, 1, 0],

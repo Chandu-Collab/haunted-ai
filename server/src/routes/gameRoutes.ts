@@ -1,10 +1,14 @@
 import { Router } from 'express';
 import { generateRiddle, getFortune } from '../controllers/gameController';
 import { castSpellAI } from '../controllers/spellController';
+import { getRoomDescription } from '../controllers/roomController';
 
 const router = Router();
 // POST /api/games/spell - generate a spell result using Gemini
 router.post('/spell', castSpellAI);
+
+// POST /api/games/room-description - generate a haunted room description using Gemini
+router.post('/room-description', getRoomDescription);
 
 
 // POST /api/games/riddle - generate a riddle using Gemini
