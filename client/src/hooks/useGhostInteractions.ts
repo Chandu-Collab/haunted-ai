@@ -1,3 +1,10 @@
+// Dedicated hook for just seanceMode state (for chat integration)
+import { useContext } from 'react';
+
+export function useSeanceMode(sessionId?: string) {
+  const { state } = useGhostInteractions(sessionId);
+  return state.seanceMode;
+}
 import { useEffect, useState, useRef } from 'react';
 
 type Achievement = {

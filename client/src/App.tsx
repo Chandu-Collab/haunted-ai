@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, FormEvent } from 'react';
+import useGhostInteractions, { useSeanceMode } from './hooks/useGhostInteractions';
 import useRooms from './hooks/useRooms';
 import GhostProfileManager from './components/GhostProfileManager';
 import GhostProfileSelector from './components/GhostProfileSelector';
@@ -63,6 +64,9 @@ interface EnhancedMessage extends Message {
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const App = () => {
+  const [sessionId] = useState(`session-${Math.random().toString(36).substring(2, 9)}`);
+  // Seance mode state for chat feature
+  const seanceMode = useSeanceMode(sessionId);
   const { rooms, fetchRooms } = useRooms();
   const [showGhostManager, setShowGhostManager] = useState(false);
   const [showGhostSelector, setShowGhostSelector] = useState(false);
@@ -171,18 +175,39 @@ const App = () => {
   // Helper to generate a stable unique id for messages when backend id is missing
   const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
-  const [messages, setMessages] = useState<EnhancedMessage[]>([
-    {
-      id: 'welcome',
-      content: '*A cold wind stirs... You feel a presence watching you...*\\n\\nWelcome to my domain, mortal. The veil between worlds has thinned, and I can sense your emotions, see through your eyes, and weave tales that respond to your very soul...\\n\\nSpeak to me, share your images, or ask me to tell you a story. I am more aware than ever before...',
-      isGhost: true,
-      timestamp: new Date().toISOString(),
-    }
-  ]);
+  const [messages, setMessages] = useState<EnhancedMessage[]>([]);
+
+  // Fetch AI-generated greeting on first load
+  useEffect(() => {
+    const fetchAIGreeting = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/chat/greeting`, { method: 'GET' });
+        if (!res.ok) throw new Error('Failed to fetch greeting');
+        const data = await res.json();
+        setMessages([
+          {
+            id: 'welcome',
+            content: data.greeting || 'The spirits are silent... but watching.',
+            isGhost: true,
+            timestamp: new Date().toISOString(),
+          }
+        ]);
+      } catch {
+        setMessages([
+          {
+            id: 'welcome',
+            content: 'The spirits are silent... but watching.',
+            isGhost: true,
+            timestamp: new Date().toISOString(),
+          }
+        ]);
+      }
+    };
+    fetchAIGreeting();
+  }, []);
 
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [sessionId] = useState(`session-${Math.random().toString(36).substring(2, 9)}`);
   const [showSettings, setShowSettings] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [showAudioPrompt, setShowAudioPrompt] = useState(true);
