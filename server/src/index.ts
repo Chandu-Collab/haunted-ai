@@ -11,6 +11,7 @@ import authRoutes from './routes/authRoutes';
 import roomRoutes from './routes/roomRoutes';
 import roomWallpaperRoutes from './routes/roomWallpaperRoutes';
 import ghostProfileRoutes from './routes/ghostProfileRoutes';
+import gameRoutes from './routes/gameRoutes';
 import { AppDataSource } from './config/data-source';
 import { Message } from './entities/Message';
 
@@ -100,6 +101,7 @@ app.use('/api/chat', chatLimiter, chatRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/rooms', roomWallpaperRoutes);
 app.use('/api/ghosts', ghostProfileRoutes);
+app.use('/api/games', gameRoutes);
 // Minimal interactions API (achievements / energy / rooms)
 app.use('/api/interactions', interactionRoutes);
 // Authentication routes (signup / login)

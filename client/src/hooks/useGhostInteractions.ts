@@ -1,3 +1,10 @@
+// Dedicated hook for just seanceMode state (for chat integration)
+import { useContext } from 'react';
+
+export function useSeanceMode(sessionId?: string) {
+  const { state } = useGhostInteractions(sessionId);
+  return state.seanceMode;
+}
 import { useEffect, useState, useRef } from 'react';
 
 type Achievement = {
@@ -163,14 +170,19 @@ export default function useGhostInteractions(sessionId?: string) {
     setState(s => ({ ...s, roomsVisited: s.roomsVisited.includes(roomId) ? s.roomsVisited : [...s.roomsVisited, roomId] }));
   };
 
-  const getFortune = () => {
-    const fortunes = [
-      "A whisper tonight becomes a song tomorrow.",
-      "You will find a memory tucked behind an old portrait.",
-      "Expect a visitor when the clock strikes the witching hour.",
-      "An old key will reveal a new path.",
-    ];
-    return fortunes[Math.floor(Math.random() * fortunes.length)];
+  // Fetch a fortune from the backend AI API
+  const getFortune = async (): Promise<string> => {
+    try {
+      const res = await fetch(`${API_URL}/api/games/fortune`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) throw new Error('Failed to fetch fortune');
+      const data = await res.json();
+      return data.fortune || 'The spirits are silent...';
+    } catch (e) {
+      return 'The spirits are silent...';
+    }
   };
 
   return {

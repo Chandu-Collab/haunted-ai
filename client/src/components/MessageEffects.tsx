@@ -176,12 +176,21 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
       {(effects.colorShift || /magic|spell|mystical|supernatural|spirit|soul/i.test(content)) && (
         <div className="absolute inset-0 pointer-events-none">
           {React.useMemo(() => {
+            // Use a deterministic seed based on content and ghostIntensity to keep the array stable between renders
             const count = Math.max(3, Math.floor((ghostIntensity / 100) * 6));
+            const seed = `${content}|${ghostIntensity}|sparkle`;
+            function seededRandom(seed: string, i: number) {
+              let h = 5381;
+              for (let j = 0; j < seed.length; j++) h = ((h << 5) + h) + seed.charCodeAt(j);
+              h += i * 9973;
+              return Math.abs(Math.sin(h) * 10000) % 1;
+            }
             return Array.from({ length: count }).map((_, i) => {
               const top = 20 + i * 15;
               const left = 10 + i * 20;
               const fontSize = `${0.5 + (ghostIntensity / 100) * 0.5}rem`;
               const delay = i * Math.max(0.08, (0.3 - (ghostIntensity / 100) * 0.08));
+              const hue = 60 * i + Math.floor(seededRandom(seed, i) * 30);
               return (
                 <motion.div
                   key={i}
@@ -190,7 +199,7 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
                     top: `${top}%`,
                     left: `${left}%`,
                     fontSize,
-                    filter: `brightness(${1 + (ghostIntensity / 100)}) hue-rotate(${i * 60}deg)`
+                    filter: `brightness(${1 + (ghostIntensity / 100)}) hue-rotate(${hue}deg)`
                   }}
                   animate={{
                     opacity: [0, 1, 0],
@@ -262,16 +271,21 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
         <div className="absolute inset-0 pointer-events-none">
           {React.useMemo(() => {
             const count = Math.floor((particleIntensity / 100) * 4);
+            const seed = `${content}|${ghostIntensity}|${particleIntensity}`;
+            function seededRandom(seed: string, i: number) {
+              let h = 5381;
+              for (let j = 0; j < seed.length; j++) h = ((h << 5) + h) + seed.charCodeAt(j);
+              h += i * 9973;
+              return Math.abs(Math.sin(h) * 10000) % 1;
+            }
             return Array.from({ length: count }).map((_, i) => {
-              const top = Math.random() * 100;
-              const left = Math.random() * 100;
+              const top = seededRandom(seed, i) * 100;
+              const left = seededRandom(seed + 'l', i) * 100;
               const fontSize = `${0.3 + (ghostIntensity / 100) * 0.4}rem`;
-              const color = `hsl(${280 + Math.random() * 40}, 90%, ${70 + (ghostIntensity / 100) * 20}%)`;
-              const x = (Math.random() - 0.5) * 20;
-              const x2 = (Math.random() - 0.5) * 40;
-              const delay = Math.random() * 0.8;
-              const glyphs = ['💫', '⭐', '✦', '✧', '🌟'];
-              const glyph = glyphs[Math.floor(Math.random() * glyphs.length)];
+              const color = `hsl(${280 + seededRandom(seed + 'c', i) * 40}, 90%, ${70 + (ghostIntensity / 100) * 20}%)`;
+              const x = (seededRandom(seed + 'x', i) - 0.5) * 20;
+              const x2 = (seededRandom(seed + 'x2', i) - 0.5) * 40;
+              const delay = seededRandom(seed + 'd', i) * 0.8;
               return (
                 <motion.div
                   key={`particle-${i}`}
@@ -283,20 +297,19 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
                     color
                   }}
                   animate={{
-                    opacity: [0, ghostIntensity / 100, 0],
+                    opacity: [0, 1, 0],
                     scale: [0, 1 + (ghostIntensity / 100) * 0.5, 0],
-                    rotate: [0, 360],
                     x: [x, x2],
-                    y: [0, -20 - (ghostIntensity / 100) * 10]
+                    y: [0, -10 - (ghostIntensity / 100) * 10, 0]
                   }}
                   transition={{
-                    duration: Math.max(0.9, 1.8 - (ghostIntensity / 100) * 0.6),
+                    duration: Math.max(0.8, 1.6 - (ghostIntensity / 100) * 0.6),
                     repeat: Infinity,
                     delay,
                     ease: 'easeOut'
                   }}
                 >
-                  {glyph}
+                  ✨
                 </motion.div>
               );
             });

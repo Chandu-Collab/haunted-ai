@@ -464,16 +464,62 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
               </div>
             </div>
 
+
             {/* Interactive Features */}
             <div>
               <label className="text-haunted-200 font-medium block mb-3">Interactive Play</label>
-        <div className="grid grid-cols-2 gap-2">
-          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={openFortune} className="p-3 bg-haunted-800 rounded">🔮 Fortune</motion.button>
-          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={openSeance} className="p-3 bg-haunted-800 rounded">🔔 Séance</motion.button>
-          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={openGames} className="p-3 bg-haunted-800 rounded">🧩 Games</motion.button>
-          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={openSpell} className="p-3 bg-haunted-800 rounded">✨ Spell</motion.button>
-          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={openExplore} className="p-3 bg-haunted-800 rounded">🗺️ Explore</motion.button>
-                <div className="p-3 bg-haunted-900 rounded">
+              <div className="grid grid-cols-2 gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={openFortune}
+                  className="p-3 bg-haunted-800 rounded flex flex-col items-center hover:bg-purple-900 transition-colors"
+                >
+                  <span className="text-2xl mb-1">🔮</span>
+                  <span className="font-semibold">Fortune</span>
+                  <span className="text-xs text-haunted-300 mt-1">Mystical fortunes from the spirits</span>
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={openSeance}
+                  className="p-3 bg-haunted-800 rounded flex flex-col items-center hover:bg-purple-900 transition-colors"
+                >
+                  <span className="text-2xl mb-1">🔔</span>
+                  <span className="font-semibold">Séance</span>
+                  <span className="text-xs text-haunted-300 mt-1">Summon and chat with spirits</span>
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={openGames}
+                  className="p-3 bg-haunted-800 rounded flex flex-col items-center hover:bg-purple-900 transition-colors"
+                >
+                  <span className="text-2xl mb-1">🧩</span>
+                  <span className="font-semibold">Games</span>
+                  <span className="text-xs text-haunted-300 mt-1">Riddles & ghostly challenges</span>
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={openSpell}
+                  className="p-3 bg-haunted-800 rounded flex flex-col items-center hover:bg-purple-900 transition-colors"
+                >
+                  <span className="text-2xl mb-1">✨</span>
+                  <span className="font-semibold">Spell</span>
+                  <span className="text-xs text-haunted-300 mt-1">Cast magical spells</span>
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={openExplore}
+                  className="p-3 bg-haunted-800 rounded flex flex-col items-center hover:bg-purple-900 transition-colors"
+                >
+                  <span className="text-2xl mb-1">🗺️</span>
+                  <span className="font-semibold">Explore</span>
+                  <span className="text-xs text-haunted-300 mt-1">Discover haunted rooms</span>
+                </motion.button>
+                <div className="p-3 bg-haunted-900 rounded col-span-2">
                   <div className="text-haunted-300 text-sm">Energy</div>
                   <EnergyBar sessionId={sessionId} />
                 </div>
