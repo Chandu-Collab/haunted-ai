@@ -1,3 +1,21 @@
+// AI-powered haunted room description
+import { getAIProvider } from '../ai/providerFactory';
+
+// POST /api/games/room-description - AI-generated haunted room description
+export const getRoomDescription = async (req: Request, res: Response) => {
+  try {
+    const { room } = req.body;
+    if (!room || typeof room !== 'string' || !room.trim()) {
+      return res.status(400).json({ description: 'The spirits are confused. Try a real room!' });
+    }
+    const ai = getAIProvider('gemini');
+    const prompt = `You are a ghostly tour guide in a haunted mansion. The user enters the room: "${room}". Describe the room in a short, vivid, spooky, and immersive way. Mention ghostly presences, mysterious objects, or supernatural events. Never repeat the same description. Do not include explanations or extra text, just the description.`;
+    const description = await ai.generateResponse(prompt);
+    res.json({ description: description.trim() });
+  } catch (e) {
+    res.status(500).json({ description: 'The spirits are silent... No vision appears.' });
+  }
+};
 // Update room decorations
 export const updateRoomDecorations = async (req: Request, res: Response) => {
   try {

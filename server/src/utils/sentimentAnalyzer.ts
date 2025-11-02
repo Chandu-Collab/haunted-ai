@@ -47,7 +47,6 @@ export class SentimentAnalyzer {
   analyzeMood(text: string): MoodAnalysis {
     const normalizedText = text.toLowerCase();
     const words = normalizedText.split(/\s+/);
-    
     // Initialize emotion scores
     const emotions = {
       joy: 0,
@@ -111,20 +110,53 @@ export class SentimentAnalyzer {
   getContextualFactors(): ContextualFactors {
     const hour = new Date().getHours();
     let timeOfDay: ContextualFactors['timeOfDay'];
-    
     if (hour >= 5 && hour < 7) timeOfDay = 'dawn';
     else if (hour >= 7 && hour < 12) timeOfDay = 'morning';
     else if (hour >= 12 && hour < 17) timeOfDay = 'afternoon';
     else if (hour >= 17 && hour < 20) timeOfDay = 'evening';
     else if (hour >= 20 && hour < 24) timeOfDay = 'night';
     else timeOfDay = 'midnight';
-
     return {
       timeOfDay,
-      roomAtmosphere: 'mysterious', // Default, can be enhanced later
-      conversationLength: 0, // Will be set by caller
-      userEngagement: 'medium' // Will be analyzed based on response patterns
+      roomAtmosphere: 'mysterious',
+      conversationLength: 0,
+      userEngagement: 'medium'
     };
+  }
+
+  // Detects user intent and question type from a message
+  detectIntent(text: string): { intent: string, questionType?: string } | null {
+    const normalized = text.toLowerCase();
+    // Simple intent detection
+    if (/\b(help|assist|how do i|can you help|what should i do)\b/.test(normalized)) {
+      return { intent: 'request', questionType: 'help' };
+    }
+    if (/\b(why|reason|cause)\b/.test(normalized)) {
+      return { intent: 'inquiry', questionType: 'why' };
+    }
+    if (/\b(who|whose)\b/.test(normalized)) {
+      return { intent: 'inquiry', questionType: 'who' };
+    }
+    if (/\b(when|time|date)\b/.test(normalized)) {
+      return { intent: 'inquiry', questionType: 'when' };
+    }
+    if (/\b(where|place|location)\b/.test(normalized)) {
+      return { intent: 'inquiry', questionType: 'where' };
+    }
+    if (/\b(what|which)\b/.test(normalized)) {
+      return { intent: 'inquiry', questionType: 'what' };
+    }
+    if (/\b(how much|how many|amount|number|count)\b/.test(normalized)) {
+      return { intent: 'inquiry', questionType: 'quantity' };
+    }
+    if (/\b(yes|no|do you|are you|is it|does it|will it|can it)\b/.test(normalized)) {
+      return { intent: 'confirmation', questionType: 'yes-no' };
+    }
+    if (/\b(tell me|story|share|describe|explain)\b/.test(normalized)) {
+      return { intent: 'request_info', questionType: 'open-ended' };
+    }
+    // Default: no clear intent
+    return null;
   }
 }
 

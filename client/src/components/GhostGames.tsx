@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import useAudio from '../hooks/useAudio';
 import useGhostInteractions from '../hooks/useGhostInteractions';
 import Portal from './Portal';
 
@@ -12,13 +13,24 @@ interface Props {
   sessionId?: string;
 }
 
+const GAME_MODES = [
+  { key: 'riddle', label: 'Riddle', emoji: '🧩' },
+  { key: 'trivia', label: 'Trivia', emoji: '❓' },
+  { key: 'memory', label: 'Memory', emoji: '🧠' },
+];
+
 export default function GhostGames({ isOpen, onClose, sessionId }: Props) {
+  const { playSyntheticSound } = useAudio();
   const { state, startRiddle, solveRiddle, endGame } = useGhostInteractions(sessionId);
+  const [gameMode, setGameMode] = useState('riddle');
   const [answer, setAnswer] = useState('');
   const [currentRiddle, setCurrentRiddle] = useState<{question: string, answer: string} | null>(null);
+  const [currentTrivia, setCurrentTrivia] = useState<{question: string, options: string[], answer: string} | null>(null);
+  const [currentMemory, setCurrentMemory] = useState<{sequence: string[], userSequence: string[], completed?: boolean} | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [score, setScore] = useState(0);
-  const [history, setHistory] = useState<{question: string, correct: boolean}[]>([]);
+  const [history, setHistory] = useState<{question: string, correct: boolean, mode?: string}[]>([]);
+  const [triviaAnswered, setTriviaAnswered] = useState(false);
 
 
   // Fetch a riddle from the backend API
@@ -40,12 +52,55 @@ export default function GhostGames({ isOpen, onClose, sessionId }: Props) {
     }
   };
 
+  // Fetch a trivia question from backend AI
+  const fetchTrivia = async () => {
+    setCurrentTrivia(null);
+    setFeedback('');
+    setAnswer('');
+    setTriviaAnswered(false);
+    try {
+      const res = await fetch(`${API_URL}/api/games/trivia`, { method: 'POST' });
+      const data = await res.json();
+      if (data && data.question && data.options && data.answer) {
+        setCurrentTrivia({ question: data.question, options: data.options, answer: data.answer });
+      } else {
+        setFeedback('Failed to load trivia. Please try again.');
+      }
+    } catch (e) {
+      setFeedback('Failed to load trivia. Please try again.');
+    }
+  };
+
+  // Start a memory game with AI-generated sequence
+  const memoryIcons = ['👻', '🎃', '🕯️', '🦇', '🧙', '🪦', '🦴', '🕸️'];
+  const startMemoryGame = async () => {
+    setCurrentMemory({ sequence: [], userSequence: [], completed: false });
+    setFeedback('');
+    setAnswer('');
+    try {
+      const res = await fetch(`${API_URL}/api/games/memory`, { method: 'POST' });
+      const data = await res.json();
+      if (data && Array.isArray(data.sequence)) {
+        setCurrentMemory({ sequence: data.sequence, userSequence: [], completed: false });
+      } else {
+        setFeedback('Failed to load memory sequence. Please try again.');
+      }
+    } catch (e) {
+      setFeedback('Failed to load memory sequence. Please try again.');
+    }
+  };
+
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+    if (gameMode === 'riddle') {
       fetchRiddle();
+    } else if (gameMode === 'trivia') {
+      fetchTrivia();
+    } else if (gameMode === 'memory') {
+      startMemoryGame();
     }
     // eslint-disable-next-line
-  }, [isOpen]);
+  }, [isOpen, gameMode]);
 
   if (!isOpen) return null;
 
@@ -53,11 +108,13 @@ export default function GhostGames({ isOpen, onClose, sessionId }: Props) {
     if (!currentRiddle) return;
     if (answer.trim().toLowerCase().includes(currentRiddle.answer)) {
       setFeedback('🎉 Correct! The ghost is impressed!');
+      playSyntheticSound('ghost');
       solveRiddle();
       setScore(s => s + 1);
       setHistory(h => [...h, { question: currentRiddle.question, correct: true }]);
     } else {
       setFeedback('👻 Oops! Try again or play a new riddle.');
+      playSyntheticSound('message');
       setHistory(h => [...h, { question: currentRiddle.question, correct: false }]);
     }
   };
@@ -84,8 +141,22 @@ export default function GhostGames({ isOpen, onClose, sessionId }: Props) {
               <span className="text-4xl">👻</span>
             </div>
             <h3 className="text-lg font-bold ghost-text mb-2">Ghost Games</h3>
+            {/* Game mode selector */}
+            <div className="flex gap-2 mb-4">
+              {GAME_MODES.map(mode => (
+                <button
+                  key={mode.key}
+                  className={`px-3 py-1 rounded text-base font-semibold flex items-center gap-1 border transition-colors ${gameMode === mode.key ? 'bg-purple-700 text-white border-purple-400' : 'bg-haunted-800 text-haunted-200 border-haunted-700'} hover:bg-purple-800/80`}
+                  onClick={() => setGameMode(mode.key)}
+                  
+                >
+                  <span>{mode.emoji}</span> {mode.label}
+                </button>
+              ))}
+            </div>
             <div className="mb-2 text-haunted-300">Score: {score}</div>
-            {currentRiddle && (
+            {/* Riddle mode */}
+            {gameMode === 'riddle' && currentRiddle && (
               <>
                 <p className="mt-3 text-haunted-200 text-center">{currentRiddle.question}</p>
                 <input
@@ -113,12 +184,104 @@ export default function GhostGames({ isOpen, onClose, sessionId }: Props) {
                 </div>
               </>
             )}
+            {/* Trivia mode */}
+            {gameMode === 'trivia' && currentTrivia && (
+              <>
+                <p className="mt-3 text-haunted-200 text-center">{currentTrivia.question}</p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {currentTrivia.options.map(option => (
+                    <button
+                      key={option}
+                      className={`px-3 py-2 bg-haunted-800 rounded text-haunted-100 transition-colors ${triviaAnswered ? (option === currentTrivia.answer ? 'bg-green-700' : 'bg-red-800/80') : 'hover:bg-purple-700/80'}`}
+                      disabled={triviaAnswered}
+                      onClick={() => {
+                        if (triviaAnswered) return;
+                        setTriviaAnswered(true);
+                        if (option === currentTrivia.answer) {
+                          setFeedback('🎉 Correct!');
+                          playSyntheticSound('ghost');
+                          setScore(s => s + 1);
+                          setHistory(h => [...h, { question: currentTrivia.question, correct: true, mode: 'trivia' }]);
+                        } else {
+                          setFeedback('👻 Oops! The answer was: ' + currentTrivia.answer);
+                          playSyntheticSound('message');
+                          setHistory(h => [...h, { question: currentTrivia.question, correct: false, mode: 'trivia' }]);
+                        }
+                      }}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+                {feedback && <div className="text-center text-lg mt-4 animate-pulse">{feedback}</div>}
+                <button
+                  onClick={fetchTrivia}
+                  className="px-3 py-1 bg-haunted-700 rounded hover:bg-haunted-600 text-haunted-100 mt-4"
+                  disabled={!triviaAnswered}
+                >
+                  Next Question
+                </button>
+              </>
+            )}
+            {/* Memory mode */}
+            {gameMode === 'memory' && currentMemory && (
+              <>
+                <p className="mt-3 text-haunted-200 text-center">Memorize this sequence:</p>
+                <div className="flex justify-center gap-2 text-3xl my-4">
+                  {currentMemory.sequence.map((icon, idx) => (
+                    <span key={idx}>{icon}</span>
+                  ))}
+                </div>
+                <p className="mt-2 text-haunted-400 text-sm">Now repeat the sequence by clicking the icons below in order:</p>
+                <div className="flex justify-center gap-2 text-3xl my-4">
+                  {memoryIcons.map((icon, idx) => (
+                    <button
+                      key={icon}
+                      className={`rounded p-1 border-2 ${currentMemory.userSequence.length < currentMemory.sequence.length && !currentMemory.completed ? 'hover:border-purple-400' : 'opacity-50 cursor-not-allowed border-gray-700'}`}
+                      disabled={currentMemory.userSequence.length >= currentMemory.sequence.length || currentMemory.completed}
+                      onClick={() => {
+                        if (currentMemory.completed) return;
+                        const newUserSeq = [...currentMemory.userSequence, icon];
+                        setCurrentMemory(mem => mem ? { ...mem, userSequence: newUserSeq } : null);
+                        if (newUserSeq.length === currentMemory.sequence.length) {
+                          // Check correctness
+                          const correct = newUserSeq.every((v, i) => v === currentMemory.sequence[i]);
+                          setTimeout(() => {
+                            if (correct) {
+                              setFeedback('🎉 Correct sequence!');
+                              playSyntheticSound('ghost');
+                              setScore(s => s + 1);
+                              setHistory(h => [...h, { question: `Memory: ${currentMemory.sequence.join(' ')}`, correct: true, mode: 'memory' }]);
+                            } else {
+                              setFeedback('👻 Oops! The correct sequence was: ' + currentMemory.sequence.join(' '));
+                              playSyntheticSound('message');
+                              setHistory(h => [...h, { question: `Memory: ${currentMemory.sequence.join(' ')}`, correct: false, mode: 'memory' }]);
+                            }
+                            setCurrentMemory(mem => mem ? { ...mem, completed: true } : null);
+                          }, 400);
+                        }
+                      }}
+                    >
+                      {icon}
+                    </button>
+                  ))}
+                </div>
+                {feedback && <div className="text-center text-lg mt-2 animate-pulse">{feedback}</div>}
+                <button
+                  onClick={startMemoryGame}
+                  className="px-3 py-1 bg-haunted-700 rounded hover:bg-haunted-600 text-haunted-100 mt-4"
+                  disabled={!currentMemory.completed}
+                >
+                  New Sequence
+                </button>
+              </>
+            )}
             <div className="mt-4 w-full">
               <h4 className="font-semibold text-haunted-400 mb-1">History</h4>
               <ul className="text-sm max-h-24 overflow-y-auto">
                 {history.slice(-5).map((h, i) => (
                   <li key={i} className={h.correct ? 'text-green-400' : 'text-red-400'}>
-                    {h.correct ? '✔️' : '❌'} {h.question}
+                    {h.correct ? '✔️' : '❌'} [{h.mode || 'riddle'}] {h.question}
                   </li>
                 ))}
               </ul>
