@@ -3,12 +3,53 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#8a4fff" />
+    <meta name="background-color" content="#18122B" />
     <title>Haunted AI - Chat with Spirits</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/ghost-icon-192.png" />
+    <link rel="apple-touch-startup-image" href="/splash-screen.svg" />
+    <style>
+      body.loading-splash {
+        background: #18122B;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #splash-loader {
+        width: 160px;
+        height: 160px;
+        display: block;
+        margin: 0 auto;
+      }
+    </style>
   </head>
   <body>
+    <div id="splash" style="display:none">
+      <img id="splash-loader" src="/splash-screen.svg" alt="Loading..." onerror="this.onerror=null;this.src='/ghost-icon-512.png'" />
+    </div>
     <div id="root"></div>
+    <script>
+      // Show splash until app loads
+      document.body.classList.add('loading-splash');
+      document.getElementById('splash').style.display = 'flex';
+      window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+          document.body.classList.remove('loading-splash');
+          document.getElementById('splash').style.display = 'none';
+        }, 1200); // Show splash for at least 1.2s
+      });
+    </script>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js');
+        });
+      }
+    </script>
   </body>
 </html>
