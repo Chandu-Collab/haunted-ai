@@ -3,6 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useGhostInteractions from '../hooks/useGhostInteractions';
 import Portal from './Portal';
+import TypewriterText from './TypewriterText';
+import ParticleSystem from './ParticleSystem';
+import useAudio from '../hooks/useAudio';
 
 interface Props {
   isOpen: boolean;
@@ -12,10 +15,9 @@ interface Props {
 
 export default function FortuneTelling({ isOpen, onClose, sessionId }: Props) {
   const { getFortune } = useGhostInteractions(sessionId);
+  const { playSyntheticSound } = useAudio();
   const [fortune, setFortune] = useState<string | null>(null);
   const [flipped, setFlipped] = useState(false);
-
-
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -23,18 +25,21 @@ export default function FortuneTelling({ isOpen, onClose, sessionId }: Props) {
       setFlipped(false);
       setLoading(true);
       setTimeout(async () => {
+        playSyntheticSound('ghost');
         const fortuneText = await getFortune();
         setFortune(fortuneText);
         setFlipped(true);
         setLoading(false);
       }, 600);
     }
+    // eslint-disable-next-line
   }, [isOpen]);
 
   const handleDrawAgain = () => {
     setFlipped(false);
     setLoading(true);
     setTimeout(async () => {
+      playSyntheticSound('ghost');
       const fortuneText = await getFortune();
       setFortune(fortuneText);
       setFlipped(true);
@@ -57,12 +62,16 @@ export default function FortuneTelling({ isOpen, onClose, sessionId }: Props) {
           <h3 className="text-xl font-semibold mb-2 ghost-text">The Spirits Whisper</h3>
           <div className="my-6 flex justify-center">
             <motion.div
-              className="w-64 h-40 bg-gradient-to-br from-purple-800 to-indigo-900 rounded-xl flex items-center justify-center shadow-lg cursor-pointer relative"
+              className="w-64 h-40 bg-gradient-to-br from-purple-800 to-indigo-900 rounded-xl flex items-center justify-center shadow-lg cursor-pointer relative overflow-hidden"
               style={{ perspective: 1000 }}
               animate={{ rotateY: flipped ? 0 : 180 }}
               transition={{ duration: 0.7 }}
               onClick={handleDrawAgain}
             >
+              {/* Ghostly particles */}
+              <div className="absolute inset-0 pointer-events-none z-0">
+                <ParticleSystem particleCount={18} intensity={80} />
+              </div>
               <AnimatePresence initial={false}>
                 {flipped ? (
                   <motion.div
@@ -70,12 +79,12 @@ export default function FortuneTelling({ isOpen, onClose, sessionId }: Props) {
                     initial={{ opacity: 0, rotateY: 180 }}
                     animate={{ opacity: 1, rotateY: 0 }}
                     exit={{ opacity: 0, rotateY: 180 }}
-                    className="absolute inset-0 flex items-center justify-center px-4 text-lg text-center"
+                    className="absolute inset-0 flex items-center justify-center px-4 text-lg text-center z-10"
                   >
                     {loading ? (
                       <span className="ghost-text animate-fade-in-slow">The spirits are whispering...</span>
                     ) : (
-                      <span className="ghost-text animate-fade-in-slow">{fortune}</span>
+                      <TypewriterText text={fortune || ''} className="ghost-text animate-fade-in-slow" isGhost speed={22} />
                     )}
                   </motion.div>
                 ) : (
@@ -84,7 +93,7 @@ export default function FortuneTelling({ isOpen, onClose, sessionId }: Props) {
                     initial={{ opacity: 1, rotateY: 0 }}
                     animate={{ opacity: 0.7, rotateY: 180 }}
                     exit={{ opacity: 0, rotateY: 0 }}
-                    className="absolute inset-0 flex items-center justify-center text-4xl text-purple-300"
+                    className="absolute inset-0 flex items-center justify-center text-4xl text-purple-300 z-10"
                   >
                     👻
                   </motion.div>
