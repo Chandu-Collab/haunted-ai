@@ -1,0 +1,20 @@
+# Haunted AI Backend on Render
+
+# Build & Start commands for Node.js
+build = "npm install && npm run build"
+start = "npm run start"
+
+# Set environment variables in the Render dashboard as needed
+# Example:
+# DATABASE_URL=your_database_url
+# API_KEY=your_api_key
+
+# Expose the port Render expects
+[service]
+  type = "web"
+  name = "haunted-ai-backend"
+  env = "node"
+  plan = "free"
+  buildCommand = "npm install && npm run build"
+  startCommand = "npm run start"
+  autoDeploy = true

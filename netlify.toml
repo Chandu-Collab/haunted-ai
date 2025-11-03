@@ -1,0 +1,10 @@
+[build]
+  publish = "client/dist"
+  command = "npm run build"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://your-backend-on-render.onrender.com/api/:splat"
+  status = 200
+
+# Add more redirects as needed
