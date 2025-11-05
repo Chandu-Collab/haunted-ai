@@ -33,17 +33,17 @@ export default function RoomSelector({ onJoin, currentRoomId }: RoomSelectorProp
   };
 
   return (
-    <div className="p-4 bg-haunted-900 rounded-xl border border-haunted-700 max-w-md w-full mx-auto mt-6">
-      <h2 className="text-lg font-bold mb-2">Select a Room</h2>
-      {loading && <div>Loading rooms...</div>}
-      {error && <div className="text-red-400">{error}</div>}
-      {rooms.length === 0 && !loading && <div className="text-purple-300 mb-2">No rooms found. Create one below!</div>}
-      <ul className="space-y-2">
+    <div className="p-2 sm:p-4 bg-haunted-900 rounded-xl border border-haunted-700 max-w-xs sm:max-w-md w-full mx-auto mt-3 sm:mt-6">
+      <h2 className="text-base sm:text-lg font-bold mb-1 sm:mb-2">Select a Room</h2>
+      {loading && <div className="text-xs sm:text-sm">Loading rooms...</div>}
+      {error && <div className="text-red-400 text-xs sm:text-sm">{error}</div>}
+      {rooms.length === 0 && !loading && <div className="text-purple-300 mb-1 sm:mb-2 text-xs sm:text-sm">No rooms found. Create one below!</div>}
+      <ul className="space-y-1 sm:space-y-2">
         {rooms.map(room => (
           <li key={room.id} className="flex items-center justify-between">
-            <span className={room.id === currentRoomId ? 'font-bold text-purple-400' : ''}>{room.name}</span>
+            <span className={room.id === currentRoomId ? 'font-bold text-purple-400 text-xs sm:text-sm' : 'text-xs sm:text-sm'}>{room.name}</span>
             <button
-              className="ml-2 px-3 py-1 bg-haunted-700 rounded text-white hover:bg-haunted-600"
+              className="ml-1 sm:ml-2 px-2 sm:px-3 py-0.5 sm:py-1 bg-haunted-700 rounded text-white text-xs sm:text-sm hover:bg-haunted-600"
               disabled={joining === room.id || room.id === currentRoomId}
               onClick={async () => {
                 setJoining(room.id);
@@ -56,24 +56,24 @@ export default function RoomSelector({ onJoin, currentRoomId }: RoomSelectorProp
           </li>
         ))}
       </ul>
-      <div className="mt-4 flex gap-2">
+      <div className="mt-2 sm:mt-4 flex gap-1 sm:gap-2">
         <input
           type="text"
           value={newRoomName}
           onChange={e => setNewRoomName(e.target.value)}
           placeholder="New room name"
-          className="px-2 py-1 rounded bg-haunted-800 border border-haunted-700 text-white flex-1"
+          className="px-1 sm:px-2 py-0.5 sm:py-1 rounded bg-haunted-800 border border-haunted-700 text-white text-xs sm:text-sm flex-1"
           disabled={creating}
         />
         <button
-          className="px-3 py-1 bg-purple-700 rounded text-white hover:bg-purple-600"
+          className="px-2 sm:px-3 py-0.5 sm:py-1 bg-purple-700 rounded text-white text-xs sm:text-sm hover:bg-purple-600"
           onClick={handleCreateRoom}
           disabled={creating || !newRoomName.trim()}
         >
           {creating ? 'Creating...' : 'Create'}
         </button>
       </div>
-      <button className="mt-4 px-3 py-1 bg-haunted-600 rounded" onClick={fetchRooms}>Refresh</button>
+      <button className="mt-2 sm:mt-4 px-2 sm:px-3 py-0.5 sm:py-1 bg-haunted-600 rounded text-xs sm:text-sm" onClick={fetchRooms}>Refresh</button>
     </div>
   );
 }

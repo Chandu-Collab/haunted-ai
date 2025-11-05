@@ -58,26 +58,26 @@ const PersonalRituals: React.FC = () => {
   if (loading) return <div>Loading personal rituals...</div>;
 
   return (
-    <div className="mb-4">
-      <label className="block text-haunted-200 font-medium mb-2">Personal Rituals</label>
-      <div className="mb-2">
+    <div className="mb-2 sm:mb-4 w-full max-w-xs sm:max-w-md mx-auto">
+      <label className="block text-haunted-200 font-medium text-xs sm:text-sm mb-1 sm:mb-2">Personal Rituals</label>
+      <div className="mb-1 sm:mb-2 flex flex-col gap-1 sm:gap-2">
         <input
           type="text"
-          className="w-full px-3 py-2 rounded bg-haunted-800 border border-haunted-700 text-white mb-2"
+          className="w-full px-2 sm:px-3 py-1 sm:py-2 rounded bg-haunted-800 border border-haunted-700 text-white text-xs sm:text-sm mb-1 sm:mb-2"
           placeholder="Custom greeting (e.g. 'Welcome, mortal!')"
           value={greeting}
           onChange={e => setGreeting(e.target.value)}
         />
         <input
           type="text"
-          className="w-full px-3 py-2 rounded bg-haunted-800 border border-haunted-700 text-white"
+          className="w-full px-2 sm:px-3 py-1 sm:py-2 rounded bg-haunted-800 border border-haunted-700 text-white text-xs sm:text-sm"
           placeholder="Custom goodbye (e.g. 'Farewell, until the next haunting!')"
           value={goodbye}
           onChange={e => setGoodbye(e.target.value)}
         />
       </div>
       <button
-        className="px-4 py-2 bg-purple-700 rounded text-white hover:bg-purple-600"
+        className="px-2 sm:px-4 py-1 sm:py-2 bg-purple-700 rounded text-white text-xs sm:text-sm hover:bg-purple-600"
         onClick={handleSave}
         disabled={saving}
       >

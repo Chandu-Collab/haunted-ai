@@ -54,44 +54,44 @@ const StoryInterface: React.FC<StoryInterfaceProps> = ({
 
   if (activeStory?.isActive) {
     return (
-      <div className="story-interface bg-black/30 border border-purple-500/50 rounded-lg p-4 mb-4">
-        <div className="story-header flex justify-between items-center mb-4">
-          <h3 className="text-purple-300 font-semibold flex items-center">
+      <div className="story-interface bg-black/30 border border-purple-500/50 rounded-lg p-3 sm:p-4 mb-4 max-w-full sm:max-w-xl mx-auto">
+        <div className="story-header flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2 sm:gap-0">
+          <h3 className="text-purple-300 font-semibold flex items-center text-base sm:text-lg">
             📖 Interactive Story Mode
           </h3>
           <button
             onClick={handleEndStory}
-            className="text-purple-400 hover:text-purple-200 text-sm"
+            className="text-purple-400 hover:text-purple-200 text-sm sm:text-base px-2 py-1 sm:px-3 sm:py-1 rounded"
             title="End Story"
           >
             ✕
           </button>
         </div>
 
-        <div className="story-atmosphere mb-3 text-xs text-purple-200">
+        <div className="story-atmosphere mb-3 text-xs sm:text-sm text-purple-200">
           <span className="italic">{activeStory.currentSegment.atmosphere}</span>
         </div>
 
         <div className="story-mood mb-4">
-          <span className={`mood-indicator px-2 py-1 rounded-full text-xs ${getMoodClass(activeStory.currentSegment.mood)}`}>
+          <span className={`mood-indicator px-2 py-1 rounded-full text-xs sm:text-sm ${getMoodClass(activeStory.currentSegment.mood)}`}>
             {getMoodIcon(activeStory.currentSegment.mood)} {activeStory.currentSegment.mood}
           </span>
         </div>
 
         {activeStory.currentSegment.choices.length > 0 && (
           <div className="story-choices">
-            <p className="text-purple-200 text-sm mb-3">What do you choose?</p>
+            <p className="text-purple-200 text-sm sm:text-base mb-3">What do you choose?</p>
             <div className="space-y-2">
               {activeStory.currentSegment.choices.map((choice) => (
                 <button
                   key={choice.id}
                   onClick={() => handleMakeChoice(choice)}
                   disabled={isLoading}
-                  className={`choice-button w-full text-left p-3 rounded-lg border transition-all duration-200 ${getChoiceClass(choice.consequenceMood)} ${
+                  className={`choice-button w-full text-left p-2 sm:p-3 rounded-lg border transition-all duration-200 text-xs sm:text-sm ${getChoiceClass(choice.consequenceMood)} ${
                     isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-purple-500/20'
                   }`}
                 >
-                  <span className="choice-text text-sm text-purple-100">
+                  <span className="choice-text text-xs sm:text-sm text-purple-100">
                     {choice.text}
                   </span>
                   <span className="choice-mood text-xs text-purple-300 ml-2">
@@ -105,7 +105,7 @@ const StoryInterface: React.FC<StoryInterfaceProps> = ({
 
         {isLoading && (
           <div className="loading text-center py-4">
-            <div className="text-purple-300 text-sm">The ghost weaves the next part of the tale...</div>
+            <div className="text-purple-300 text-sm sm:text-base">The ghost weaves the next part of the tale...</div>
           </div>
         )}
       </div>
@@ -113,22 +113,22 @@ const StoryInterface: React.FC<StoryInterfaceProps> = ({
   }
 
   return (
-    <div className="story-launcher">
+    <div className="story-launcher w-full max-w-full sm:max-w-xl mx-auto">
       {!showStoryMenu ? (
         <button
           onClick={() => setShowStoryMenu(true)}
-          className="story-trigger bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/50 rounded-lg px-4 py-2 text-purple-200 text-sm transition-colors duration-200 flex items-center space-x-2"
+          className="story-trigger bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/50 rounded-lg px-3 py-2 sm:px-4 sm:py-2 text-purple-200 text-xs sm:text-sm transition-colors duration-200 flex items-center space-x-2 w-full sm:w-auto"
         >
           <span>📚</span>
           <span>Tell me a ghost story...</span>
         </button>
       ) : (
-        <div className="story-menu bg-black/30 border border-purple-500/50 rounded-lg p-4">
-          <div className="story-menu-header flex justify-between items-center mb-4">
-            <h3 className="text-purple-300 font-semibold">Choose Your Ghost Story</h3>
+        <div className="story-menu bg-black/30 border border-purple-500/50 rounded-lg p-3 sm:p-4 w-full max-w-full sm:max-w-xl mx-auto">
+          <div className="story-menu-header flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2 sm:gap-0">
+            <h3 className="text-purple-300 font-semibold text-base sm:text-lg">Choose Your Ghost Story</h3>
             <button
               onClick={() => setShowStoryMenu(false)}
-              className="text-purple-400 hover:text-purple-200"
+              className="text-purple-400 hover:text-purple-200 px-2 py-1 sm:px-3 sm:py-1 rounded"
             >
               ✕
             </button>
@@ -136,20 +136,20 @@ const StoryInterface: React.FC<StoryInterfaceProps> = ({
 
           {isLoading ? (
             <div className="loading text-center py-4">
-              <div className="text-purple-300 text-sm">Summoning available tales...</div>
+              <div className="text-purple-300 text-xs sm:text-sm">Summoning available tales...</div>
             </div>
           ) : (
-            <div className="stories-list space-y-3">
+            <div className="stories-list space-y-2 sm:space-y-3">
               {availableStories.map((story) => (
                 <button
                   key={story.id}
                   onClick={() => handleStartStory(story.id)}
-                  className="story-option w-full text-left p-3 bg-purple-900/20 hover:bg-purple-800/30 border border-purple-500/30 rounded-lg transition-colors duration-200"
+                  className="story-option w-full text-left p-2 sm:p-3 bg-purple-900/20 hover:bg-purple-800/30 border border-purple-500/30 rounded-lg transition-colors duration-200 text-xs sm:text-sm"
                 >
-                  <div className="story-title text-purple-200 font-medium mb-1">
+                  <div className="story-title text-purple-200 font-medium mb-1 text-xs sm:text-base">
                     {story.title}
                   </div>
-                  <div className="story-description text-purple-300 text-sm">
+                  <div className="story-description text-purple-300 text-xs sm:text-sm">
                     {story.description}
                   </div>
                 </button>

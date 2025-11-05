@@ -34,6 +34,17 @@ const FloatingGhostOrbs: React.FC<FloatingGhostOrbsProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Responsive: handle device pixel ratio for sharpness
+    const setCanvasSize = () => {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
+      ctx.scale(dpr, dpr);
+    };
+
     // Initialize orbs
     const initializeOrbs = () => {
       orbsRef.current = [];
@@ -142,8 +153,7 @@ const FloatingGhostOrbs: React.FC<FloatingGhostOrbsProps> = ({
     };
 
     const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      setCanvasSize();
       initializeOrbs();
     };
 
@@ -163,7 +173,7 @@ const FloatingGhostOrbs: React.FC<FloatingGhostOrbsProps> = ({
   return (
     <canvas
       ref={canvasRef}
-      className={`fixed inset-0 pointer-events-none z-[2] ${className}`}
+      className={`fixed inset-0 w-full h-full pointer-events-none z-[2] ${className}`}
       style={{ mixBlendMode: 'screen' }}
     />
   );

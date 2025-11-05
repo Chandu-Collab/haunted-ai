@@ -33,21 +33,21 @@ export default function LoginForm({ onSuccess }: { onSuccess?: () => void }) {
   }
 
   return (
-    <form onSubmit={submit} className="mt-4" aria-live="polite">
-      <div className="mb-2">
-        <label className="text-haunted-300 text-sm">Email</label>
+    <form onSubmit={submit} className="mt-2 sm:mt-4" aria-live="polite">
+      <div className="mb-1 sm:mb-2">
+        <label className="text-haunted-300 text-xs sm:text-sm">Email</label>
         <input
           value={email}
           onChange={e => setEmail(e.target.value)}
           onBlur={() => setTouched(t => ({ ...t, email: true }))}
           placeholder="you@example.com"
           aria-invalid={touched.email && !emailValid}
-          className="w-full p-2 bg-haunted-800 rounded mt-1"
+          className="w-full p-1 sm:p-2 bg-haunted-800 rounded mt-0.5 sm:mt-1 text-xs sm:text-sm"
         />
-        {touched.email && !emailValid && <div className="text-yellow-300 text-xs mt-1">Enter a valid email</div>}
+        {touched.email && !emailValid && <div className="text-yellow-300 text-xs mt-0.5 sm:mt-1">Enter a valid email</div>}
       </div>
-      <div className="mb-2">
-        <label className="text-haunted-300 text-sm">Password</label>
+      <div className="mb-1 sm:mb-2">
+        <label className="text-haunted-300 text-xs sm:text-sm">Password</label>
         <input
           type="password"
           value={password}
@@ -55,13 +55,13 @@ export default function LoginForm({ onSuccess }: { onSuccess?: () => void }) {
           onBlur={() => setTouched(t => ({ ...t, password: true }))}
           placeholder="At least 6 characters"
           aria-invalid={touched.password && !passwordValid}
-          className="w-full p-2 bg-haunted-800 rounded mt-1"
+          className="w-full p-1 sm:p-2 bg-haunted-800 rounded mt-0.5 sm:mt-1 text-xs sm:text-sm"
         />
-        {touched.password && !passwordValid && <div className="text-yellow-300 text-xs mt-1">Password must be at least 6 characters</div>}
+        {touched.password && !passwordValid && <div className="text-yellow-300 text-xs mt-0.5 sm:mt-1">Password must be at least 6 characters</div>}
       </div>
-      {error && <div className="text-red-400 text-sm mb-2">{error}</div>}
-      <div className="flex items-center justify-end space-x-2">
-        <button type="submit" disabled={loading} className={`px-3 py-1 bg-haunted-600 rounded ${!formValid ? 'opacity-60 cursor-not-allowed' : ''}`}>
+      {error && <div className="text-red-400 text-xs sm:text-sm mb-1 sm:mb-2">{error}</div>}
+      <div className="flex items-center justify-end space-x-1 sm:space-x-2">
+        <button type="submit" disabled={loading} className={`px-2 sm:px-3 py-1 bg-haunted-600 rounded text-xs sm:text-sm ${!formValid ? 'opacity-60 cursor-not-allowed' : ''}`}>
           {loading ? '...' : 'Login'}
         </button>
       </div>

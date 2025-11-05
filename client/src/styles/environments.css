@@ -50,6 +50,25 @@
   --ghost-primary: #8a4fff;
   --ghost-accent: #8a4fff;
 }
+
+@media (max-width: 640px) {
+  .main-bg-container.env-graveyard,
+  .main-bg-container.env-mansion,
+  .main-bg-container.env-forest,
+  .main-bg-container.env-catacombs {
+    background-size: cover;
+    min-height: 100vh;
+    padding: 0;
+  }
+  .main-bg-container .ghost-message {
+    font-size: 0.95em !important;
+    padding: 0.7em 1em !important;
+  }
+  .main-bg-container .ghost-title {
+    font-size: 1.1em !important;
+  }
+}
+
 .main-bg-container .ghost-message {
   border-color: var(--ghost-primary, #8a4fff) !important;
   background: linear-gradient(135deg, rgba(138, 79, 255, 0.1) 0%, var(--ghost-primary, #8a4fff) 100%) !important;

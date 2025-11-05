@@ -19,20 +19,20 @@ const NicknameInput: React.FC = () => {
   };
 
   return (
-    <div className="mb-4">
-      <label className="block text-haunted-200 font-medium mb-2">Preferred Nickname</label>
-      <div className="flex items-center gap-4">
+    <div className="mb-2 sm:mb-4 w-full max-w-xs sm:max-w-md mx-auto">
+      <label className="block text-haunted-200 font-medium text-xs sm:text-sm mb-1 sm:mb-2">Preferred Nickname</label>
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
         <input
           type="text"
           value={nickname}
           onChange={e => setNickname(e.target.value)}
-          className="px-3 py-2 rounded bg-haunted-800 border border-haunted-700 text-white"
+          className="px-2 sm:px-3 py-1 sm:py-2 rounded bg-haunted-800 border border-haunted-700 text-white text-xs sm:text-sm flex-1"
           maxLength={32}
           placeholder="Enter your nickname"
         />
         <button
           type="button"
-          className="px-3 py-1 bg-purple-700 rounded text-white hover:bg-purple-600"
+          className="px-2 sm:px-3 py-1 sm:py-1.5 bg-purple-700 rounded text-white text-xs sm:text-sm hover:bg-purple-600"
           onClick={handleSave}
           disabled={saving}
         >

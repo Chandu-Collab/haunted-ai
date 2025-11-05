@@ -165,7 +165,7 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+  className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4"
         onClick={handleClose}
       >
         <motion.div
@@ -173,11 +173,11 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           key="settings"
-          className="bg-haunted-900/95 border border-haunted-700/50 rounded-2xl max-w-md w-full backdrop-blur-md max-h-[90vh] flex flex-col"
+          className="bg-haunted-900/95 border border-haunted-700/50 rounded-2xl max-w-xs sm:max-w-md w-full backdrop-blur-md max-h-[90vh] flex flex-col"
           onClick={e => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between p-6 border-b border-haunted-700/30">
-            <h2 className="text-xl font-bold text-haunted-100 ghost-text">
+          <div className="flex items-center justify-between p-2 sm:p-6 border-b border-haunted-700/30">
+            <h2 className="text-base sm:text-xl font-bold text-haunted-100 ghost-text">
               👻 Spectral Settings
             </h2>
             <button
@@ -189,20 +189,20 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
           </div>
 
           {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar"
-               style={{ maxHeight: 'calc(90vh - 140px)' }}>
+    <div className="flex-1 overflow-y-auto p-2 sm:p-6 space-y-3 sm:space-y-6 custom-scrollbar"
+      style={{ maxHeight: 'calc(90vh - 140px)' }}>
             {/* Sound Toggle */}
             <div className="flex items-center justify-between">
-              <label className="text-haunted-200 font-medium">Sound Effects</label>
+              <label className="text-haunted-200 font-medium text-xs sm:text-sm">Sound Effects</label>
               <button
                 onClick={() => handleChange('soundEnabled', !localSettings.soundEnabled)}
-                className={`w-12 h-6 rounded-full transition-colors ${
+                className={`w-10 sm:w-12 h-5 sm:h-6 rounded-full transition-colors ${
                   localSettings.soundEnabled ? 'bg-haunted-600' : 'bg-haunted-800'
                 } relative`}
               >
                 <motion.div
-                  className="w-5 h-5 bg-white rounded-full absolute top-0.5"
-                  animate={{ x: localSettings.soundEnabled ? 24 : 2 }}
+                  className="w-4 sm:w-5 h-4 sm:h-5 bg-white rounded-full absolute top-0.5"
+                  animate={{ x: localSettings.soundEnabled ? 20 : 2 }}
                   transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                 />
               </button>
@@ -217,11 +217,11 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
             {/* Voice Effect Selector */}
             {localSettings.voiceEnabled && (
               <div className="mt-2">
-                <label className="text-haunted-200 font-medium block mb-2">Ghost Voice Effect</label>
+                <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 text-xs sm:text-sm">Ghost Voice Effect</label>
                 <select
                   value={voiceEffect}
                   onChange={e => setVoiceEffect(e.target.value as VoiceEffectOption)}
-                  className="w-full bg-haunted-800/60 border border-haunted-700/50 rounded-lg px-3 py-2 text-haunted-100 text-sm focus:outline-none focus:ring-2 focus:ring-haunted-500/50"
+                  className="w-full bg-haunted-800/60 border border-haunted-700/50 rounded-lg px-2 sm:px-3 py-1 sm:py-2 text-haunted-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-haunted-500/50"
                 >
                   <option value="none">None (Normal Ghost)</option>
                   <option value="whisper">Whisper</option>
@@ -229,7 +229,7 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
                   <option value="reverb">Reverb</option>
                   <option value="robot">Robot</option>
                 </select>
-                <div className="text-xs text-haunted-400 mt-1">Try different effects for extra spooky voices!</div>
+                <div className="text-xs text-haunted-400 mt-0.5 sm:mt-1">Try different effects for extra spooky voices!</div>
               </div>
             )}
 
@@ -260,7 +260,7 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
 
             {/* Particle Count */}
             <div>
-              <label className="text-haunted-200 font-medium block mb-2">
+              <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 text-xs sm:text-sm">
                 Particle Intensity ({localSettings.particleCount})
               </label>
               <input
@@ -269,13 +269,13 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
                 max="100"
                 value={localSettings.particleCount}
                 onChange={e => handleChange('particleCount', parseInt(e.target.value))}
-                className="w-full accent-haunted-600"
+                className="w-full accent-haunted-600 h-2 sm:h-3"
               />
             </div>
 
             {/* Ghost Intensity */}
             <div>
-              <label className="text-haunted-200 font-medium block mb-2">
+              <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 text-xs sm:text-sm">
                 Ghost Activity ({localSettings.ghostIntensity}%)
               </label>
               <input
@@ -284,14 +284,14 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
                 max="100"
                 value={localSettings.ghostIntensity}
                 onChange={e => handleChange('ghostIntensity', parseInt(e.target.value))}
-                className="w-full accent-haunted-600"
+                className="w-full accent-haunted-600 h-2 sm:h-3"
               />
             </div>
 
             {/* Theme Selection */}
             <div>
-              <label className="text-haunted-200 font-medium block mb-2">Theme</label>
-              <div className="grid grid-cols-3 gap-2 mb-2">
+              <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 text-xs sm:text-sm">Theme</label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 sm:gap-2 mb-1 sm:mb-2">
                 {(['dark', 'darker', 'midnight'] as const).map(theme => (
                   <button
                     key={theme}
@@ -307,8 +307,8 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
                 ))}
               </div>
               {/* Environment Selection */}
-              <label className="text-haunted-200 font-medium block mb-2 mt-4">Environment</label>
-              <div className="grid grid-cols-4 gap-2 mb-2">
+              <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 mt-2 sm:mt-4 text-xs sm:text-sm">Environment</label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 sm:gap-2 mb-1 sm:mb-2">
                 {(['graveyard', 'mansion', 'forest', 'catacombs'] as Environment[]).map(env => (
                   <button
                     key={env}
@@ -324,8 +324,8 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
                 ))}
               </div>
               {/* Time of Day Selection */}
-              <label className="text-haunted-200 font-medium block mb-2 mt-4">Time of Day</label>
-              <div className="grid grid-cols-2 gap-2 mb-2">
+              <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 mt-2 sm:mt-4 text-xs sm:text-sm">Time of Day</label>
+              <div className="grid grid-cols-2 gap-1 sm:gap-2 mb-1 sm:mb-2">
                 {(['day', 'night'] as TimeOfDay[]).map(t => (
                   <button
                     key={t}
@@ -341,8 +341,8 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
                 ))}
               </div>
               {/* Season Selection */}
-              <label className="text-haunted-200 font-medium block mb-2 mt-4">Season</label>
-              <div className="grid grid-cols-4 gap-2 mb-2">
+              <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 mt-2 sm:mt-4 text-xs sm:text-sm">Season</label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 sm:gap-2 mb-1 sm:mb-2">
                 {(['default', 'halloween', 'winter', 'spring'] as Season[]).map(s => (
                   <button
                     key={s}
@@ -358,8 +358,8 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
                 ))}
               </div>
               {/* Accessibility Controls */}
-              <label className="text-haunted-200 font-medium block mb-2 mt-4">Accessibility</label>
-              <div className="flex flex-wrap gap-2 mb-2">
+              <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 mt-2 sm:mt-4 text-xs sm:text-sm">Accessibility</label>
+              <div className="flex flex-wrap gap-1 sm:gap-2 mb-1 sm:mb-2">
                 <button
                   onClick={() => setHighContrast(!highContrast)}
                   className={`p-2 rounded-lg border text-xs transition-all ${
@@ -392,11 +392,11 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
 
             {/* Visual Effects Settings */}
             <div>
-              <label className="text-haunted-200 font-medium block mb-3">Visual Effects</label>
-              <div className="space-y-3">
+              <label className="text-haunted-200 font-medium block mb-1 sm:mb-3 text-xs sm:text-sm">Visual Effects</label>
+              <div className="space-y-2 sm:space-y-3">
                 {/* Lightning Effects */}
                 <div className="flex items-center justify-between">
-                  <span className="text-haunted-300 text-sm">Lightning Flashes</span>
+                  <span className="text-haunted-300 text-xs sm:text-sm">Lightning Flashes</span>
                   <button
                     onClick={() => handleChange('lightningEnabled', !localSettings.lightningEnabled)}
                     className={`w-10 h-5 rounded-full transition-colors ${
@@ -413,7 +413,7 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
 
                 {/* Fog Effects */}
                 <div className="flex items-center justify-between">
-                  <span className="text-haunted-300 text-sm">Fog/Mist</span>
+                  <span className="text-haunted-300 text-xs sm:text-sm">Fog/Mist</span>
                   <button
                     onClick={() => handleChange('fogEnabled', !localSettings.fogEnabled)}
                     className={`w-10 h-5 rounded-full transition-colors ${
@@ -430,7 +430,7 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
 
                 {/* Eye Tracking */}
                 <div className="flex items-center justify-between">
-                  <span className="text-haunted-300 text-sm">Eye Tracking</span>
+                  <span className="text-haunted-300 text-xs sm:text-sm">Eye Tracking</span>
                   <button
                     onClick={() => handleChange('eyeTrackingEnabled', !localSettings.eyeTrackingEnabled)}
                     className={`w-10 h-5 rounded-full transition-colors ${
@@ -447,7 +447,7 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
 
                 {/* Floating Text Spirits */}
                 <div className="flex items-center justify-between">
-                  <span className="text-haunted-300 text-sm">Text Spirits</span>
+                  <span className="text-haunted-300 text-xs sm:text-sm">Text Spirits</span>
                   <button
                     onClick={() => handleChange('textSpiritsEnabled', !localSettings.textSpiritsEnabled)}
                     className={`w-10 h-5 rounded-full transition-colors ${
@@ -467,71 +467,71 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
 
             {/* Interactive Features */}
             <div>
-              <label className="text-haunted-200 font-medium block mb-3">Interactive Play</label>
-              <div className="grid grid-cols-2 gap-2">
+              <label className="text-haunted-200 font-medium block mb-1 sm:mb-3 text-xs sm:text-sm">Interactive Play</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={openFortune}
-                  className="p-3 bg-haunted-800 rounded flex flex-col items-center hover:bg-purple-900 transition-colors"
+                  className="p-2 sm:p-3 bg-haunted-800 rounded flex flex-col items-center hover:bg-purple-900 transition-colors"
                 >
-                  <span className="text-2xl mb-1">🔮</span>
-                  <span className="font-semibold">Fortune</span>
-                  <span className="text-xs text-haunted-300 mt-1">Mystical fortunes from the spirits</span>
+                  <span className="text-xl sm:text-2xl mb-0.5 sm:mb-1">🔮</span>
+                  <span className="font-semibold text-xs sm:text-base">Fortune</span>
+                  <span className="text-xs text-haunted-300 mt-0.5 sm:mt-1">Mystical fortunes from the spirits</span>
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={openSeance}
-                  className="p-3 bg-haunted-800 rounded flex flex-col items-center hover:bg-purple-900 transition-colors"
+                  className="p-2 sm:p-3 bg-haunted-800 rounded flex flex-col items-center hover:bg-purple-900 transition-colors"
                 >
-                  <span className="text-2xl mb-1">🔔</span>
-                  <span className="font-semibold">Séance</span>
-                  <span className="text-xs text-haunted-300 mt-1">Summon and chat with spirits</span>
+                  <span className="text-xl sm:text-2xl mb-0.5 sm:mb-1">🔔</span>
+                  <span className="font-semibold text-xs sm:text-base">Séance</span>
+                  <span className="text-xs text-haunted-300 mt-0.5 sm:mt-1">Summon and chat with spirits</span>
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={openGames}
-                  className="p-3 bg-haunted-800 rounded flex flex-col items-center hover:bg-purple-900 transition-colors"
+                  className="p-2 sm:p-3 bg-haunted-800 rounded flex flex-col items-center hover:bg-purple-900 transition-colors"
                 >
-                  <span className="text-2xl mb-1">🧩</span>
-                  <span className="font-semibold">Games</span>
-                  <span className="text-xs text-haunted-300 mt-1">Riddles & ghostly challenges</span>
+                  <span className="text-xl sm:text-2xl mb-0.5 sm:mb-1">🧩</span>
+                  <span className="font-semibold text-xs sm:text-base">Games</span>
+                  <span className="text-xs text-haunted-300 mt-0.5 sm:mt-1">Riddles & ghostly challenges</span>
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={openSpell}
-                  className="p-3 bg-haunted-800 rounded flex flex-col items-center hover:bg-purple-900 transition-colors"
+                  className="p-2 sm:p-3 bg-haunted-800 rounded flex flex-col items-center hover:bg-purple-900 transition-colors"
                 >
-                  <span className="text-2xl mb-1">✨</span>
-                  <span className="font-semibold">Spell</span>
-                  <span className="text-xs text-haunted-300 mt-1">Cast magical spells</span>
+                  <span className="text-xl sm:text-2xl mb-0.5 sm:mb-1">✨</span>
+                  <span className="font-semibold text-xs sm:text-base">Spell</span>
+                  <span className="text-xs text-haunted-300 mt-0.5 sm:mt-1">Cast magical spells</span>
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={openExplore}
-                  className="p-3 bg-haunted-800 rounded flex flex-col items-center hover:bg-purple-900 transition-colors"
+                  className="p-2 sm:p-3 bg-haunted-800 rounded flex flex-col items-center hover:bg-purple-900 transition-colors"
                 >
-                  <span className="text-2xl mb-1">🗺️</span>
-                  <span className="font-semibold">Explore</span>
-                  <span className="text-xs text-haunted-300 mt-1">Discover haunted rooms</span>
+                  <span className="text-xl sm:text-2xl mb-0.5 sm:mb-1">🗺️</span>
+                  <span className="font-semibold text-xs sm:text-base">Explore</span>
+                  <span className="text-xs text-haunted-300 mt-0.5 sm:mt-1">Discover haunted rooms</span>
                 </motion.button>
-                <div className="p-3 bg-haunted-900 rounded col-span-2">
-                  <div className="text-haunted-300 text-sm">Energy</div>
+                <div className="p-2 sm:p-3 bg-haunted-900 rounded col-span-1 sm:col-span-2">
+                  <div className="text-haunted-300 text-xs sm:text-sm">Energy</div>
                   <EnergyBar sessionId={sessionId} />
                 </div>
               </div>
-              <div className="mt-3">
-                <label className="text-haunted-200 font-medium block mb-2">Achievements</label>
+              <div className="mt-2 sm:mt-3">
+                <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 text-xs sm:text-sm">Achievements</label>
                 <AchievementSystem sessionId={sessionId} />
               </div>
-              <div className="mt-4">
-                <label className="text-haunted-200 font-medium block mb-2">Account</label>
-                <div className="flex space-x-2">
-                  <button onClick={() => setShowAuth(true)} className="px-3 py-2 bg-haunted-800 rounded">Sign in / Sign up</button>
+              <div className="mt-2 sm:mt-4">
+                <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 text-xs sm:text-sm">Account</label>
+                <div className="flex gap-1 sm:gap-2">
+                  <button onClick={() => setShowAuth(true)} className="px-2 sm:px-3 py-1 sm:py-2 bg-haunted-800 rounded text-xs sm:text-sm">Sign in / Sign up</button>
                 </div>
               </div>
             </div>
@@ -554,11 +554,11 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
           </div>
 
           {/* Fixed Footer */}
-          <div className="p-6 border-t border-haunted-700/30">
-            <div className="flex justify-end space-x-3">
+          <div className="p-2 sm:p-6 border-t border-haunted-700/30">
+            <div className="flex justify-end gap-2 sm:gap-3">
               <button
                 onClick={onClose}
-                className="px-4 py-2 text-haunted-300 hover:text-haunted-100 transition-colors"
+                className="px-2 sm:px-4 py-1 sm:py-2 text-haunted-300 hover:text-haunted-100 transition-colors text-xs sm:text-sm"
               >
                 Close
               </button>

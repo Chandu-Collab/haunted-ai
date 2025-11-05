@@ -48,7 +48,7 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({ notifications, 
   };
 
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
+  <div className="fixed top-2 right-2 sm:top-4 sm:right-4 z-50 space-y-1 sm:space-y-2 max-w-xs sm:max-w-sm w-full">
       <AnimatePresence>
         {notifications.map(notification => (
           <motion.div
@@ -58,21 +58,21 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({ notifications, 
             exit={{ opacity: 0, x: 300, scale: 0.9 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
             className={`
-              border rounded-lg p-4 backdrop-blur-sm shadow-lg cursor-pointer
+              border rounded-lg p-2 sm:p-4 backdrop-blur-sm shadow-lg cursor-pointer
               ${getColors(notification.type)}
             `}
             onClick={() => onRemove(notification.id)}
           >
-            <div className="flex items-start gap-3">
-              <span className="text-lg flex-shrink-0">
+            <div className="flex items-start gap-2 sm:gap-3">
+              <span className="text-base sm:text-lg flex-shrink-0">
                 {getIcon(notification.type)}
               </span>
               <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-sm">
+                <h4 className="font-medium text-xs sm:text-sm">
                   {notification.title}
                 </h4>
                 {notification.message && (
-                  <p className="text-xs opacity-90 mt-1">
+                  <p className="text-xs opacity-90 mt-0.5 sm:mt-1">
                     {notification.message}
                   </p>
                 )}
