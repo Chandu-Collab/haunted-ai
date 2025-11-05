@@ -54,7 +54,7 @@ export default function RoomExplorer({ isOpen, onClose, sessionId }: Props) {
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 overflow-hidden">
+  <div className="fixed inset-0 z-[70] flex items-center justify-center p-2 sm:p-4 overflow-hidden">
         {/* Ghostly fog and orbs in the background */}
         <div className="absolute inset-0 pointer-events-none z-0">
           <FogEffect intensity={4} />
@@ -65,14 +65,14 @@ export default function RoomExplorer({ isOpen, onClose, sessionId }: Props) {
         <div className="absolute inset-0 pointer-events-none z-10">
           <FloatingGhosts triggerCount={selectedRoom ? 2 : 0} intensity={selectedRoom ? 100 : 60} />
         </div>
-        <div className="relative bg-haunted-900 border border-haunted-700 rounded-xl p-6 max-w-md w-full z-20 shadow-2xl backdrop-blur-md">
-          <h3 className="text-lg font-bold ghost-text mb-2 animate-fade-in">🗺️ Room Explorer</h3>
-          <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="relative bg-haunted-900 border border-haunted-700 rounded-xl p-2 sm:p-6 max-w-xs sm:max-w-md w-full z-20 shadow-2xl backdrop-blur-md">
+          <h3 className="text-base sm:text-lg font-bold ghost-text mb-1 sm:mb-2 animate-fade-in">🗺️ Room Explorer</h3>
+          <div className="mt-2 sm:mt-3 grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
             {ROOMS.map(r => (
               <button
                 key={r.id}
                 onClick={() => handleExplore(r.id, r.name)}
-                className={`p-3 bg-haunted-800 rounded transition-colors font-semibold shadow-md hover:bg-purple-800/80 ${selectedRoom === r.id ? 'ring-2 ring-purple-500 scale-105' : ''}`}
+                className={`p-2 sm:p-3 bg-haunted-800 rounded transition-colors font-semibold shadow-md hover:bg-purple-800/80 text-xs sm:text-base ${selectedRoom === r.id ? 'ring-2 ring-purple-500 scale-105' : ''}`}
                 disabled={loading && selectedRoom === r.id}
               >
                 <div>{r.name}</div>
@@ -83,19 +83,19 @@ export default function RoomExplorer({ isOpen, onClose, sessionId }: Props) {
 
           {/* Room description display */}
           {selectedRoom && (
-            <div className="mt-6 p-4 bg-haunted-800 rounded-lg border border-haunted-700 animate-fade-in-slow min-h-[80px] text-center relative overflow-hidden">
+            <div className="mt-4 sm:mt-6 p-2 sm:p-4 bg-haunted-800 rounded-lg border border-haunted-700 animate-fade-in-slow min-h-[60px] sm:min-h-[80px] text-center relative overflow-hidden">
               {/* Animated ghostly overlay */}
               <div className="absolute inset-0 pointer-events-none z-0 animate-pulse bg-gradient-to-br from-purple-900/30 to-black/40" />
-              {loading && <span className="ghost-text z-10 relative">The spirits are peering into the room...</span>}
-              {error && <span className="text-red-400 z-10 relative">{error}</span>}
+              {loading && <span className="ghost-text text-xs sm:text-base z-10 relative">The spirits are peering into the room...</span>}
+              {error && <span className="text-red-400 text-xs sm:text-base z-10 relative">{error}</span>}
               {roomDescription && !loading && !error && (
-                <span className="ghost-text text-base z-10 relative animate-fade-in-slow">{roomDescription}</span>
+                <span className="ghost-text text-xs sm:text-base z-10 relative animate-fade-in-slow">{roomDescription}</span>
               )}
             </div>
           )}
 
-          <div className="mt-4 flex justify-end">
-            <button onClick={onClose} className="px-3 py-1 bg-haunted-600 rounded shadow-md hover:bg-purple-700/80 transition-colors">Close</button>
+          <div className="mt-2 sm:mt-4 flex justify-end">
+            <button onClick={onClose} className="px-2 sm:px-3 py-1 bg-haunted-600 rounded shadow-md hover:bg-purple-700/80 transition-colors text-xs sm:text-base">Close</button>
           </div>
         </div>
       </div>

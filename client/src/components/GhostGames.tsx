@@ -133,51 +133,50 @@ export default function GhostGames({ isOpen, onClose, sessionId }: Props) {
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60">
-        <div className="bg-haunted-900 border border-haunted-700 rounded-xl p-6 max-w-md w-full shadow-2xl relative">
-          <button onClick={handleClose} className="absolute top-2 right-2 text-haunted-400 hover:text-haunted-200">✖</button>
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/60">
+        <div className="bg-haunted-900 border border-haunted-700 rounded-xl p-3 sm:p-6 max-w-xs sm:max-w-md w-full shadow-2xl relative">
+          <button onClick={handleClose} className="absolute top-2 right-2 text-haunted-400 hover:text-haunted-200 text-base sm:text-lg">✖</button>
           <div className="flex flex-col items-center">
-            <div className="mb-2">
-              <span className="text-4xl">👻</span>
+            <div className="mb-1 sm:mb-2">
+              <span className="text-2xl sm:text-4xl">👻</span>
             </div>
-            <h3 className="text-lg font-bold ghost-text mb-2">Ghost Games</h3>
+            <h3 className="text-base sm:text-lg font-bold ghost-text mb-1 sm:mb-2">Ghost Games</h3>
             {/* Game mode selector */}
-            <div className="flex gap-2 mb-4">
+            <div className="flex gap-1 sm:gap-2 mb-2 sm:mb-4">
               {GAME_MODES.map(mode => (
                 <button
                   key={mode.key}
-                  className={`px-3 py-1 rounded text-base font-semibold flex items-center gap-1 border transition-colors ${gameMode === mode.key ? 'bg-purple-700 text-white border-purple-400' : 'bg-haunted-800 text-haunted-200 border-haunted-700'} hover:bg-purple-800/80`}
+                  className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-base font-semibold flex items-center gap-1 border transition-colors ${gameMode === mode.key ? 'bg-purple-700 text-white border-purple-400' : 'bg-haunted-800 text-haunted-200 border-haunted-700'} hover:bg-purple-800/80`}
                   onClick={() => setGameMode(mode.key)}
-                  
                 >
                   <span>{mode.emoji}</span> {mode.label}
                 </button>
               ))}
             </div>
-            <div className="mb-2 text-haunted-300">Score: {score}</div>
+            <div className="mb-1 sm:mb-2 text-haunted-300 text-xs sm:text-base">Score: {score}</div>
             {/* Riddle mode */}
             {gameMode === 'riddle' && currentRiddle && (
               <>
-                <p className="mt-3 text-haunted-200 text-center">{currentRiddle.question}</p>
+                <p className="mt-2 sm:mt-3 text-haunted-200 text-center text-xs sm:text-base">{currentRiddle.question}</p>
                 <input
                   value={answer}
                   onChange={e => setAnswer(e.target.value)}
-                  className="mt-3 w-full p-2 bg-haunted-800 rounded text-center"
+                  className="mt-2 sm:mt-3 w-full p-1 sm:p-2 bg-haunted-800 rounded text-center text-xs sm:text-base"
                   placeholder="Your answer"
                   onKeyDown={e => { if (e.key === 'Enter') handleSubmit(); }}
                   autoFocus
                 />
-                <div className="mt-3 flex flex-col items-center space-y-2">
+                <div className="mt-2 sm:mt-3 flex flex-col items-center space-y-1 sm:space-y-2">
                   <button
                     onClick={handleSubmit}
-                    className="px-4 py-1 bg-haunted-600 rounded hover:bg-haunted-500 text-white"
+                    className="px-3 sm:px-4 py-1 bg-haunted-600 rounded hover:bg-haunted-500 text-white text-xs sm:text-base"
                   >
                     Submit
                   </button>
-                  {feedback && <div className="text-center text-lg mt-2 animate-pulse">{feedback}</div>}
+                  {feedback && <div className="text-center text-base sm:text-lg mt-1 sm:mt-2 animate-pulse">{feedback}</div>}
                   <button
                     onClick={handleNextRiddle}
-                    className="px-3 py-1 bg-haunted-700 rounded hover:bg-haunted-600 text-haunted-100 mt-2"
+                    className="px-2 sm:px-3 py-1 bg-haunted-700 rounded hover:bg-haunted-600 text-haunted-100 mt-1 sm:mt-2 text-xs sm:text-base"
                   >
                     Play Another Riddle
                   </button>
@@ -187,12 +186,12 @@ export default function GhostGames({ isOpen, onClose, sessionId }: Props) {
             {/* Trivia mode */}
             {gameMode === 'trivia' && currentTrivia && (
               <>
-                <p className="mt-3 text-haunted-200 text-center">{currentTrivia.question}</p>
-                <div className="mt-3 grid grid-cols-2 gap-2">
+                <p className="mt-2 sm:mt-3 text-haunted-200 text-center text-xs sm:text-base">{currentTrivia.question}</p>
+                <div className="mt-2 sm:mt-3 grid grid-cols-2 gap-1 sm:gap-2">
                   {currentTrivia.options.map(option => (
                     <button
                       key={option}
-                      className={`px-3 py-2 bg-haunted-800 rounded text-haunted-100 transition-colors ${triviaAnswered ? (option === currentTrivia.answer ? 'bg-green-700' : 'bg-red-800/80') : 'hover:bg-purple-700/80'}`}
+                      className={`px-2 sm:px-3 py-1 sm:py-2 bg-haunted-800 rounded text-haunted-100 transition-colors text-xs sm:text-base ${triviaAnswered ? (option === currentTrivia.answer ? 'bg-green-700' : 'bg-red-800/80') : 'hover:bg-purple-700/80'}`}
                       disabled={triviaAnswered}
                       onClick={() => {
                         if (triviaAnswered) return;
@@ -213,10 +212,10 @@ export default function GhostGames({ isOpen, onClose, sessionId }: Props) {
                     </button>
                   ))}
                 </div>
-                {feedback && <div className="text-center text-lg mt-4 animate-pulse">{feedback}</div>}
+                {feedback && <div className="text-center text-base sm:text-lg mt-2 sm:mt-4 animate-pulse">{feedback}</div>}
                 <button
                   onClick={fetchTrivia}
-                  className="px-3 py-1 bg-haunted-700 rounded hover:bg-haunted-600 text-haunted-100 mt-4"
+                  className="px-2 sm:px-3 py-1 bg-haunted-700 rounded hover:bg-haunted-600 text-haunted-100 mt-2 sm:mt-4 text-xs sm:text-base"
                   disabled={!triviaAnswered}
                 >
                   Next Question
@@ -226,18 +225,18 @@ export default function GhostGames({ isOpen, onClose, sessionId }: Props) {
             {/* Memory mode */}
             {gameMode === 'memory' && currentMemory && (
               <>
-                <p className="mt-3 text-haunted-200 text-center">Memorize this sequence:</p>
-                <div className="flex justify-center gap-2 text-3xl my-4">
+                <p className="mt-2 sm:mt-3 text-haunted-200 text-center text-xs sm:text-base">Memorize this sequence:</p>
+                <div className="flex justify-center gap-1 sm:gap-2 text-xl sm:text-3xl my-2 sm:my-4">
                   {currentMemory.sequence.map((icon, idx) => (
                     <span key={idx}>{icon}</span>
                   ))}
                 </div>
-                <p className="mt-2 text-haunted-400 text-sm">Now repeat the sequence by clicking the icons below in order:</p>
-                <div className="flex justify-center gap-2 text-3xl my-4">
+                <p className="mt-1 sm:mt-2 text-haunted-400 text-xs sm:text-sm">Now repeat the sequence by clicking the icons below in order:</p>
+                <div className="flex justify-center gap-1 sm:gap-2 text-xl sm:text-3xl my-2 sm:my-4">
                   {memoryIcons.map((icon, idx) => (
                     <button
                       key={icon}
-                      className={`rounded p-1 border-2 ${currentMemory.userSequence.length < currentMemory.sequence.length && !currentMemory.completed ? 'hover:border-purple-400' : 'opacity-50 cursor-not-allowed border-gray-700'}`}
+                      className={`rounded p-0.5 sm:p-1 border-2 text-xl sm:text-3xl ${currentMemory.userSequence.length < currentMemory.sequence.length && !currentMemory.completed ? 'hover:border-purple-400' : 'opacity-50 cursor-not-allowed border-gray-700'}`}
                       disabled={currentMemory.userSequence.length >= currentMemory.sequence.length || currentMemory.completed}
                       onClick={() => {
                         if (currentMemory.completed) return;
@@ -266,19 +265,19 @@ export default function GhostGames({ isOpen, onClose, sessionId }: Props) {
                     </button>
                   ))}
                 </div>
-                {feedback && <div className="text-center text-lg mt-2 animate-pulse">{feedback}</div>}
+                {feedback && <div className="text-center text-base sm:text-lg mt-1 sm:mt-2 animate-pulse">{feedback}</div>}
                 <button
                   onClick={startMemoryGame}
-                  className="px-3 py-1 bg-haunted-700 rounded hover:bg-haunted-600 text-haunted-100 mt-4"
+                  className="px-2 sm:px-3 py-1 bg-haunted-700 rounded hover:bg-haunted-600 text-haunted-100 mt-2 sm:mt-4 text-xs sm:text-base"
                   disabled={!currentMemory.completed}
                 >
                   New Sequence
                 </button>
               </>
             )}
-            <div className="mt-4 w-full">
-              <h4 className="font-semibold text-haunted-400 mb-1">History</h4>
-              <ul className="text-sm max-h-24 overflow-y-auto">
+            <div className="mt-2 sm:mt-4 w-full">
+              <h4 className="font-semibold text-haunted-400 mb-1 text-xs sm:text-base">History</h4>
+              <ul className="text-xs sm:text-sm max-h-24 overflow-y-auto">
                 {history.slice(-5).map((h, i) => (
                   <li key={i} className={h.correct ? 'text-green-400' : 'text-red-400'}>
                     {h.correct ? '✔️' : '❌'} [{h.mode || 'riddle'}] {h.question}

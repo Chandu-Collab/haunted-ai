@@ -93,9 +93,9 @@ const WeatherDisplay: React.FC<WeatherDisplayProps> = ({ className = '' }) => {
 
   if (isLoading) {
     return (
-      <div className={`weather-display ${className}`}>
-        <div className="weather-loading p-3 bg-black/20 rounded-lg border border-purple-500/30">
-          <div className="text-purple-300 text-sm text-center">
+      <div className={`weather-display w-full max-w-full sm:max-w-md mx-auto px-2 sm:px-0 ${className}`}>
+        <div className="weather-loading p-2 sm:p-3 bg-black/20 rounded-lg border border-purple-500/30">
+          <div className="text-purple-300 text-xs sm:text-sm text-center">
             Reading the atmospheric omens...
           </div>
         </div>
@@ -106,42 +106,42 @@ const WeatherDisplay: React.FC<WeatherDisplayProps> = ({ className = '' }) => {
   if (!weather) return null;
 
   return (
-    <div className={`weather-display ${className}`}>
-      <div className="weather-container p-3 bg-black/20 rounded-lg border border-purple-500/30">
-        <div className="weather-header flex items-center justify-between mb-2">
-          <h3 className="text-purple-300 text-sm font-semibold">Spiritual Atmosphere</h3>
+    <div className={`weather-display w-full max-w-full sm:max-w-md mx-auto px-2 sm:px-0 ${className}`}>
+      <div className="weather-container p-2 sm:p-3 bg-black/20 rounded-lg border border-purple-500/30">
+        <div className="weather-header flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-2 sm:gap-0">
+          <h3 className="text-purple-300 text-xs sm:text-sm font-semibold">Spiritual Atmosphere</h3>
           <button
             onClick={fetchWeather}
-            className="text-purple-400 hover:text-purple-200 text-xs"
+            className="text-purple-400 hover:text-purple-200 text-xs sm:text-sm"
             title="Refresh atmospheric readings"
           >
             🔄
           </button>
         </div>
 
-        <div className="weather-main flex items-center space-x-3 mb-3">
-          <div className="weather-icon text-2xl">
+        <div className="weather-main flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 mb-3">
+          <div className="weather-icon text-xl sm:text-2xl">
             {getWeatherIcon(weather.condition, weather.isNight)}
           </div>
           <div className="weather-info flex-1">
-            <div className="weather-temp text-purple-100 text-lg font-semibold">
+            <div className="weather-temp text-purple-100 text-base sm:text-lg font-semibold">
               {weather.temperature}°C
             </div>
-            <div className="weather-condition text-purple-200 text-sm">
+            <div className="weather-condition text-purple-200 text-xs sm:text-sm">
               {weather.description}
             </div>
           </div>
           <div className="weather-mood flex items-center space-x-1">
-            <span className="mood-icon text-lg">
+            <span className="mood-icon text-base sm:text-lg">
               {getMoodIcon(weather.mood)}
             </span>
-            <span className={`mood-text text-sm capitalize ${getMoodClass(weather.mood)}`}>
+            <span className={`mood-text text-xs sm:text-sm capitalize ${getMoodClass(weather.mood)}`}>
               {weather.mood}
             </span>
           </div>
         </div>
 
-        <div className="weather-details grid grid-cols-3 gap-2 mb-3 text-xs">
+        <div className="weather-details grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3 text-xs sm:text-sm">
           <div className="detail text-center">
             <div className="text-purple-400">Humidity</div>
             <div className="text-purple-200">{weather.humidity}%</div>
@@ -150,20 +150,25 @@ const WeatherDisplay: React.FC<WeatherDisplayProps> = ({ className = '' }) => {
             <div className="text-purple-400">Wind</div>
             <div className="text-purple-200">{weather.windSpeed} m/s</div>
           </div>
-          <div className="detail text-center">
+          <div className="detail text-center hidden sm:block">
+            <div className="text-purple-400">Clouds</div>
+            <div className="text-purple-200">{weather.cloudCover}%</div>
+          </div>
+          {/* On mobile, show clouds below */}
+          <div className="detail text-center sm:hidden col-span-2">
             <div className="text-purple-400">Clouds</div>
             <div className="text-purple-200">{weather.cloudCover}%</div>
           </div>
         </div>
 
-        <div className="spiritual-description bg-purple-900/20 rounded p-2">
-          <div className="text-purple-200 text-xs italic">
+        <div className="spiritual-description bg-purple-900/20 rounded p-2 sm:p-3">
+          <div className="text-purple-200 text-xs sm:text-sm italic">
             {getSpiritalDescription(weather)}
           </div>
         </div>
 
         <div className="time-indicator mt-2 text-center">
-          <span className="text-purple-400 text-xs">
+          <span className="text-purple-400 text-xs sm:text-sm">
             {weather.isNight ? '🌙 Night time - Peak spiritual activity' : '☀️ Day time - Spirits are present but subtle'}
           </span>
         </div>

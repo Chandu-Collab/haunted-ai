@@ -26,7 +26,7 @@ export default function SeanceMode({ isOpen, onClose, sessionId }: Props) {
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+  <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/70 backdrop-blur-sm">
         {/* Ghostly candle animation - moved lower for clarity */}
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 select-none">
           <div className="flex flex-col items-center">
@@ -42,18 +42,18 @@ export default function SeanceMode({ isOpen, onClose, sessionId }: Props) {
           </div>
         </div>
 
-        <div className="bg-haunted-900 border border-haunted-700 rounded-xl p-6 max-w-md w-full relative z-20 flex flex-col items-center">
-          <h3 className="text-lg font-bold ghost-text mb-2">🔔 Séance Mode</h3>
-          <p className="mb-4 text-haunted-200 ghost-text">When active, the ghost will respond with ritual-like messages and special behaviors.</p>
-          <div className="mt-2 flex items-center w-full justify-center gap-3">
-            <span className="text-haunted-300">Active</span>
+        <div className="bg-haunted-900 border border-haunted-700 rounded-xl p-2 sm:p-6 max-w-xs sm:max-w-md w-full relative z-20 flex flex-col items-center">
+          <h3 className="text-base sm:text-lg font-bold ghost-text mb-1 sm:mb-2">🔔 Séance Mode</h3>
+          <p className="mb-2 sm:mb-4 text-haunted-200 ghost-text text-xs sm:text-base">When active, the ghost will respond with ritual-like messages and special behaviors.</p>
+          <div className="mt-1 sm:mt-2 flex items-center w-full justify-center gap-2 sm:gap-3">
+            <span className="text-haunted-300 text-xs sm:text-base">Active</span>
             <button
               onClick={handleToggle}
-              className={`w-14 h-7 rounded-full transition-colors duration-300 flex items-center relative ${state.seanceMode ? 'bg-purple-700 shadow-lg' : 'bg-haunted-800'}`}
+              className={`w-10 sm:w-14 h-5 sm:h-7 rounded-full transition-colors duration-300 flex items-center relative ${state.seanceMode ? 'bg-purple-700 shadow-lg' : 'bg-haunted-800'}`}
               style={{ verticalAlign: 'middle' }}
             >
               <span
-                className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300 ${state.seanceMode ? 'translate-x-7' : 'translate-x-0'}`}
+                className={`absolute top-0.5 left-0.5 w-4 sm:w-5 h-4 sm:h-5 bg-white rounded-full shadow-md transition-transform duration-300 ${state.seanceMode ? 'translate-x-5 sm:translate-x-7' : 'translate-x-0'}`}
                 style={{ boxSizing: 'border-box' }}
               />
             </button>
@@ -66,15 +66,15 @@ export default function SeanceMode({ isOpen, onClose, sessionId }: Props) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
-                className="mt-6 text-center"
+                className="mt-4 sm:mt-6 text-center"
               >
-                <span className="ghost-text animate-fade-in-slow text-purple-200 text-base">The veil is thin. Spirits gather and listen...</span>
+                <span className="ghost-text animate-fade-in-slow text-purple-200 text-xs sm:text-base">The veil is thin. Spirits gather and listen...</span>
               </motion.div>
             )}
           </AnimatePresence>
 
-          <div className="mt-6 flex justify-end w-full">
-            <button onClick={onClose} className="px-3 py-1 bg-haunted-600 rounded">Close</button>
+          <div className="mt-2 sm:mt-6 flex justify-end w-full">
+            <button onClick={onClose} className="px-2 sm:px-3 py-1 bg-haunted-600 rounded text-xs sm:text-base">Close</button>
           </div>
         </div>
 

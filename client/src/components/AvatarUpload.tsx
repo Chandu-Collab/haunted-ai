@@ -29,17 +29,17 @@ const AvatarUpload: React.FC = () => {
   };
 
   return (
-    <div className="mb-4">
-      <label className="block text-haunted-200 font-medium mb-2">Avatar</label>
-      <div className="flex items-center gap-4">
+    <div className="mb-3 sm:mb-4">
+      <label className="block text-haunted-200 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Avatar</label>
+      <div className="flex items-center gap-2 sm:gap-4">
         <img
           src={avatarUrl || '/default-avatar.png'}
           alt="Avatar"
-          className="w-16 h-16 rounded-full border border-haunted-700 object-cover"
+          className="w-12 h-12 sm:w-16 sm:h-16 rounded-full border border-haunted-700 object-cover"
         />
         <button
           type="button"
-          className="px-3 py-1 bg-purple-700 rounded text-white hover:bg-purple-600"
+          className="px-2 sm:px-3 py-1 bg-purple-700 rounded text-xs sm:text-sm text-white hover:bg-purple-600"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
         >

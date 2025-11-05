@@ -40,33 +40,33 @@ const MessageSearch: React.FC<MessageSearchProps> = ({ roomId, sessionId }) => {
   };
 
   return (
-    <div className="p-4 bg-black/40 rounded-xl border border-purple-700 max-w-lg w-full mx-auto my-4">
-      <form onSubmit={handleSubmit} className="flex gap-2 mb-2">
+    <div className="p-2 sm:p-4 bg-black/40 rounded-xl border border-purple-700 max-w-xs sm:max-w-lg w-full mx-auto my-2 sm:my-4">
+      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 mb-2">
         <input
           type="text"
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="Search messages..."
-          className="flex-1 px-3 py-2 rounded bg-haunted-800 border border-haunted-700 text-white"
+          className="flex-1 px-2 sm:px-3 py-1 sm:py-2 rounded bg-haunted-800 border border-haunted-700 text-white text-xs sm:text-sm"
         />
-        <button type="submit" className="px-4 py-2 bg-purple-700 rounded text-white hover:bg-purple-600">Search</button>
-        <button type="button" onClick={handleExport} className="px-4 py-2 bg-green-700 rounded text-white hover:bg-green-600 ml-2">Export Story</button>
+        <div className="flex gap-2 mt-2 sm:mt-0">
+          <button type="submit" className="px-2 sm:px-4 py-1 sm:py-2 bg-purple-700 rounded text-white text-xs sm:text-sm hover:bg-purple-600">Search</button>
+          <button type="button" onClick={handleExport} className="px-2 sm:px-4 py-1 sm:py-2 bg-green-700 rounded text-white text-xs sm:text-sm hover:bg-green-600 ml-0 sm:ml-2">Export Story</button>
+        </div>
       </form>
-      {loading && <div className="text-purple-300">Searching...</div>}
-      {error && <div className="text-red-400">{error}</div>}
-      <ul className="space-y-2 mt-2 max-h-64 overflow-y-auto">
+      {loading && <div className="text-purple-300 text-xs sm:text-sm">Searching...</div>}
+      {error && <div className="text-red-400 text-xs sm:text-sm">{error}</div>}
+      <ul className="space-y-2 mt-2 max-h-48 sm:max-h-64 overflow-y-auto">
         {results.map(msg => {
           let ghostAppearance = null;
           if (msg.isGhost && ghosts.length > 0) {
-            // Try to find a matching ghost profile (by name, id, or fallback)
-            // Adjust this logic if your message has a ghostId or similar
             ghostAppearance = ghosts[0].appearance || { color: ghosts[0].color, emoji: ghosts[0].emoji };
           }
           return (
-            <li key={msg.id} className="p-2 rounded bg-haunted-900 border border-haunted-700">
-              <div className="text-xs text-purple-400 mb-1">{msg.createdAt ? new Date(msg.createdAt).toLocaleString() : ''}</div>
+            <li key={msg.id} className="p-1 sm:p-2 rounded bg-haunted-900 border border-haunted-700">
+              <div className="text-xs text-purple-400 mb-0.5 sm:mb-1">{msg.createdAt ? new Date(msg.createdAt).toLocaleString() : ''}</div>
               {msg.isGhost && ghostAppearance ? (
-                <span className="text-3xl mr-2" style={{ color: ghostAppearance.color }}>{ghostAppearance.emoji}</span>
+                <span className="text-2xl sm:text-3xl mr-1 sm:mr-2" style={{ color: ghostAppearance.color }}>{ghostAppearance.emoji}</span>
               ) : null}
               <span className={msg.isGhost ? 'text-purple-200' : 'text-blue-200'}>{msg.content}</span>
             </li>

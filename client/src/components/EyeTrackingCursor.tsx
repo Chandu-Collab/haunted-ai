@@ -122,7 +122,7 @@ const EyeTrackingCursor: React.FC<EyeTrackingCursorProps> = ({
           >
             {/* Eye socket */}
             <div
-              className="relative w-12 h-8 bg-haunted-900 rounded-full border-2 border-haunted-600 shadow-lg overflow-hidden"
+              className="relative w-8 h-6 sm:w-12 sm:h-8 bg-haunted-900 rounded-full border-2 border-haunted-600 shadow-lg overflow-hidden"
               style={{
                 boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.8), 0 0 15px rgba(124, 45, 255, 0.3)'
               }}
@@ -131,7 +131,7 @@ const EyeTrackingCursor: React.FC<EyeTrackingCursorProps> = ({
               <div className="absolute inset-1 bg-haunted-100 rounded-full">
                 {/* Iris */}
                 <div
-                  className="absolute w-6 h-6 rounded-full"
+                  className="absolute w-4 h-4 sm:w-6 sm:h-6 rounded-full"
                   style={{
                     background: 'radial-gradient(circle, #7c2dff 30%, #4c13b3 70%, #2e0a66 100%)',
                     left: '50%',
@@ -142,7 +142,7 @@ const EyeTrackingCursor: React.FC<EyeTrackingCursorProps> = ({
                 >
                   {/* Pupil */}
                   <div
-                    className="absolute w-3 h-3 bg-black rounded-full"
+                    className="absolute w-2 h-2 sm:w-3 sm:h-3 bg-black rounded-full"
                     style={{
                       left: '50%',
                       top: '50%',
@@ -151,7 +151,7 @@ const EyeTrackingCursor: React.FC<EyeTrackingCursorProps> = ({
                   >
                     {/* Reflection */}
                     <div
-                      className="absolute w-1 h-1 bg-white rounded-full opacity-80"
+                      className="absolute w-0.5 h-0.5 sm:w-1 sm:h-1 bg-white rounded-full opacity-80"
                       style={{
                         left: '20%',
                         top: '20%'
