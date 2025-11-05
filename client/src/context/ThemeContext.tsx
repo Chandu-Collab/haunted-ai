@@ -5,6 +5,7 @@ export type TimeOfDay = 'day' | 'night';
 export type Season = 'halloween' | 'winter' | 'spring' | 'default';
 
 export interface ThemeState {
+  isMobile: boolean;
   environment: Environment;
   timeOfDay: TimeOfDay;
   season: Season;
@@ -22,6 +23,17 @@ export interface ThemeState {
 const ThemeContext = createContext<ThemeState | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
+  // Detect mobile device for responsive adaptation
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 640 || /Mobi|Android/i.test(navigator.userAgent));
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   // Default values can be enhanced with logic (e.g., detect time/season)
   const [environment, setEnvironment] = useState<Environment>('graveyard');
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('night');
@@ -53,6 +65,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
       highContrast,
       fontSize,
       motionReduced,
+      isMobile,
       setEnvironment,
       setTimeOfDay,
       setSeason,
