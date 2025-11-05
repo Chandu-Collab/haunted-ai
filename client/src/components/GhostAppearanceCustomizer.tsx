@@ -70,28 +70,28 @@ const GhostAppearanceCustomizer: React.FC = () => {
   if (loading) return <div>Loading ghost profile...</div>;
 
   return (
-    <div className="mb-4">
-      <label className="block text-haunted-200 font-medium mb-2">Ghost Appearance</label>
-      <div className="flex items-center gap-4 mb-2">
-        <span className="text-3xl" style={{ color }}>{emoji}</span>
-        <span className="text-haunted-400 text-xs">Preview</span>
+    <div className="mb-3 sm:mb-4">
+      <label className="block text-haunted-200 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Ghost Appearance</label>
+      <div className="flex items-center gap-2 sm:gap-4 mb-1 sm:mb-2">
+        <span className="text-xl sm:text-3xl" style={{ color }}>{emoji}</span>
+        <span className="text-haunted-400 text-xs sm:text-sm">Preview</span>
       </div>
-      <div className="flex gap-2 mb-2">
+      <div className="flex gap-1 sm:gap-2 mb-1 sm:mb-2">
         {COLORS.map(c => (
           <button
             key={c}
-            className={`w-8 h-8 rounded-full border-2 ${color === c ? 'border-purple-500' : 'border-haunted-700'}`}
+            className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 ${color === c ? 'border-purple-500' : 'border-haunted-700'}`}
             style={{ backgroundColor: c }}
             onClick={() => setColor(c)}
             aria-label={`Pick color ${c}`}
           />
         ))}
       </div>
-      <div className="flex gap-2 mb-2">
+      <div className="flex gap-1 sm:gap-2 mb-1 sm:mb-2">
         {EMOJIS.map(e => (
           <button
             key={e}
-            className={`text-2xl rounded ${emoji === e ? 'ring-2 ring-purple-500' : ''}`}
+            className={`text-xl sm:text-2xl rounded ${emoji === e ? 'ring-2 ring-purple-500' : ''}`}
             onClick={() => setEmoji(e)}
             aria-label={`Pick emoji ${e}`}
           >{e}</button>
@@ -99,7 +99,7 @@ const GhostAppearanceCustomizer: React.FC = () => {
       </div>
       <button
         type="button"
-        className="px-3 py-1 bg-purple-700 rounded text-white hover:bg-purple-600 mt-2"
+        className="px-2 sm:px-3 py-1 bg-purple-700 rounded text-xs sm:text-sm text-white hover:bg-purple-600 mt-1 sm:mt-2"
         onClick={handleSave}
         disabled={saving}
       >

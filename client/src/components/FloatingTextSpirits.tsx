@@ -163,7 +163,7 @@ const FloatingTextSpirits: React.FC<FloatingTextSpiritsProps> = ({
               scale: { duration: 3, repeat: Infinity },
               rotate: { duration: 4, repeat: Infinity }
             }}
-            className="absolute text-xs md:text-sm text-haunted-300 font-mono max-w-xs"
+            className="absolute text-xs sm:text-sm md:text-base text-haunted-300 font-mono max-w-[60vw] sm:max-w-xs"
             style={{
               fontSize: `${spirit.size}rem`,
               textShadow: '0 0 10px rgba(124, 45, 255, 0.6)',
@@ -171,10 +171,9 @@ const FloatingTextSpirits: React.FC<FloatingTextSpiritsProps> = ({
               transform: `translate(-50%, -50%) rotate(${Math.sin(spirit.age * 0.01) * 3}deg)`
             }}
           >
-            <div className="bg-haunted-900/20 backdrop-blur-sm rounded px-2 py-1 border border-haunted-700/30">
+            <div className="bg-haunted-900/20 backdrop-blur-sm rounded px-1 sm:px-2 py-0.5 sm:py-1 border border-haunted-700/30">
               {spirit.text}
             </div>
-            
             {/* Ghostly trail effect */}
             <div
               className="absolute inset-0 text-haunted-400/30"
@@ -183,7 +182,7 @@ const FloatingTextSpirits: React.FC<FloatingTextSpiritsProps> = ({
                 zIndex: -1
               }}
             >
-              <div className="bg-haunted-900/10 backdrop-blur-sm rounded px-2 py-1 border border-haunted-700/20">
+              <div className="bg-haunted-900/10 backdrop-blur-sm rounded px-1 sm:px-2 py-0.5 sm:py-1 border border-haunted-700/20">
                 {spirit.text}
               </div>
             </div>

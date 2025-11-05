@@ -80,13 +80,14 @@ const FloatingGhosts: React.FC<FloatingGhostsProps> = ({
               duration: 4,
               ease: "easeOut"
             }}
-            className="absolute text-4xl filter drop-shadow-lg"
+            className="absolute text-2xl sm:text-4xl filter drop-shadow-lg"
             style={{
               textShadow: '0 0 20px rgba(124, 45, 255, 0.8)',
-              fontSize: `${ghost.size}rem`
+              fontSize: `calc(${ghost.size}rem * 0.7)`
             }}
           >
-            {ghost.emoji}
+            <span className="sm:hidden">{ghost.emoji}</span>
+            <span className="hidden sm:inline">{ghost.emoji}</span>
           </motion.div>
         ))}
       </AnimatePresence>

@@ -42,27 +42,24 @@ const MoodVisualizer: React.FC<MoodVisualizerProps> = ({ userMood, ghostMood, cl
   };
 
   return (
-    <div className={`mood-visualizer ${className}`}>
-      <div className="mood-container p-4 bg-black/20 rounded-lg backdrop-blur-sm border border-purple-500/30">
-        <h3 className="text-purple-300 text-sm font-semibold mb-3">Emotional Atmosphere</h3>
-        
-        <div className="flex justify-between space-x-4">
+    <div className={`mood-visualizer ${className} w-full`}>
+      <div className="mood-container p-2 sm:p-4 bg-black/20 rounded-lg backdrop-blur-sm border border-purple-500/30 max-w-xs sm:max-w-md mx-auto">
+        <h3 className="text-purple-300 text-xs sm:text-sm font-semibold mb-2 sm:mb-3">Emotional Atmosphere</h3>
+        <div className="flex flex-col sm:flex-row justify-between gap-2 sm:gap-4">
           {userMood && (
             <div className="mood-display flex-1">
-              <div className="text-xs text-purple-200 mb-1">Your Mood</div>
-              <div className="flex items-center space-x-2">
+              <div className="text-xs text-purple-200 mb-0.5 sm:mb-1">Your Mood</div>
+              <div className="flex items-center gap-1 sm:gap-2">
                 <div 
-                  className={`mood-indicator w-4 h-4 rounded-full ${getIntensitySize(userMood.intensity)}`}
+                  className={`mood-indicator w-3 h-3 sm:w-4 sm:h-4 rounded-full ${getIntensitySize(userMood.intensity)}`}
                   style={{ backgroundColor: getMoodColor(userMood.dominant) }}
                 />
-                <span className="text-purple-100 text-sm capitalize">
+                <span className="text-purple-100 text-xs sm:text-sm capitalize">
                   {userMood.dominant}
                 </span>
-                <span className={`sentiment-icon ${getIntensitySize(userMood.intensity)}`}>
-                  {getSentimentIcon(userMood.sentiment)}
-                </span>
+                <span className={`sentiment-icon ${getIntensitySize(userMood.intensity)}`}> {getSentimentIcon(userMood.sentiment)} </span>
               </div>
-              <div className="text-xs text-purple-300 mt-1">
+              <div className="text-xs text-purple-300 mt-0.5 sm:mt-1">
                 {(userMood.confidence * 100).toFixed(0)}% confidence
               </div>
             </div>
@@ -70,20 +67,18 @@ const MoodVisualizer: React.FC<MoodVisualizerProps> = ({ userMood, ghostMood, cl
 
           {ghostMood && (
             <div className="mood-display flex-1">
-              <div className="text-xs text-purple-200 mb-1">Ghost's Response</div>
-              <div className="flex items-center space-x-2">
+              <div className="text-xs text-purple-200 mb-0.5 sm:mb-1">Ghost's Response</div>
+              <div className="flex items-center gap-1 sm:gap-2">
                 <div 
-                  className={`mood-indicator w-4 h-4 rounded-full ${getIntensitySize(ghostMood.intensity)}`}
+                  className={`mood-indicator w-3 h-3 sm:w-4 sm:h-4 rounded-full ${getIntensitySize(ghostMood.intensity)}`}
                   style={{ backgroundColor: getMoodColor(ghostMood.dominant) }}
                 />
-                <span className="text-purple-100 text-sm capitalize">
+                <span className="text-purple-100 text-xs sm:text-sm capitalize">
                   {ghostMood.dominant}
                 </span>
-                <span className={`sentiment-icon ${getIntensitySize(ghostMood.intensity)}`}>
-                  {getSentimentIcon(ghostMood.sentiment)}
-                </span>
+                <span className={`sentiment-icon ${getIntensitySize(ghostMood.intensity)}`}> {getSentimentIcon(ghostMood.sentiment)} </span>
               </div>
-              <div className="text-xs text-purple-300 mt-1">
+              <div className="text-xs text-purple-300 mt-0.5 sm:mt-1">
                 {(ghostMood.confidence * 100).toFixed(0)}% confidence
               </div>
             </div>
@@ -92,14 +87,14 @@ const MoodVisualizer: React.FC<MoodVisualizerProps> = ({ userMood, ghostMood, cl
 
         {/* Emotion spectrum visualization */}
         {userMood && (
-          <div className="emotion-spectrum mt-3">
-            <div className="text-xs text-purple-200 mb-2">Emotional Spectrum</div>
-            <div className="flex space-x-1">
+          <div className="emotion-spectrum mt-2 sm:mt-3">
+            <div className="text-xs text-purple-200 mb-1 sm:mb-2">Emotional Spectrum</div>
+            <div className="flex gap-0.5 sm:gap-1">
               {Object.entries(userMood.emotions).map(([emotion, value]) => (
                 <div
                   key={emotion}
                   className="emotion-bar flex-1 bg-purple-900/30 rounded-sm overflow-hidden"
-                  style={{ height: '20px' }}
+                  style={{ height: '12px', minWidth: '16px' }}
                   title={`${emotion}: ${(value * 100).toFixed(0)}%`}
                 >
                   <div
@@ -112,7 +107,7 @@ const MoodVisualizer: React.FC<MoodVisualizerProps> = ({ userMood, ghostMood, cl
                 </div>
               ))}
             </div>
-            <div className="flex justify-between text-xs text-purple-400 mt-1">
+            <div className="flex justify-between text-xs text-purple-400 mt-0.5 sm:mt-1">
               <span>😊</span>
               <span>😢</span>
               <span>😠</span>

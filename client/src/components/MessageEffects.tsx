@@ -119,7 +119,7 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
       initial={initial}
       animate={animate}
       transition={transition}
-      className={`${getEffectClasses()} ${className} message-container`}
+      className={`${getEffectClasses()} ${className} message-container relative px-2 py-1 sm:px-4 sm:py-2 max-w-xs sm:max-w-md text-xs sm:text-sm`}
       style={{ 
         color: isGhost ? '#f1ebff' : '#dbeafe',
         ...style 
@@ -128,7 +128,6 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
       <div style={{ color: 'inherit' }}>
         {children}
       </div>
-      
       {/* Overlay effects for ghost messages */}
       {isGhost && effects.glitch && (
         <div className="absolute inset-0 pointer-events-none">
@@ -140,7 +139,6 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
               opacity: [0, 0.3, 0]
             }}
             transition={{
-              // faster glitch sweep and shorter gaps
               duration: 0.6,
               repeat: Infinity,
               repeatDelay: 1 + Math.random() * 2
@@ -152,9 +150,9 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
       {/* Lightning effect for dramatic moments - intensity affects frequency and size */}
       {(effects.shake || content.includes('⚡') || /angry|furious|rage|thunder|storm|power/i.test(content)) && (
         <motion.div
-          className="absolute -top-2 -right-2 text-haunted-400"
+          className="absolute -top-1 sm:-top-2 -right-1 sm:-right-2 text-haunted-400"
           style={{ 
-            fontSize: `${0.75 + (ghostIntensity / 100) * 0.5}rem`,
+            fontSize: `clamp(0.85rem, 1vw + 0.7rem, 1.25rem)`,
             filter: `brightness(${1 + (ghostIntensity / 100)}) drop-shadow(0 0 ${ghostIntensity / 10}px rgba(124, 45, 255, 0.8))`
           }}
           animate={{
@@ -174,7 +172,7 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
 
       {/* Mystical sparkles for magical content - more sparkles with higher intensity */}
       {(effects.colorShift || /magic|spell|mystical|supernatural|spirit|soul/i.test(content)) && (
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {React.useMemo(() => {
             // Use a deterministic seed based on content and ghostIntensity to keep the array stable between renders
             const count = Math.max(3, Math.floor((ghostIntensity / 100) * 6));
@@ -188,7 +186,7 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
             return Array.from({ length: count }).map((_, i) => {
               const top = 20 + i * 15;
               const left = 10 + i * 20;
-              const fontSize = `${0.5 + (ghostIntensity / 100) * 0.5}rem`;
+                  const fontSize = `clamp(0.6rem, 1vw + 0.4rem, 1.1rem)`;
               const delay = i * Math.max(0.08, (0.3 - (ghostIntensity / 100) * 0.08));
               const hue = 60 * i + Math.floor(seededRandom(seed, i) * 30);
               return (
@@ -225,9 +223,9 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
       {/* Skull effects for dark/death content - more dramatic with higher intensity */}
       {/death|die|kill|destroy|doom|curse|evil/i.test(content) && (
         <motion.div
-          className="absolute -top-1 -left-1 text-red-400 opacity-60"
+          className="absolute -top-0.5 sm:-top-1 -left-0.5 sm:-left-1 text-red-400 opacity-60"
           style={{ 
-            fontSize: `${0.75 + (ghostIntensity / 100) * 0.5}rem`,
+            fontSize: `clamp(0.85rem, 1vw + 0.7rem, 1.25rem)`,
             filter: `brightness(${1 + (ghostIntensity / 100) * 0.5})`
           }}
           animate={{
@@ -247,9 +245,9 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
       {/* Fire effects for rage/anger - more intense flames with higher intensity */}
       {/fire|burn|rage|inferno|flame/i.test(content) && (
         <motion.div
-          className="absolute -bottom-1 -right-1 text-orange-400"
+          className="absolute -bottom-0.5 sm:-bottom-1 -right-0.5 sm:-right-1 text-orange-400"
           style={{ 
-            fontSize: `${0.75 + (ghostIntensity / 100) * 0.5}rem`,
+            fontSize: `clamp(0.85rem, 1vw + 0.7rem, 1.25rem)`,
             filter: `brightness(${1 + (ghostIntensity / 100)}) saturate(${1 + (ghostIntensity / 100)})`
           }}
           animate={{
@@ -268,7 +266,7 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
 
       {/* High-intensity particle effects */}
       {isGhost && ghostIntensity > 70 && particleIntensity > 50 && (
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {React.useMemo(() => {
             const count = Math.floor((particleIntensity / 100) * 4);
             const seed = `${content}|${ghostIntensity}|${particleIntensity}`;
@@ -281,7 +279,7 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
             return Array.from({ length: count }).map((_, i) => {
               const top = seededRandom(seed, i) * 100;
               const left = seededRandom(seed + 'l', i) * 100;
-              const fontSize = `${0.3 + (ghostIntensity / 100) * 0.4}rem`;
+              const fontSize = `clamp(0.5rem, 1vw + 0.2rem, 0.9rem)`;
               const color = `hsl(${280 + seededRandom(seed + 'c', i) * 40}, 90%, ${70 + (ghostIntensity / 100) * 20}%)`;
               const x = (seededRandom(seed + 'x', i) - 0.5) * 20;
               const x2 = (seededRandom(seed + 'x2', i) - 0.5) * 40;

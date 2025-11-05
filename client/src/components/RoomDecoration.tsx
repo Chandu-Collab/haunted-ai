@@ -37,9 +37,9 @@ const RoomDecoration: React.FC<{ roomId: number }> = ({ roomId }) => {
   };
 
   return (
-    <div className="mb-4">
-      <label className="block text-haunted-200 font-medium mb-2">Room Wallpaper</label>
-      <div className="flex flex-col gap-2">
+    <div className="mb-2 sm:mb-4 w-full max-w-xs sm:max-w-md mx-auto">
+      <label className="block text-haunted-200 font-medium text-xs sm:text-sm mb-1 sm:mb-2">Room Wallpaper</label>
+      <div className="flex flex-col gap-1 sm:gap-2">
         <input
           type="file"
           accept="image/*"
@@ -57,18 +57,18 @@ const RoomDecoration: React.FC<{ roomId: number }> = ({ roomId }) => {
           }}
         />
         {imagePreview && (
-          <div className="flex items-center gap-2 mt-2">
-            <img src={imagePreview} alt="Preview" className="w-32 h-20 object-cover rounded border border-haunted-700" />
+          <div className="flex items-center gap-1 sm:gap-2 mt-1 sm:mt-2">
+            <img src={imagePreview} alt="Preview" className="w-24 h-16 sm:w-32 sm:h-20 object-cover rounded border border-haunted-700" />
             <button
               type="button"
-              className="px-2 py-1 bg-haunted-700 text-white rounded hover:bg-haunted-600 text-xs"
+              className="px-1 sm:px-2 py-0.5 sm:py-1 bg-haunted-700 text-white rounded hover:bg-haunted-600 text-xs"
               onClick={() => { setImageFile(null); setImagePreview(''); }}
             >Remove</button>
           </div>
         )}
         <button
           type="button"
-          className="px-3 py-1 bg-purple-700 rounded text-white hover:bg-purple-600 mt-2"
+          className="px-2 sm:px-3 py-1 sm:py-2 bg-purple-700 rounded text-white text-xs sm:text-sm hover:bg-purple-600 mt-1 sm:mt-2"
           onClick={handleSave}
           disabled={saving || !imageFile}
         >

@@ -137,7 +137,6 @@ const LightningFlash: React.FC<LightningFlashProps> = ({
           />
         )}
       </AnimatePresence>
-
       {/* Lightning bolt overlay for dramatic effect */}
       <AnimatePresence>
         {isFlashing && flashType === 'lightning' && (
@@ -153,7 +152,7 @@ const LightningFlash: React.FC<LightningFlashProps> = ({
             className="absolute inset-0 flex items-center justify-center"
           >
             <div
-              className="text-white text-8xl opacity-30"
+              className="text-white text-5xl sm:text-8xl opacity-30"
               style={{
                 textShadow: '0 0 20px rgba(255, 255, 255, 0.8)',
                 transform: `translateX(${Math.random() * 200 - 100}px)`

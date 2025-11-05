@@ -76,10 +76,10 @@ const MusicControls: React.FC<MusicControlsProps> = ({
   }
 
   return (
-    <div className={`space-y-4 ${className}`}>
+  <div className={`space-y-2 sm:space-y-4 ${className} w-full max-w-xs sm:max-w-md mx-auto`}>
       {/* Music Toggle */}
-      <div className="flex items-center justify-between">
-        <label className="text-haunted-200 font-medium">Background Music</label>
+  <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
+  <label className="text-haunted-200 font-medium text-xs sm:text-sm">Background Music</label>
         <button
           onClick={() => {
             onToggle(!isEnabled);
@@ -87,13 +87,13 @@ const MusicControls: React.FC<MusicControlsProps> = ({
               stop();
             }
           }}
-          className={`w-12 h-6 rounded-full transition-colors ${
+          className={`w-10 sm:w-12 h-5 sm:h-6 rounded-full transition-colors ${
             isEnabled ? 'bg-haunted-600' : 'bg-haunted-800'
           } relative`}
         >
           <motion.div
-            className="w-5 h-5 bg-white rounded-full absolute top-0.5"
-            animate={{ x: isEnabled ? 24 : 2 }}
+            className="w-4 sm:w-5 h-4 sm:h-5 bg-white rounded-full absolute top-0.5"
+            animate={{ x: isEnabled ? 20 : 2 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           />
         </button>
@@ -108,8 +108,8 @@ const MusicControls: React.FC<MusicControlsProps> = ({
         >
           {/* Current Track Display */}
           {currentTrack && (
-            <div className="bg-haunted-800/30 rounded-lg p-3 border border-haunted-700/30">
-              <div className="flex items-center space-x-3">
+            <div className="bg-haunted-800/30 rounded-lg p-2 sm:p-3 border border-haunted-700/30">
+              <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
                 <motion.div
                   animate={isPlaying ? { scale: [1, 1.1, 1] } : {}}
                   transition={{ duration: 1, repeat: isPlaying ? Infinity : 0 }}
@@ -118,14 +118,14 @@ const MusicControls: React.FC<MusicControlsProps> = ({
                   🎵
                 </motion.div>
                 <div className="flex-1">
-                  <h4 className="text-haunted-100 font-medium text-sm">
+                  <h4 className="text-haunted-100 font-medium text-xs sm:text-sm">
                     {currentTrack.name}
                   </h4>
-                  <p className="text-haunted-400 text-xs">
+                  <p className="text-haunted-400 text-xs sm:text-sm">
                     {currentTrack.description}
                   </p>
                 </div>
-                <div className="text-xs text-haunted-300">
+                <div className="text-xs sm:text-sm text-haunted-300">
                   {isPlaying ? 'Playing' : 'Paused'}
                 </div>
               </div>
@@ -134,13 +134,13 @@ const MusicControls: React.FC<MusicControlsProps> = ({
 
           {/* Track Selection - ENABLED for Continuous Music */}
           <div>
-            <label className="text-haunted-300 text-sm block mb-2">
+            <label className="text-haunted-300 text-xs sm:text-sm block mb-1 sm:mb-2">
               Ambient Track (Continuous Playback)
             </label>
             <select
               value={selectedTrackIndex}
               onChange={(e) => handleTrackChange(parseInt(e.target.value))}
-              className="w-full bg-haunted-800/60 border border-haunted-700/50 rounded-lg px-3 py-2 text-haunted-100 text-sm focus:outline-none focus:ring-2 focus:ring-haunted-500/50"
+              className="w-full bg-haunted-800/60 border border-haunted-700/50 rounded-lg px-2 sm:px-3 py-1 sm:py-2 text-haunted-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-haunted-500/50"
               title="Select which track to play continuously"
             >
               {tracks.map((track, index) => (
@@ -149,14 +149,14 @@ const MusicControls: React.FC<MusicControlsProps> = ({
                 </option>
               ))}
             </select>
-            <p className="text-xs text-haunted-400 mt-1">
+            <p className="text-xs sm:text-sm text-haunted-400 mt-0.5 sm:mt-1">
               🎵 Selected track will play until you pause or switch
             </p>
           </div>
 
           {/* Volume Control */}
           <div>
-            <label className="text-haunted-300 text-sm block mb-2">
+            <label className="text-haunted-300 text-xs sm:text-sm block mb-1 sm:mb-2">
               Volume ({Math.round(currentVolume * 100)}%)
             </label>
             <input
@@ -166,46 +166,43 @@ const MusicControls: React.FC<MusicControlsProps> = ({
               step="0.1"
               value={currentVolume}
               onChange={(e) => setCurrentVolume(parseFloat(e.target.value))}
-              className="w-full accent-haunted-600"
+              className="w-full accent-haunted-600 h-2 sm:h-3"
             />
           </div>
 
           {/* Playback Controls - ENABLED */}
-          <div className="flex items-center justify-center space-x-3">
+          <div className="flex items-center justify-center gap-2 sm:gap-3">
             <button
               onClick={previousTrack}
-              className="p-2 bg-haunted-800/40 text-haunted-100 rounded-lg hover:bg-haunted-700/40"
+              className="p-1 sm:p-2 bg-haunted-800/40 text-haunted-100 rounded-lg hover:bg-haunted-700/40 text-base sm:text-lg"
               title="Previous Track"
             >
               ⏮️
             </button>
-            
             <button
               onClick={handlePlayPause}
-              className="p-3 bg-haunted-600/60 hover:bg-haunted-500/60 rounded-lg transition-colors flex items-center justify-center min-w-[3rem]"
+              className="p-2 sm:p-3 bg-haunted-600/60 hover:bg-haunted-500/60 rounded-lg transition-colors flex items-center justify-center min-w-[2.2rem] sm:min-w-[3rem] text-base sm:text-lg"
               title={isPlaying ? "Pause Music" : "Play Music"}
             >
               <motion.span
                 key={isPlaying ? 'pause' : 'play'}
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="text-lg"
+                className="text-base sm:text-lg"
               >
                 {isPlaying ? '⏸️' : '▶️'}
               </motion.span>
             </button>
-
             <button
               onClick={nextTrack}
-              className="p-2 bg-haunted-800/40 text-haunted-100 rounded-lg hover:bg-haunted-700/40"
+              className="p-1 sm:p-2 bg-haunted-800/40 text-haunted-100 rounded-lg hover:bg-haunted-700/40 text-base sm:text-lg"
               title="Next Track"
             >
               ⏭️
             </button>
-
             <button
               onClick={stop}
-              className="p-2 bg-haunted-700/60 hover:bg-haunted-600/60 rounded-lg transition-colors"
+              className="p-1 sm:p-2 bg-haunted-700/60 hover:bg-haunted-600/60 rounded-lg transition-colors text-base sm:text-lg"
               title="Stop Music"
             >
               ⏹️
@@ -213,7 +210,7 @@ const MusicControls: React.FC<MusicControlsProps> = ({
           </div>
 
           {/* Info */}
-          <div className="text-xs text-haunted-400 bg-haunted-800/30 rounded-lg p-3 space-y-2">
+          <div className="text-xs sm:text-sm text-haunted-400 bg-haunted-800/30 rounded-lg p-2 sm:p-3 space-y-1 sm:space-y-2">
             <p className="mb-1">
               <strong>Tracks:</strong> {tracks.length} terrifying horror ambiences
             </p>
@@ -224,9 +221,9 @@ const MusicControls: React.FC<MusicControlsProps> = ({
               <strong>Featured Horror Tracks:</strong> Nightmare Asylum, Demon's Lair, Torture Chamber, Blood Moon Rising, Purgatory Gates & more!
             </p>
             {/* Track Categories */}
-            <div className="border-t border-haunted-700/30 pt-2">
-              <p className="font-semibold text-haunted-300 mb-1">Horror Categories:</p>
-              <div className="grid grid-cols-2 gap-1 text-xs">
+            <div className="border-t border-haunted-700/30 pt-1 sm:pt-2">
+              <p className="font-semibold text-haunted-300 mb-0.5 sm:mb-1">Horror Categories:</p>
+              <div className="grid grid-cols-2 gap-0.5 sm:gap-1 text-xs sm:text-sm">
                 <span className="text-red-400">💀 Supernatural</span>
                 <span className="text-purple-400">🔮 Demonic</span>
                 <span className="text-blue-400">🌙 Atmospheric</span>

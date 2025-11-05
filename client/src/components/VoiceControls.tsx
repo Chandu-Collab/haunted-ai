@@ -44,19 +44,19 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
   }
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`space-y-4 w-full max-w-full sm:max-w-md mx-auto px-2 sm:px-0 ${className}`}>
       {/* Voice Toggle */}
-      <div className="flex items-center justify-between">
-        <label className="text-haunted-200 font-medium">Ghost Voice</label>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+        <label className="text-haunted-200 font-medium text-base sm:text-lg">Ghost Voice</label>
         <button
           onClick={() => onToggle(!isEnabled)}
-          className={`w-12 h-6 rounded-full transition-colors ${
+          className={`w-14 sm:w-12 h-7 sm:h-6 rounded-full transition-colors ${
             isEnabled ? 'bg-haunted-600' : 'bg-haunted-800'
-          } relative`}
+          } relative flex-shrink-0`}
         >
           <motion.div
-            className="w-5 h-5 bg-white rounded-full absolute top-0.5"
-            animate={{ x: isEnabled ? 24 : 2 }}
+            className="w-6 sm:w-5 h-6 sm:h-5 bg-white rounded-full absolute top-0.5"
+            animate={{ x: isEnabled ? 28 : 2 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           />
         </button>
@@ -72,7 +72,7 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
           {/* Voice Selection */}
           {voices.length > 0 && (
             <div>
-              <label className="text-haunted-300 text-sm block mb-2">
+              <label className="text-haunted-300 text-xs sm:text-sm block mb-2">
                 Voice Selection
               </label>
               <select
@@ -81,7 +81,7 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
                   const voice = voices.find(v => v.name === e.target.value);
                   setSelectedVoice(voice || null);
                 }}
-                className="w-full bg-haunted-800/60 border border-haunted-700/50 rounded-lg px-3 py-2 text-haunted-100 text-sm focus:outline-none focus:ring-2 focus:ring-haunted-500/50"
+                className="w-full bg-haunted-800/60 border border-haunted-700/50 rounded-lg px-2 sm:px-3 py-2 text-haunted-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-haunted-500/50"
               >
                 <option value="">Default Voice</option>
                 {voices
@@ -99,7 +99,7 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
           <button
             onClick={handleTestVoice}
             disabled={!selectedVoice}
-            className="w-full bg-haunted-700/60 hover:bg-haunted-600/60 border border-haunted-600/50 rounded-lg px-4 py-2 text-haunted-100 text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            className="w-full bg-haunted-700/60 hover:bg-haunted-600/60 border border-haunted-600/50 rounded-lg px-3 sm:px-4 py-2 text-haunted-100 text-xs sm:text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
           >
             <motion.span
               animate={isSpeaking ? { scale: [1, 1.2, 1] } : {}}
@@ -111,7 +111,7 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
           </button>
 
           {/* Voice Info */}
-          <div className="text-xs text-haunted-400 bg-haunted-800/30 rounded-lg p-3">
+          <div className="text-xs sm:text-sm text-haunted-400 bg-haunted-800/30 rounded-lg p-2 sm:p-3">
             <p className="mb-1">
               <strong>Selected:</strong> {selectedVoice?.name || 'Default'}
             </p>

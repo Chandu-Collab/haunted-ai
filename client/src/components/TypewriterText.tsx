@@ -167,38 +167,42 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
   }, [text]);
 
   return (
-    <div className={`relative ${className}`} style={{ color: 'inherit' }}>
-      <span 
-        className={`${isGhost ? 'ghost-text' : ''}`}
-        style={{ 
+    <div
+      className={`relative w-full max-w-full sm:max-w-xl mx-auto px-2 sm:px-0 ${className}`}
+      style={{ color: 'inherit' }}
+    >
+      <span
+        className={`${isGhost ? 'ghost-text' : ''} block break-words text-base sm:text-lg`}
+        style={{
           color: isGhost ? '#f1ebff' : '#dbeafe',
           textShadow: isGhost ? `0 0 ${effects.glowIntensity * 10}px rgba(124, 45, 255, ${effects.glowIntensity})` : 'none',
           transform: isGhost && effects.shakeIntensity > 1 ? `translateX(${Math.sin(Date.now() * 0.01) * effects.shakeIntensity}px)` : 'none',
-          fontSize: isGhost ? `${effects.emojiScale}em` : '1em',
-          filter: isGhost && effects.glowIntensity > 0.7 ? `brightness(${1 + effects.glowIntensity * 0.3})` : 'none'
+          fontSize: isGhost ? `clamp(1em, ${effects.emojiScale}em, 1.2em)` : 'clamp(1em, 1em, 1.2em)',
+          filter: isGhost && effects.glowIntensity > 0.7 ? `brightness(${1 + effects.glowIntensity * 0.3})` : 'none',
+          wordBreak: 'break-word',
+          overflowWrap: 'break-word',
         }}
       >
         {displayedText}
       </span>
-      
+
       {/* Cursor with intensity-based effects */}
       {!isComplete && (
         <motion.span
-          animate={{ 
+          animate={{
             opacity: [1, 0],
-                scale: isGhost ? [1, 1 + effects.glowIntensity * 0.15] : [1, 1]
-              }}
-              transition={{ 
-                // Faster cursor blink for snappier feel
-                duration: isGhost ? Math.max(0.28, 0.6 - (effects.soundIntensity * 0.2)) : 0.5, 
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-          className={`inline-block w-0.5 h-5 ml-1`}
+            scale: isGhost ? [1, 1 + effects.glowIntensity * 0.15] : [1, 1]
+          }}
+          transition={{
+            duration: isGhost ? Math.max(0.28, 0.6 - (effects.soundIntensity * 0.2)) : 0.5,
+            repeat: Infinity,
+            ease: 'easeInOut'
+          }}
+          className={`inline-block w-1 h-5 sm:h-6 ml-1 align-middle`}
           style={{
             backgroundColor: isGhost ? '#7c2dff' : '#ffffff',
             boxShadow: isGhost ? `0 0 ${effects.emojiGlow}px rgba(124, 45, 255, ${effects.glowIntensity})` : 'none',
-            transform: isGhost ? `scaleY(${effects.emojiScale})` : 'none'
+            transform: isGhost ? `scaleY(${effects.emojiScale})` : 'none',
           }}
         />
       )}
@@ -206,17 +210,17 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
       {/* Intensity-based particle effects for ghost messages */}
       {isGhost && !isComplete && effects.particleSpawnRate > 0.2 && (
         <div className="absolute inset-0 pointer-events-none">
-          {/* Dynamic number of sparkles based on particle intensity */}
           {[...Array(Math.floor(effects.particleSpawnRate * 5))].map((_, index) => (
             <motion.div
               key={index}
-              className="absolute text-xs"
+              className="absolute text-xs sm:text-sm"
               style={{
                 top: `${Math.random() * 100}%`,
                 left: `${Math.random() * 100}%`,
                 color: `hsl(${280 + Math.random() * 40}, 90%, ${70 + effects.glowIntensity * 20}%)`,
-                fontSize: `${0.5 + effects.emojiScale * 0.5}em`,
-                filter: `brightness(${1 + effects.glowIntensity})`
+                fontSize: `clamp(0.7em, ${0.5 + effects.emojiScale * 0.5}em, 1em)`,
+                filter: `brightness(${1 + effects.glowIntensity})`,
+                zIndex: 10,
               }}
               animate={{
                 y: [0, -20 * effects.particleSpawnRate, 0],
@@ -225,11 +229,10 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
                 rotate: [0, 360 * effects.glowIntensity]
               }}
               transition={{
-                // Shorter particle animation to reduce perceived slowness
                 duration: Math.max(0.8, 1.4 - effects.soundIntensity),
                 repeat: Infinity,
                 delay: Math.random() * 0.6,
-                ease: "easeInOut"
+                ease: 'easeInOut'
               }}
             >
               {['✨', '⭐', '💫', '🌟', '✦', '✧'][Math.floor(Math.random() * 6)]}
@@ -250,10 +253,9 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
             ]
           }}
           transition={{
-            // Faster dramatic pulse
             duration: Math.max(1.2, 2 - effects.soundIntensity),
             repeat: Infinity,
-            ease: "easeInOut"
+            ease: 'easeInOut'
           }}
         />
       )}
