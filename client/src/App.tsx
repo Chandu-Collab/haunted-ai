@@ -233,6 +233,7 @@ const App = () => {
     fogEnabled: true,
     eyeTrackingEnabled: true,
     textSpiritsEnabled: true,
+    language: 'en',
     // New AI settings
     moodVisualizationEnabled: true,
     imageAnalysisEnabled: true,
@@ -401,7 +402,7 @@ const App = () => {
       personalityId: appSettings.ghostPersonality.id
     }]);
 
-  // Fetch full AI reply from backend
+    // Fetch full AI reply from backend and translate if needed
     (async () => {
       try {
         const response = await fetch(`/api/chat/send`, {
@@ -411,7 +412,8 @@ const App = () => {
             content: messageContent,
             sessionId,
             personalityId: appSettings.ghostPersonality.id,
-            ...(imageBase64 && { imageBase64 })
+            ...(imageBase64 && { imageBase64 }),
+            language: appSettings.language || 'en'
           })
         });
         if (!response.ok) throw new Error('Failed to get AI reply');
@@ -424,9 +426,14 @@ const App = () => {
         } else {
           aiReply = data.response || data.reply || '';
         }
-        // Hauntify the ghost reply before displaying
+        // Hauntify the ghost reply
+        let haunted = hauntifyMessage(aiReply);
+        // Translate if needed
+        if (appSettings.language && appSettings.language !== 'en') {
+          // Translation now handled by Gemini model directly
+        }
         setMessages(prev => prev.map(msg =>
-          msg.id === ghostMsgId ? { ...msg, content: hauntifyMessage(aiReply) } : msg
+          msg.id === ghostMsgId ? { ...msg, content: haunted } : msg
         ));
         // Play ghost sound when ghost message is received
         if (appSettings.soundEnabled) {
@@ -441,7 +448,7 @@ const App = () => {
         setPendingGhostMsgId(null);
       }
     })();
-  }, [appSettings.ghostPersonality, appSettings.soundEnabled, playSyntheticSound, generateId, setMessages, setInput, setIsTyping, sessionId]);
+  }, [appSettings.ghostPersonality, appSettings.soundEnabled, playSyntheticSound, generateId, setMessages, setInput, setIsTyping, sessionId, appSettings.language]);
 
   // Handle form submission
   const handleSubmit = (e: FormEvent) => {

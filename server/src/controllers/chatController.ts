@@ -90,7 +90,8 @@ const generateGhostResponse = async (
   personalityId?: string,
   sessionId?: string,
   imageBase64?: string,
-  aiProviderName?: string
+  aiProviderName?: string,
+  replyLanguage?: string
 ): Promise<{ response: string; moodAnalysis: MoodAnalysis; contextualFactors: ContextualFactors }> => {
   try {
     // Get the selected personality or use default
@@ -155,8 +156,13 @@ const generateGhostResponse = async (
 
     // Always use Gemini provider
     const aiProvider = getAIProvider('gemini');
-    // Compose prompt (could be improved to include more context)
-    const prompt = `${enhancedPrompt}\n${userMessage}`;
+    // Add language instruction if needed
+    let languageInstruction = '';
+    if (replyLanguage && replyLanguage !== 'en') {
+      languageInstruction = `\nIMPORTANT: Reply ONLY in ${replyLanguage}.`;
+    }
+    // Compose prompt with language instruction
+    const prompt = `${enhancedPrompt}\n${userMessage}${languageInstruction}`;
     const responseText = await aiProvider.generateResponse(prompt, {
       personalityId,
       sessionId,
@@ -357,14 +363,17 @@ const sendMessage = async (req: Request, res: Response): Promise<void> => {
       take: 8
     });
     
-    // Generate ghost response fully adapted to selected personality
+    // Generate ghost response fully adapted to selected personality and language
     // This uses the personality's systemPrompt, mood adaptation, and context
+    const replyLanguage = req.body.language || 'en';
     const ghostResponseData = await generateGhostResponse(
       content,
       recentMessages.reverse(),
       personalityId,
       sessionId,
-      imageBase64
+      imageBase64,
+      undefined,
+      replyLanguage
     );
 
     // Save ghost response with all analysis and personality context

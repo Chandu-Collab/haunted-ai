@@ -58,6 +58,7 @@ interface SettingsProps {
     ghostIntensity: number;
     theme: 'dark' | 'darker' | 'midnight';
     ghostPersonality: GhostPersonality;
+    language?: string;
     lightningEnabled?: boolean;
     fogEnabled?: boolean;
     eyeTrackingEnabled?: boolean;
@@ -87,6 +88,7 @@ interface SettingsProps {
 const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettingsChange, onSettingsClose, musicControls, availablePersonalities, sessionId, currentRoomId, voiceEffect, setVoiceEffect }) => {
   const [localSettings, setLocalSettings] = useState({
     ...settings,
+    language: settings.language || 'en',
     lightningEnabled: settings.lightningEnabled ?? true,
     fogEnabled: settings.fogEnabled ?? true,
     eyeTrackingEnabled: settings.eyeTrackingEnabled ?? true,
@@ -259,6 +261,29 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
       </Suspense>
       {/* Theme, environment, and accessibility controls */}
       <div className="mt-4 space-y-2">
+      {/* Language selection for AI replies */}
+      <div className="mt-2">
+        <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 text-xs sm:text-sm">AI Reply Language</label>
+        <select
+          value={localSettings.language || 'en'}
+          onChange={e => handleChange('language', e.target.value)}
+          className="w-full bg-haunted-800/60 border border-haunted-700/50 rounded-lg px-2 sm:px-3 py-1 sm:py-2 text-haunted-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-haunted-500/50"
+        >
+          <option value="en">English</option>
+          <option value="es">Spanish</option>
+          <option value="fr">French</option>
+          <option value="de">German</option>
+          <option value="it">Italian</option>
+          <option value="ru">Russian</option>
+          <option value="zh">Chinese</option>
+          <option value="ja">Japanese</option>
+          <option value="ko">Korean</option>
+          <option value="hi">Hindi</option>
+          <option value="ar">Arabic</option>
+          <option value="pt">Portuguese</option>
+        </select>
+        <div className="text-xs text-haunted-400 mt-0.5 sm:mt-1">Choose the language for ghost replies.</div>
+      </div>
         <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 text-xs sm:text-sm">Theme</label>
         <select
           value={settings.theme}
