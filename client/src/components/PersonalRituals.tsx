@@ -9,7 +9,6 @@ const PersonalRituals: React.FC = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-  let debounceTimeout: number;
     const fetchRituals = async () => {
       if (!user) return;
       setLoading(true);
@@ -27,11 +26,8 @@ const PersonalRituals: React.FC = () => {
       }
     };
     if (user) {
-      debounceTimeout = setTimeout(fetchRituals, 500); // 500ms debounce
+      fetchRituals();
     }
-    return () => {
-      if (debounceTimeout) clearTimeout(debounceTimeout);
-    };
   }, [user]);
 
   const handleSave = async () => {
@@ -87,4 +83,4 @@ const PersonalRituals: React.FC = () => {
   );
 };
 
-export default PersonalRituals;
+export default React.memo(PersonalRituals);

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useGhostInteractions from '../hooks/useGhostInteractions';
 import Portal from './Portal';
@@ -13,7 +13,8 @@ interface Props {
   sessionId?: string;
 }
 
-export default function FortuneTelling({ isOpen, onClose, sessionId }: Props) {
+
+const FortuneTellingComponent = forwardRef<HTMLDivElement, Props>(function FortuneTelling({ isOpen, onClose, sessionId }, ref) {
   const { getFortune } = useGhostInteractions(sessionId);
   const { playSyntheticSound } = useAudio();
   const [fortune, setFortune] = useState<string | null>(null);
@@ -24,13 +25,13 @@ export default function FortuneTelling({ isOpen, onClose, sessionId }: Props) {
     if (isOpen) {
       setFlipped(false);
       setLoading(true);
-      setTimeout(async () => {
+      (async () => {
         playSyntheticSound('ghost');
         const fortuneText = await getFortune();
         setFortune(fortuneText);
         setFlipped(true);
         setLoading(false);
-      }, 600);
+      })();
     }
     // eslint-disable-next-line
   }, [isOpen]);
@@ -38,20 +39,20 @@ export default function FortuneTelling({ isOpen, onClose, sessionId }: Props) {
   const handleDrawAgain = () => {
     setFlipped(false);
     setLoading(true);
-    setTimeout(async () => {
+    (async () => {
       playSyntheticSound('ghost');
       const fortuneText = await getFortune();
       setFortune(fortuneText);
       setFlipped(true);
       setLoading(false);
-    }, 600);
+    })();
   };
 
   if (!isOpen) return null;
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[60] flex items-center justify-center pointer-events-auto bg-black/60 p-2 sm:p-0">
+      <div ref={ref} className="fixed inset-0 z-[60] flex items-center justify-center pointer-events-auto bg-black/60 p-2 sm:p-0">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
@@ -119,4 +120,6 @@ export default function FortuneTelling({ isOpen, onClose, sessionId }: Props) {
       </div>
     </Portal>
   );
-}
+});
+
+export default memo(FortuneTellingComponent);

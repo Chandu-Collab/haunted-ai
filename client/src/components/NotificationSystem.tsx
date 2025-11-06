@@ -15,17 +15,8 @@ interface NotificationSystemProps {
 }
 
 const NotificationSystem: React.FC<NotificationSystemProps> = ({ notifications, onRemove }) => {
-  useEffect(() => {
-    notifications.forEach(notification => {
-      if (notification.duration !== 0) { // 0 means persistent
-        const timer = setTimeout(() => {
-          onRemove(notification.id);
-        }, notification.duration || 3000);
-        
-        return () => clearTimeout(timer);
-      }
-    });
-  }, [notifications, onRemove]);
+  // Remove auto-dismiss delay for instant UI (notifications must be dismissed manually)
+  useEffect(() => {}, [notifications, onRemove]);
 
   const getIcon = (type: string) => {
     switch (type) {

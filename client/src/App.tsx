@@ -730,9 +730,9 @@ const App = () => {
                             y: [0, -20 - (appSettings.ghostIntensity / 100) * 10]
                           }}
                           transition={{
-                            duration: 3 - (appSettings.ghostIntensity / 100) * 1,
+                            duration: 0.1,
                             repeat: Infinity,
-                            delay: Math.random() * 2,
+                            delay: 0,
                             ease: "easeOut"
                           }}
                         >
@@ -756,9 +756,9 @@ const App = () => {
                         rotate: [0, 180, 360]
                       }}
                       transition={{
-                        duration: Math.max(0.3, 0.8 - (appSettings.ghostIntensity / 100) * 0.3),
+                        duration: 0.1,
                         repeat: Infinity,
-                        repeatDelay: Math.max(1, 3 - (appSettings.ghostIntensity / 100) * 1.5)
+                        repeatDelay: 0
                       }}
                     >
                       ⚡

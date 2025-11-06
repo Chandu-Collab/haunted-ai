@@ -32,23 +32,8 @@ const LightningFlash: React.FC<LightningFlashProps> = ({
     }, duration);
   }, [isFlashing, onFlash]);
 
-  // Random automatic flashes
-  useEffect(() => {
-    if (intensity <= 0) return;
-
-    const randomFlash = () => {
-      const shouldFlash = Math.random() < intensity * 0.01; // Very low chance per tick
-      if (shouldFlash) {
-        const flashTypes: ('lightning' | 'pulse' | 'strobe')[] = ['lightning', 'pulse', 'strobe'];
-        const randomType = flashTypes[Math.floor(Math.random() * flashTypes.length)];
-        triggerFlash(randomType);
-      }
-    };
-
-    const interval = setInterval(randomFlash, 1000); // Check every second
-
-    return () => clearInterval(interval);
-  }, [intensity, triggerFlash]);
+  // Remove random automatic flashes for instant UI (no delay)
+  useEffect(() => {}, [intensity, triggerFlash]);
 
   // Manual trigger
   useEffect(() => {

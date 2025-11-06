@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, forwardRef, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useGhostInteractions from '../hooks/useGhostInteractions';
 import Portal from './Portal';
@@ -10,7 +10,8 @@ interface Props {
 }
 
 
-export default function SeanceMode({ isOpen, onClose, sessionId }: Props) {
+
+const SeanceModeComponent = forwardRef<HTMLDivElement, Props>(function SeanceMode({ isOpen, onClose, sessionId }, ref) {
   const { state, toggleSeance } = useGhostInteractions(sessionId);
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -26,7 +27,7 @@ export default function SeanceMode({ isOpen, onClose, sessionId }: Props) {
 
   return (
     <Portal>
-  <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/70 backdrop-blur-sm">
+  <div ref={ref} className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/70 backdrop-blur-sm">
         {/* Ghostly candle animation - moved lower for clarity */}
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 select-none">
           <div className="flex flex-col items-center">
@@ -83,4 +84,6 @@ export default function SeanceMode({ isOpen, onClose, sessionId }: Props) {
       </div>
     </Portal>
   );
-}
+});
+
+export default memo(SeanceModeComponent);

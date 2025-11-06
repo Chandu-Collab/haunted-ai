@@ -141,18 +141,15 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
       
       // Calculate dynamic speed with intensity variation
   // Allow faster minimum to speed up long messages
-  const dynamicSpeed = Math.max(6, Math.round(effects.baseSpeed + (Math.random() - 0.5) * effects.speedVariation));
+  // Remove artificial delay for instant typing
+  const dynamicSpeed = 0;
       
-      const timer = setTimeout(async () => {
-          // Direct character addition without glitch effects for clean text
-        setDisplayedText(prev => prev + currentChar);
-        setCurrentIndex(prev => prev + 1);
-        
-        // Play typing sound with intensity
-        await playTypingSound(isGhost);
-  }, dynamicSpeed);
-
-      return () => clearTimeout(timer);
+      // Instantly add character and play sound (no delay)
+  setDisplayedText(prev => prev + currentChar);
+  setCurrentIndex(prev => prev + 1);
+  playTypingSound(isGhost);
+  // No timer/timeout needed
+  return undefined;
     } else if (!isComplete) {
       setIsComplete(true);
       onComplete?.();
@@ -229,9 +226,9 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
                 rotate: [0, 360 * effects.glowIntensity]
               }}
               transition={{
-                duration: Math.max(0.8, 1.4 - effects.soundIntensity),
+                duration: 0.1,
                 repeat: Infinity,
-                delay: Math.random() * 0.6,
+                delay: 0,
                 ease: 'easeInOut'
               }}
             >
@@ -253,7 +250,7 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
             ]
           }}
           transition={{
-            duration: Math.max(1.2, 2 - effects.soundIntensity),
+            duration: 0.1,
             repeat: Infinity,
             ease: 'easeInOut'
           }}

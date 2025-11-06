@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, forwardRef, memo } from 'react';
 import useGhostInteractions from '../hooks/useGhostInteractions';
 import Portal from './Portal';
 
@@ -9,7 +9,8 @@ interface Props {
 }
 
 
-export default function SpellCasting({ isOpen, onClose, sessionId }: Props) {
+
+const SpellCastingComponent = forwardRef<HTMLDivElement, Props>(function SpellCasting({ isOpen, onClose, sessionId }, ref) {
   const { castSpell } = useGhostInteractions(sessionId);
   const [spell, setSpell] = useState('');
   const [result, setResult] = useState<string | null>(null);
@@ -41,20 +42,20 @@ export default function SpellCasting({ isOpen, onClose, sessionId }: Props) {
       audioRef.current.play();
     }
     castSpell(spell);
-    // Simulate delay for spell effect
-    setTimeout(async () => {
+    // Instantly get spell result (no delay)
+    (async () => {
       const res = await getSpellResult(spell);
       setResult(res);
       setCasting(false);
       setSpell('');
-    }, 1200);
+    })();
   };
 
   if (!isOpen) return null;
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/70 backdrop-blur-sm">
+      <div ref={ref} className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/70 backdrop-blur-sm">
         <div className="bg-haunted-900 border border-haunted-700 rounded-xl p-2 sm:p-6 max-w-xs sm:max-w-md w-full relative flex flex-col items-center">
           <h3 className="text-base sm:text-lg font-bold ghost-text mb-1 sm:mb-2">✨ Spell Casting</h3>
           <p className="mt-1 sm:mt-2 text-haunted-300 text-xs sm:text-base">Type a spell name. Try: "Glow", "Lift", or "Drain".</p>
@@ -99,4 +100,6 @@ export default function SpellCasting({ isOpen, onClose, sessionId }: Props) {
       </div>
     </Portal>
   );
-}
+});
+
+export default memo(SpellCastingComponent);

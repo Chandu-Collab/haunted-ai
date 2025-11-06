@@ -50,36 +50,11 @@ const EyeTrackingCursor: React.FC<EyeTrackingCursorProps> = ({
     };
   }, [enabled]);
 
-  // Random blinking
+  // Remove random blinking for instant UI (no delay)
   useEffect(() => {
     if (!enabled) return;
-
-    const startBlinking = () => {
-      eyes.forEach((eye, index) => {
-        const blinkInterval = setInterval(() => {
-          if (Math.random() < 0.1) { // 10% chance to blink
-            setEyes(prev => prev.map(e => 
-              e.id === eye.id ? { ...e, blinking: true } : e
-            ));
-
-            setTimeout(() => {
-              setEyes(prev => prev.map(e => 
-                e.id === eye.id ? { ...e, blinking: false } : e
-              ));
-            }, 150);
-          }
-        }, 1000 + Math.random() * 2000); // Random interval 1-3 seconds
-
-        blinkTimeouts.current[index] = blinkInterval;
-      });
-    };
-
-    startBlinking();
-
-    return () => {
-      blinkTimeouts.current.forEach(timeout => clearInterval(timeout));
-      blinkTimeouts.current = [];
-    };
+    setEyes(prev => prev.map(e => ({ ...e, blinking: false })));
+    return () => {};
   }, [eyes.length, enabled]);
 
   const calculatePupilPosition = (eyeX: number, eyeY: number) => {
@@ -118,7 +93,7 @@ const EyeTrackingCursor: React.FC<EyeTrackingCursorProps> = ({
             }}
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 0.8 }}
-            transition={{ delay: eye.id * 0.2 }}
+            transition={{ delay: 0 }}
           >
             {/* Eye socket */}
             <div
@@ -211,11 +186,11 @@ const EyeTrackingCursor: React.FC<EyeTrackingCursorProps> = ({
                 y: [0, -1, 1, 0]
               }}
               transition={{
-                duration: 0.1,
-                repeat: Infinity,
-                repeatDelay: 5 + Math.random() * 10,
-                ease: "easeInOut"
-              }}
+                  duration: 0.1,
+                  repeat: Infinity,
+                  repeatDelay: 0,
+                  ease: "easeInOut"
+                }}
             />
           </motion.div>
         );

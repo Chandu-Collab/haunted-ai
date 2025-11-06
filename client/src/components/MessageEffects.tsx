@@ -139,9 +139,9 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
               opacity: [0, 0.3, 0]
             }}
             transition={{
-              duration: 0.6,
+              duration: 0.1,
               repeat: Infinity,
-              repeatDelay: 1 + Math.random() * 2
+              repeatDelay: 0
             }}
           />
         </div>
@@ -161,9 +161,9 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
             rotate: [0, 180, 360]
           }}
             transition={{
-                duration: Math.max(0.18, 0.5 - (ghostIntensity / 100) * 0.18),
+                duration: 0.1,
                 repeat: Infinity,
-                repeatDelay: Math.max(0.6, 1.5 - (ghostIntensity / 100) * 0.8)
+                repeatDelay: 0
               }}
         >
           ⚡
@@ -187,7 +187,7 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
               const top = 20 + i * 15;
               const left = 10 + i * 20;
                   const fontSize = `clamp(0.6rem, 1vw + 0.4rem, 1.1rem)`;
-              const delay = i * Math.max(0.08, (0.3 - (ghostIntensity / 100) * 0.08));
+              const delay = 0;
               const hue = 60 * i + Math.floor(seededRandom(seed, i) * 30);
               return (
                 <motion.div
@@ -206,9 +206,9 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
                     y: [0, -10 - (ghostIntensity / 100) * 10, 0]
                   }}
                   transition={{
-                    duration: Math.max(0.8, 1.6 - (ghostIntensity / 100) * 0.6),
+                    duration: 0.1,
                     repeat: Infinity,
-                    delay,
+                    delay: 0,
                     ease: 'easeOut'
                   }}
                 >
@@ -283,7 +283,7 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
               const color = `hsl(${280 + seededRandom(seed + 'c', i) * 40}, 90%, ${70 + (ghostIntensity / 100) * 20}%)`;
               const x = (seededRandom(seed + 'x', i) - 0.5) * 20;
               const x2 = (seededRandom(seed + 'x2', i) - 0.5) * 40;
-              const delay = seededRandom(seed + 'd', i) * 0.8;
+              const delay = 0;
               return (
                 <motion.div
                   key={`particle-${i}`}
@@ -301,9 +301,9 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
                     y: [0, -10 - (ghostIntensity / 100) * 10, 0]
                   }}
                   transition={{
-                    duration: Math.max(0.8, 1.6 - (ghostIntensity / 100) * 0.6),
+                    duration: 0.1,
                     repeat: Infinity,
-                    delay,
+                    delay: 0,
                     ease: 'easeOut'
                   }}
                 >
