@@ -96,12 +96,9 @@ export default function useGhostInteractions(sessionId?: string) {
   useEffect(() => {
     if (!sessionId) return;
 
-    // Clear existing timer
-    if (syncRef.current.timer) window.clearTimeout(syncRef.current.timer as number);
-
-    syncRef.current.timer = window.setTimeout(async () => {
+    // Instantly sync to server on state change (no debounce)
+    (async () => {
       try {
-        // Send a patch with current energy and full achievements/rooms lists
         const token = localStorage.getItem('jwt') || localStorage.getItem('authToken');
         await fetch(`${API_URL}/api/interactions/${encodeURIComponent(sessionId)}`, {
           method: 'PATCH',
@@ -111,11 +108,7 @@ export default function useGhostInteractions(sessionId?: string) {
       } catch (e) {
         // ignore for now
       }
-    }, 2000); // Increased debounce to 2000ms
-
-    return () => {
-      if (syncRef.current.timer) window.clearTimeout(syncRef.current.timer as number);
-    };
+    })();
   }, [state.energy, state.achievements, state.roomsVisited, sessionId]);
 
   const reactToMessage = (messageId: string, emoji: string) => {

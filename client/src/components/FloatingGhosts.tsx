@@ -43,13 +43,8 @@ const FloatingGhosts: React.FC<FloatingGhostsProps> = ({
 
     setGhosts(prev => [...prev, newGhost]);
 
-    // Remove ghost after animation (duration also scales with intensity)
-    const duration = 4000 * Math.max(0.5, intensity / 100);
-    const timer = setTimeout(() => {
-      setGhosts(prev => prev.filter(ghost => ghost.id !== newGhost.id));
-    }, duration);
-
-    return () => clearTimeout(timer);
+    // Remove auto-removal for instant UI (ghosts persist until next trigger)
+    return () => {};
   }, [triggerCount, intensity]);
 
   return (

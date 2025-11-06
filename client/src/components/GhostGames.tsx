@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, memo } from 'react';
 import useAudio from '../hooks/useAudio';
 import useGhostInteractions from '../hooks/useGhostInteractions';
 import Portal from './Portal';
@@ -19,7 +19,8 @@ const GAME_MODES = [
   { key: 'memory', label: 'Memory', emoji: '🧠' },
 ];
 
-export default function GhostGames({ isOpen, onClose, sessionId }: Props) {
+
+const GhostGamesComponent = forwardRef<HTMLDivElement, Props>(function GhostGames({ isOpen, onClose, sessionId }, ref) {
   const { playSyntheticSound } = useAudio();
   const { state, startRiddle, solveRiddle, endGame } = useGhostInteractions(sessionId);
   const [gameMode, setGameMode] = useState('riddle');
@@ -133,7 +134,7 @@ export default function GhostGames({ isOpen, onClose, sessionId }: Props) {
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/60">
+      <div ref={ref} className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/60">
         <div className="bg-haunted-900 border border-haunted-700 rounded-xl p-3 sm:p-6 max-w-xs sm:max-w-md w-full shadow-2xl relative">
           <button onClick={handleClose} className="absolute top-2 right-2 text-haunted-400 hover:text-haunted-200 text-base sm:text-lg">✖</button>
           <div className="flex flex-col items-center">
@@ -245,19 +246,17 @@ export default function GhostGames({ isOpen, onClose, sessionId }: Props) {
                         if (newUserSeq.length === currentMemory.sequence.length) {
                           // Check correctness
                           const correct = newUserSeq.every((v, i) => v === currentMemory.sequence[i]);
-                          setTimeout(() => {
-                            if (correct) {
-                              setFeedback('🎉 Correct sequence!');
-                              playSyntheticSound('ghost');
-                              setScore(s => s + 1);
-                              setHistory(h => [...h, { question: `Memory: ${currentMemory.sequence.join(' ')}`, correct: true, mode: 'memory' }]);
-                            } else {
-                              setFeedback('👻 Oops! The correct sequence was: ' + currentMemory.sequence.join(' '));
-                              playSyntheticSound('message');
-                              setHistory(h => [...h, { question: `Memory: ${currentMemory.sequence.join(' ')}`, correct: false, mode: 'memory' }]);
-                            }
-                            setCurrentMemory(mem => mem ? { ...mem, completed: true } : null);
-                          }, 400);
+                          if (correct) {
+                            setFeedback('🎉 Correct sequence!');
+                            playSyntheticSound('ghost');
+                            setScore(s => s + 1);
+                            setHistory(h => [...h, { question: `Memory: ${currentMemory.sequence.join(' ')}`, correct: true, mode: 'memory' }]);
+                          } else {
+                            setFeedback('👻 Oops! The correct sequence was: ' + currentMemory.sequence.join(' '));
+                            playSyntheticSound('message');
+                            setHistory(h => [...h, { question: `Memory: ${currentMemory.sequence.join(' ')}`, correct: false, mode: 'memory' }]);
+                          }
+                          setCurrentMemory(mem => mem ? { ...mem, completed: true } : null);
                         }
                       }}
                     >
@@ -290,4 +289,6 @@ export default function GhostGames({ isOpen, onClose, sessionId }: Props) {
       </div>
     </Portal>
   );
-}
+});
+
+export default memo(GhostGamesComponent);

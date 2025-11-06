@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { forwardRef, memo } from 'react';
 import Portal from './Portal'
 import useAuth from '../hooks/useAuth'
 import LoginForm from './LoginForm'
@@ -9,7 +9,8 @@ interface Props {
   onClose: () => void
 }
 
-export default function AuthModal({ isOpen, onClose }: Props) {
+
+const AuthModalComponent = forwardRef<HTMLDivElement, Props>(function AuthModal({ isOpen, onClose }, ref) {
   const { user, login, signup, logout } = useAuth()
   const [mode, setMode] = React.useState<'login'|'signup'>('login')
   const [email, setEmail] = React.useState('')
@@ -34,7 +35,7 @@ export default function AuthModal({ isOpen, onClose }: Props) {
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[70] flex items-center justify-center p-2 sm:p-4 bg-black/40">
+      <div ref={ref} className="fixed inset-0 z-[70] flex items-center justify-center p-2 sm:p-4 bg-black/40">
         <div className="bg-haunted-900 border border-haunted-700 rounded-xl p-3 sm:p-6 max-w-xs sm:max-w-sm w-full">
           <h3 className="text-base sm:text-lg font-bold ghost-text">Account</h3>
           {user ? (
@@ -66,4 +67,6 @@ export default function AuthModal({ isOpen, onClose }: Props) {
       </div>
     </Portal>
   )
-}
+});
+
+export default memo(AuthModalComponent);

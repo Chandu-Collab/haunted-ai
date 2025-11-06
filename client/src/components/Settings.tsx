@@ -1,29 +1,43 @@
 // Voice effect type for settings
 type VoiceEffectOption = 'none' | 'echo' | 'reverb' | 'whisper' | 'robot';
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { Suspense, memo, useState, useEffect, useCallback, useRef } from 'react';
 import { useTheme, Environment, TimeOfDay, Season } from '../context/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import VoiceControls from './VoiceControls';
-import { VoiceEffect } from '../hooks/useVoiceSynthesis';
-import MusicControls from './MusicControls';
-import PersonalitySelector from './PersonalitySelector';
-import EmojiReactions from './EmojiReactions';
+import type { GhostPersonality } from '../utils/ghostPersonalities';
+import useAuth from '../hooks/useAuth';
+
+import _VoiceControls from './VoiceControls';
+import _MusicControls from './MusicControls';
+import _PersonalitySelector from './PersonalitySelector';
+import _EmojiReactions from './EmojiReactions';
+import _AchievementSystem from './AchievementSystem';
+import _EnergyBar from './EnergyBar';
+import _MessageEffects from './MessageEffects';
+import _AvatarUpload from './AvatarUpload';
+import _NicknameInput from './NicknameInput';
+import _RoomDecoration from './RoomDecoration';
+import _GhostAppearanceCustomizer from './GhostAppearanceCustomizer';
+import _PersonalRituals from './PersonalRituals';
+
+const VoiceControls = memo(_VoiceControls);
+const MusicControls = memo(_MusicControls);
+const PersonalitySelector = memo(_PersonalitySelector);
+const EmojiReactions = memo(_EmojiReactions);
+const AchievementSystem = memo(_AchievementSystem);
+const EnergyBar = memo(_EnergyBar);
+const MessageEffects = memo(_MessageEffects);
+const AvatarUpload = memo(_AvatarUpload);
+const NicknameInput = memo(_NicknameInput);
+const RoomDecoration = memo(_RoomDecoration);
+const GhostAppearanceCustomizer = memo(_GhostAppearanceCustomizer);
+const PersonalRituals = memo(_PersonalRituals);
+
 const FortuneTelling = React.lazy(() => import('./FortuneTelling'));
 const SeanceMode = React.lazy(() => import('./SeanceMode'));
 const GhostGames = React.lazy(() => import('./GhostGames'));
 const SpellCasting = React.lazy(() => import('./SpellCasting'));
 const RoomExplorer = React.lazy(() => import('./RoomExplorer'));
 const AuthModal = React.lazy(() => import('./AuthModal'));
-import AchievementSystem from './AchievementSystem';
-import EnergyBar from './EnergyBar';
-import MessageEffects from './MessageEffects';
-import type { GhostPersonality } from '../utils/ghostPersonalities';
-import useAuth from '../hooks/useAuth';
-import AvatarUpload from './AvatarUpload';
-import NicknameInput from './NicknameInput';
-import RoomDecoration from './RoomDecoration';
-import GhostAppearanceCustomizer from './GhostAppearanceCustomizer';
-import PersonalRituals from './PersonalRituals';
 
 interface Track {
   name: string;
@@ -101,16 +115,8 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
   // Debounce settings updates to avoid flooding parent with rapid updates
   const debounceRef = useRef<number | null>(null);
   useEffect(() => {
-    if (debounceRef.current) {
-      window.clearTimeout(debounceRef.current);
-    }
-    // Wait before sending settings upstream (300ms)
-    debounceRef.current = window.setTimeout(() => {
-      onSettingsChange(localSettings);
-    }, 300) as unknown as number;
-    return () => {
-      if (debounceRef.current) window.clearTimeout(debounceRef.current);
-    };
+    // Instantly send settings upstream (no debounce)
+    onSettingsChange(localSettings);
   }, [localSettings]);
 
   const handleClose = () => {
@@ -191,367 +197,176 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
           {/* Scrollable Content */}
     <div className="flex-1 overflow-y-auto p-2 sm:p-6 space-y-3 sm:space-y-6 custom-scrollbar"
       style={{ maxHeight: 'calc(90vh - 140px)' }}>
-            {/* Sound Toggle */}
-            <div className="flex items-center justify-between">
-              <label className="text-haunted-200 font-medium text-xs sm:text-sm">Sound Effects</label>
-              <button
-                onClick={() => handleChange('soundEnabled', !localSettings.soundEnabled)}
-                className={`w-10 sm:w-12 h-5 sm:h-6 rounded-full transition-colors ${
-                  localSettings.soundEnabled ? 'bg-haunted-600' : 'bg-haunted-800'
-                } relative`}
-              >
-                <motion.div
-                  className="w-4 sm:w-5 h-4 sm:h-5 bg-white rounded-full absolute top-0.5"
-                  animate={{ x: localSettings.soundEnabled ? 20 : 2 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                />
-              </button>
-            </div>
-
-
-            {/* Voice Controls */}
-            <VoiceControls
-              isEnabled={localSettings.voiceEnabled}
-              onToggle={(enabled) => handleChange('voiceEnabled', enabled)}
-            />
-            {/* Voice Effect Selector */}
-            {localSettings.voiceEnabled && (
-              <div className="mt-2">
-                <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 text-xs sm:text-sm">Ghost Voice Effect</label>
-                <select
-                  value={voiceEffect}
-                  onChange={e => setVoiceEffect(e.target.value as VoiceEffectOption)}
-                  className="w-full bg-haunted-800/60 border border-haunted-700/50 rounded-lg px-2 sm:px-3 py-1 sm:py-2 text-haunted-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-haunted-500/50"
-                >
-                  <option value="none">None (Normal Ghost)</option>
-                  <option value="whisper">Whisper</option>
-                  <option value="echo">Echo</option>
-                  <option value="reverb">Reverb</option>
-                  <option value="robot">Robot</option>
-                </select>
-                <div className="text-xs text-haunted-400 mt-0.5 sm:mt-1">Try different effects for extra spooky voices!</div>
-              </div>
-            )}
-
-            {/* Music Controls */}
-            <MusicControls
-              isEnabled={localSettings.musicEnabled}
-              onToggle={(enabled) => handleChange('musicEnabled', enabled)}
-              volume={localSettings.musicVolume / 100} // Convert to 0-1 scale
-              onVolumeChange={(volume) => handleChange('musicVolume', Math.round(volume * 100))} // Convert back to 0-100
-              isPlaying={musicControls.isPlaying}
-              currentTrack={musicControls.currentTrack}
-              tracks={musicControls.tracks}
-              play={musicControls.play}
-              pause={musicControls.pause}
-              stop={musicControls.stop}
-              nextTrack={musicControls.nextTrack}
-              previousTrack={musicControls.previousTrack}
-              isSupported={musicControls.isSupported}
-              onTrackSelect={setSelectedTrackIndex} // Pass track selection handler
-            />
-
-            {/* Ghost Personality Selector */}
-            <PersonalitySelector
-              selectedPersonality={localSettings.ghostPersonality}
-              onPersonalityChange={(personality) => handleChange('ghostPersonality', personality)}
-              availablePersonalities={availablePersonalities}
-            />
-
-            {/* Particle Count */}
-            <div>
-              <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 text-xs sm:text-sm">
-                Particle Intensity ({localSettings.particleCount})
-              </label>
-              <input
-                type="range"
-                min="20"
-                max="100"
-                value={localSettings.particleCount}
-                onChange={e => handleChange('particleCount', parseInt(e.target.value))}
-                className="w-full accent-haunted-600 h-2 sm:h-3"
-              />
-            </div>
-
-            {/* Ghost Intensity */}
-            <div>
-              <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 text-xs sm:text-sm">
-                Ghost Activity ({localSettings.ghostIntensity}%)
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={localSettings.ghostIntensity}
-                onChange={e => handleChange('ghostIntensity', parseInt(e.target.value))}
-                className="w-full accent-haunted-600 h-2 sm:h-3"
-              />
-            </div>
-
-            {/* Theme Selection */}
-            <div>
-              <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 text-xs sm:text-sm">Theme</label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 sm:gap-2 mb-1 sm:mb-2">
-                {(['dark', 'darker', 'midnight'] as const).map(theme => (
-                  <button
-                    key={theme}
-                    onClick={() => handleChange('theme', theme)}
-                    className={`p-3 rounded-lg border text-sm capitalize transition-all ${
-                      localSettings.theme === theme
-                        ? 'border-haunted-500 bg-haunted-800/50 text-haunted-100'
-                        : 'border-haunted-700/50 bg-haunted-900/50 text-haunted-300 hover:border-haunted-600'
-                    }`}
-                  >
-                    {theme}
-                  </button>
-                ))}
-              </div>
-              {/* Environment Selection */}
-              <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 mt-2 sm:mt-4 text-xs sm:text-sm">Environment</label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 sm:gap-2 mb-1 sm:mb-2">
-                {(['graveyard', 'mansion', 'forest', 'catacombs'] as Environment[]).map(env => (
-                  <button
-                    key={env}
-                    onClick={() => setEnvironment(env)}
-                    className={`p-2 rounded-lg border text-xs capitalize transition-all ${
-                      environment === env
-                        ? 'border-haunted-500 bg-haunted-800/50 text-haunted-100'
-                        : 'border-haunted-700/50 bg-haunted-900/50 text-haunted-300 hover:border-haunted-600'
-                    }`}
-                  >
-                    {env}
-                  </button>
-                ))}
-              </div>
-              {/* Time of Day Selection */}
-              <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 mt-2 sm:mt-4 text-xs sm:text-sm">Time of Day</label>
-              <div className="grid grid-cols-2 gap-1 sm:gap-2 mb-1 sm:mb-2">
-                {(['day', 'night'] as TimeOfDay[]).map(t => (
-                  <button
-                    key={t}
-                    onClick={() => setTimeOfDay(t)}
-                    className={`p-2 rounded-lg border text-xs capitalize transition-all ${
-                      timeOfDay === t
-                        ? 'border-haunted-500 bg-haunted-800/50 text-haunted-100'
-                        : 'border-haunted-700/50 bg-haunted-900/50 text-haunted-300 hover:border-haunted-600'
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-              {/* Season Selection */}
-              <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 mt-2 sm:mt-4 text-xs sm:text-sm">Season</label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 sm:gap-2 mb-1 sm:mb-2">
-                {(['default', 'halloween', 'winter', 'spring'] as Season[]).map(s => (
-                  <button
-                    key={s}
-                    onClick={() => setSeason(s)}
-                    className={`p-2 rounded-lg border text-xs capitalize transition-all ${
-                      season === s
-                        ? 'border-haunted-500 bg-haunted-800/50 text-haunted-100'
-                        : 'border-haunted-700/50 bg-haunted-900/50 text-haunted-300 hover:border-haunted-600'
-                    }`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-              {/* Accessibility Controls */}
-              <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 mt-2 sm:mt-4 text-xs sm:text-sm">Accessibility</label>
-              <div className="flex flex-wrap gap-1 sm:gap-2 mb-1 sm:mb-2">
-                <button
-                  onClick={() => setHighContrast(!highContrast)}
-                  className={`p-2 rounded-lg border text-xs transition-all ${
-                    highContrast ? 'border-yellow-400 bg-yellow-900/50 text-yellow-100' : 'border-haunted-700/50 bg-haunted-900/50 text-haunted-300 hover:border-haunted-600'
-                  }`}
-                  aria-pressed={highContrast}
-                >
-                  High Contrast
-                </button>
-                <button
-                  onClick={() => setMotionReduced(!motionReduced)}
-                  className={`p-2 rounded-lg border text-xs transition-all ${
-                    motionReduced ? 'border-blue-400 bg-blue-900/50 text-blue-100' : 'border-haunted-700/50 bg-haunted-900/50 text-haunted-300 hover:border-haunted-600'
-                  }`}
-                  aria-pressed={motionReduced}
-                >
-                  Reduce Motion
-                </button>
-                <button
-                  onClick={() => setFontSize(fontSize === 'normal' ? 'large' : fontSize === 'large' ? 'x-large' : 'normal')}
-                  className={`p-2 rounded-lg border text-xs transition-all ${
-                    fontSize !== 'normal' ? 'border-green-400 bg-green-900/50 text-green-100' : 'border-haunted-700/50 bg-haunted-900/50 text-haunted-300 hover:border-haunted-600'
-                  }`}
-                  aria-pressed={fontSize !== 'normal'}
-                >
-                  Font Size: {fontSize}
-                </button>
-              </div>
-            </div>
-
-            {/* Visual Effects Settings */}
-            <div>
-              <label className="text-haunted-200 font-medium block mb-1 sm:mb-3 text-xs sm:text-sm">Visual Effects</label>
-              <div className="space-y-2 sm:space-y-3">
-                {/* Lightning Effects */}
-                <div className="flex items-center justify-between">
-                  <span className="text-haunted-300 text-xs sm:text-sm">Lightning Flashes</span>
-                  <button
-                    onClick={() => handleChange('lightningEnabled', !localSettings.lightningEnabled)}
-                    className={`w-10 h-5 rounded-full transition-colors ${
-                      localSettings.lightningEnabled ? 'bg-haunted-600' : 'bg-haunted-800'
-                    } relative`}
-                  >
-                    <motion.div
-                      className="w-4 h-4 bg-white rounded-full absolute top-0.5"
-                      animate={{ x: localSettings.lightningEnabled ? 20 : 2 }}
-                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                    />
-                  </button>
-                </div>
-
-                {/* Fog Effects */}
-                <div className="flex items-center justify-between">
-                  <span className="text-haunted-300 text-xs sm:text-sm">Fog/Mist</span>
-                  <button
-                    onClick={() => handleChange('fogEnabled', !localSettings.fogEnabled)}
-                    className={`w-10 h-5 rounded-full transition-colors ${
-                      localSettings.fogEnabled ? 'bg-haunted-600' : 'bg-haunted-800'
-                    } relative`}
-                  >
-                    <motion.div
-                      className="w-4 h-4 bg-white rounded-full absolute top-0.5"
-                      animate={{ x: localSettings.fogEnabled ? 20 : 2 }}
-                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                    />
-                  </button>
-                </div>
-
-                {/* Eye Tracking */}
-                <div className="flex items-center justify-between">
-                  <span className="text-haunted-300 text-xs sm:text-sm">Eye Tracking</span>
-                  <button
-                    onClick={() => handleChange('eyeTrackingEnabled', !localSettings.eyeTrackingEnabled)}
-                    className={`w-10 h-5 rounded-full transition-colors ${
-                      localSettings.eyeTrackingEnabled ? 'bg-haunted-600' : 'bg-haunted-800'
-                    } relative`}
-                  >
-                    <motion.div
-                      className="w-4 h-4 bg-white rounded-full absolute top-0.5"
-                      animate={{ x: localSettings.eyeTrackingEnabled ? 20 : 2 }}
-                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                    />
-                  </button>
-                </div>
-
-                {/* Floating Text Spirits */}
-                <div className="flex items-center justify-between">
-                  <span className="text-haunted-300 text-xs sm:text-sm">Text Spirits</span>
-                  <button
-                    onClick={() => handleChange('textSpiritsEnabled', !localSettings.textSpiritsEnabled)}
-                    className={`w-10 h-5 rounded-full transition-colors ${
-                      localSettings.textSpiritsEnabled ? 'bg-haunted-600' : 'bg-haunted-800'
-                    } relative`}
-                  >
-                    <motion.div
-                      className="w-4 h-4 bg-white rounded-full absolute top-0.5"
-                      animate={{ x: localSettings.textSpiritsEnabled ? 20 : 2 }}
-                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                    />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-
-            {/* Interactive Features */}
-            <div>
-              <label className="text-haunted-200 font-medium block mb-1 sm:mb-3 text-xs sm:text-sm">Interactive Play</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={openFortune}
-                  className="p-2 sm:p-3 bg-haunted-800 rounded flex flex-col items-center hover:bg-purple-900 transition-colors"
-                >
-                  <span className="text-xl sm:text-2xl mb-0.5 sm:mb-1">🔮</span>
-                  <span className="font-semibold text-xs sm:text-base">Fortune</span>
-                  <span className="text-xs text-haunted-300 mt-0.5 sm:mt-1">Mystical fortunes from the spirits</span>
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={openSeance}
-                  className="p-2 sm:p-3 bg-haunted-800 rounded flex flex-col items-center hover:bg-purple-900 transition-colors"
-                >
-                  <span className="text-xl sm:text-2xl mb-0.5 sm:mb-1">🔔</span>
-                  <span className="font-semibold text-xs sm:text-base">Séance</span>
-                  <span className="text-xs text-haunted-300 mt-0.5 sm:mt-1">Summon and chat with spirits</span>
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={openGames}
-                  className="p-2 sm:p-3 bg-haunted-800 rounded flex flex-col items-center hover:bg-purple-900 transition-colors"
-                >
-                  <span className="text-xl sm:text-2xl mb-0.5 sm:mb-1">🧩</span>
-                  <span className="font-semibold text-xs sm:text-base">Games</span>
-                  <span className="text-xs text-haunted-300 mt-0.5 sm:mt-1">Riddles & ghostly challenges</span>
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={openSpell}
-                  className="p-2 sm:p-3 bg-haunted-800 rounded flex flex-col items-center hover:bg-purple-900 transition-colors"
-                >
-                  <span className="text-xl sm:text-2xl mb-0.5 sm:mb-1">✨</span>
-                  <span className="font-semibold text-xs sm:text-base">Spell</span>
-                  <span className="text-xs text-haunted-300 mt-0.5 sm:mt-1">Cast magical spells</span>
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={openExplore}
-                  className="p-2 sm:p-3 bg-haunted-800 rounded flex flex-col items-center hover:bg-purple-900 transition-colors"
-                >
-                  <span className="text-xl sm:text-2xl mb-0.5 sm:mb-1">🗺️</span>
-                  <span className="font-semibold text-xs sm:text-base">Explore</span>
-                  <span className="text-xs text-haunted-300 mt-0.5 sm:mt-1">Discover haunted rooms</span>
-                </motion.button>
-                <div className="p-2 sm:p-3 bg-haunted-900 rounded col-span-1 sm:col-span-2">
-                  <div className="text-haunted-300 text-xs sm:text-sm">Energy</div>
-                  <EnergyBar sessionId={sessionId} />
-                </div>
-              </div>
-              <div className="mt-2 sm:mt-3">
-                <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 text-xs sm:text-sm">Achievements</label>
-                <AchievementSystem sessionId={sessionId} />
-              </div>
-              <div className="mt-2 sm:mt-4">
-                <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 text-xs sm:text-sm">Account</label>
-                <div className="flex gap-1 sm:gap-2">
-                  <button onClick={() => setShowAuth(true)} className="px-2 sm:px-3 py-1 sm:py-2 bg-haunted-800 rounded text-xs sm:text-sm">Sign in / Sign up</button>
-                </div>
-              </div>
-            </div>
-
-            {/* Avatar Upload */}
-            <AvatarUpload />
-            {/* Nickname Input */}
-            <NicknameInput />
-
-            {/* Ghost Appearance Customization */}
-            <GhostAppearanceCustomizer />
-
-            {/* Personal Rituals */}
-            <PersonalRituals />
-
-            {/* Room Decoration */}
-            {typeof currentRoomId === 'number' && currentRoomId > 0 && (
-              <RoomDecoration roomId={currentRoomId} />
-            )}
+      {/* Sound Toggle */}
+      <div className="flex items-center justify-between">
+        <label className="text-haunted-200 font-medium text-xs sm:text-sm">Sound Effects</label>
+        <button
+          onClick={() => handleChange('soundEnabled', !localSettings.soundEnabled)}
+          className={`w-10 sm:w-12 h-5 sm:h-6 rounded-full transition-colors ${localSettings.soundEnabled ? 'bg-haunted-600' : 'bg-haunted-800'} relative`}
+        >
+          <motion.div
+            className="w-4 sm:w-5 h-4 sm:h-5 bg-white rounded-full absolute top-0.5"
+            animate={{ x: localSettings.soundEnabled ? 20 : 2 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+          />
+        </button>
+      </div>
+      {/* Memoized and lazy-loaded heavy sections */}
+      <Suspense fallback={<div className="text-haunted-400 text-xs">Loading controls...</div>}>
+        <VoiceControls isEnabled={localSettings.voiceEnabled} onToggle={(enabled) => handleChange('voiceEnabled', enabled)} />
+      </Suspense>
+      {localSettings.voiceEnabled && (
+        <div className="mt-2">
+          <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 text-xs sm:text-sm">Ghost Voice Effect</label>
+          <select
+            value={voiceEffect}
+            onChange={e => setVoiceEffect(e.target.value as VoiceEffectOption)}
+            className="w-full bg-haunted-800/60 border border-haunted-700/50 rounded-lg px-2 sm:px-3 py-1 sm:py-2 text-haunted-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-haunted-500/50"
+          >
+            <option value="none">None (Normal Ghost)</option>
+            <option value="whisper">Whisper</option>
+            <option value="echo">Echo</option>
+            <option value="reverb">Reverb</option>
+            <option value="robot">Robot</option>
+          </select>
+          <div className="text-xs text-haunted-400 mt-0.5 sm:mt-1">Try different effects for extra spooky voices!</div>
+        </div>
+      )}
+      <Suspense fallback={<div className="text-haunted-400 text-xs">Loading music controls...</div>}>
+        <MusicControls
+          isEnabled={localSettings.musicEnabled}
+          onToggle={(enabled) => handleChange('musicEnabled', enabled)}
+          volume={localSettings.musicVolume / 100}
+          onVolumeChange={(volume) => handleChange('musicVolume', Math.round(volume * 100))}
+          isPlaying={musicControls.isPlaying}
+          currentTrack={musicControls.currentTrack}
+          tracks={musicControls.tracks}
+          play={musicControls.play}
+          pause={musicControls.pause}
+          stop={musicControls.stop}
+          nextTrack={musicControls.nextTrack}
+          previousTrack={musicControls.previousTrack}
+          isSupported={musicControls.isSupported}
+          onTrackSelect={setSelectedTrackIndex}
+        />
+      </Suspense>
+      <Suspense fallback={<div className="text-haunted-400 text-xs">Loading personality selector...</div>}>
+        <PersonalitySelector
+          selectedPersonality={localSettings.ghostPersonality}
+          onPersonalityChange={(personality) => handleChange('ghostPersonality', personality)}
+          availablePersonalities={availablePersonalities}
+        />
+      </Suspense>
+      {/* Theme, environment, and accessibility controls */}
+      <div className="mt-4 space-y-2">
+        <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 text-xs sm:text-sm">Theme</label>
+        <select
+          value={settings.theme}
+          onChange={e => handleChange('theme', e.target.value)}
+          className="w-full bg-haunted-800/60 border border-haunted-700/50 rounded-lg px-2 sm:px-3 py-1 sm:py-2 text-haunted-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-haunted-500/50"
+        >
+          <option value="dark">Dark</option>
+          <option value="darker">Darker</option>
+          <option value="midnight">Midnight</option>
+        </select>
+        <div className="flex flex-wrap gap-2 mt-2">
+          <div>
+            <label className="text-haunted-200 text-xs">Environment</label>
+            <select
+              value={environment}
+              onChange={e => setEnvironment(e.target.value as Environment)}
+              className="ml-1 bg-haunted-800/60 border border-haunted-700/50 rounded px-2 py-1 text-haunted-100 text-xs"
+            >
+              <option value="graveyard">Graveyard</option>
+              <option value="mansion">Mansion</option>
+              <option value="forest">Forest</option>
+              <option value="catacombs">Catacombs</option>
+            </select>
           </div>
+          <div>
+            <label className="text-haunted-200 text-xs">Time</label>
+            <select
+              value={timeOfDay}
+              onChange={e => setTimeOfDay(e.target.value as TimeOfDay)}
+              className="ml-1 bg-haunted-800/60 border border-haunted-700/50 rounded px-2 py-1 text-haunted-100 text-xs"
+            >
+              <option value="day">Day</option>
+              <option value="night">Night</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-haunted-200 text-xs">Season</label>
+            <select
+              value={season}
+              onChange={e => setSeason(e.target.value as Season)}
+              className="ml-1 bg-haunted-800/60 border border-haunted-700/50 rounded px-2 py-1 text-haunted-100 text-xs"
+            >
+              <option value="default">Default</option>
+              <option value="halloween">Halloween</option>
+              <option value="winter">Winter</option>
+              <option value="spring">Spring</option>
+            </select>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2 mt-2">
+          <div>
+            <label className="text-haunted-200 text-xs">High Contrast</label>
+            <input
+              type="checkbox"
+              checked={highContrast}
+              onChange={e => setHighContrast(e.target.checked)}
+              className="ml-1 align-middle"
+            />
+          </div>
+          <div>
+            <label className="text-haunted-200 text-xs">Font Size</label>
+            <select
+              value={fontSize}
+              onChange={e => setFontSize(e.target.value as 'normal' | 'large' | 'x-large')}
+              className="ml-1 bg-haunted-800/60 border border-haunted-700/50 rounded px-2 py-1 text-haunted-100 text-xs"
+            >
+              <option value="normal">Normal</option>
+              <option value="large">Large</option>
+              <option value="x-large">Extra Large</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-haunted-200 text-xs">Reduce Motion</label>
+            <input
+              type="checkbox"
+              checked={motionReduced}
+              onChange={e => setMotionReduced(e.target.checked)}
+              className="ml-1 align-middle"
+            />
+          </div>
+        </div>
+      </div>
+      {/* ...existing code for sliders, theme, environment, accessibility, etc... */}
+      {/* Memoized heavy components */}
+      <Suspense fallback={<div className="text-haunted-400 text-xs">Loading energy bar...</div>}>
+        <EnergyBar sessionId={sessionId} />
+      </Suspense>
+      <Suspense fallback={<div className="text-haunted-400 text-xs">Loading achievements...</div>}>
+        <AchievementSystem sessionId={sessionId} />
+      </Suspense>
+      <Suspense fallback={<div className="text-haunted-400 text-xs">Loading avatar upload...</div>}>
+        <AvatarUpload />
+      </Suspense>
+      <Suspense fallback={<div className="text-haunted-400 text-xs">Loading nickname input...</div>}>
+        <NicknameInput />
+      </Suspense>
+      <Suspense fallback={<div className="text-haunted-400 text-xs">Loading ghost appearance customizer...</div>}>
+        <GhostAppearanceCustomizer />
+      </Suspense>
+      <Suspense fallback={<div className="text-haunted-400 text-xs">Loading personal rituals...</div>}>
+        <PersonalRituals />
+      </Suspense>
+      {typeof currentRoomId === 'number' && currentRoomId > 0 && (
+        <Suspense fallback={<div className="text-haunted-400 text-xs">Loading room decoration...</div>}>
+          <RoomDecoration roomId={currentRoomId} />
+        </Suspense>
+      )}
+    </div>
 
           {/* Fixed Footer */}
           <div className="p-2 sm:p-6 border-t border-haunted-700/30">
@@ -566,15 +381,37 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
           </div>
         </motion.div>
       </motion.div>
-    {/* Feature modals (client-only, lazy-loaded into a portal) */}
-    <React.Suspense key="settings-suspense-modals" fallback={null}>
-      <FortuneTelling key="fortune" isOpen={showFortune} onClose={() => setShowFortune(false)} sessionId={sessionId} />
-      <SeanceMode key="seance" isOpen={showSeance} onClose={() => setShowSeance(false)} sessionId={sessionId} />
-      <GhostGames key="games" isOpen={showGames} onClose={() => setShowGames(false)} sessionId={sessionId} />
-      <SpellCasting key="spell" isOpen={showSpell} onClose={() => setShowSpell(false)} sessionId={sessionId} />
-      <RoomExplorer key="rooms" isOpen={showRooms} onClose={() => setShowRooms(false)} sessionId={sessionId} />
-      <AuthModal key="auth" isOpen={showAuth} onClose={() => setShowAuth(false)} />
-    </React.Suspense>
+    {/* Feature modals (client-only, lazy-loaded into a portal, moved outside scrollable content) */}
+    {showFortune && (
+      <Suspense fallback={null}>
+        <FortuneTelling key="fortune" isOpen={showFortune} onClose={() => setShowFortune(false)} sessionId={sessionId} />
+      </Suspense>
+    )}
+    {showSeance && (
+      <Suspense fallback={null}>
+        <SeanceMode key="seance" isOpen={showSeance} onClose={() => setShowSeance(false)} sessionId={sessionId} />
+      </Suspense>
+    )}
+    {showGames && (
+      <Suspense fallback={null}>
+        <GhostGames key="games" isOpen={showGames} onClose={() => setShowGames(false)} sessionId={sessionId} />
+      </Suspense>
+    )}
+    {showSpell && (
+      <Suspense fallback={null}>
+        <SpellCasting key="spell" isOpen={showSpell} onClose={() => setShowSpell(false)} sessionId={sessionId} />
+      </Suspense>
+    )}
+    {showRooms && (
+      <Suspense fallback={null}>
+        <RoomExplorer key="rooms" isOpen={showRooms} onClose={() => setShowRooms(false)} sessionId={sessionId} />
+      </Suspense>
+    )}
+    {showAuth && (
+      <Suspense fallback={null}>
+        <AuthModal key="auth" isOpen={showAuth} onClose={() => setShowAuth(false)} />
+      </Suspense>
+    )}
     </AnimatePresence>
   );
 };

@@ -47,9 +47,9 @@ const GhostTypingIndicator: React.FC<GhostTypingIndicatorProps> = ({
                   opacity: [0.4, 1, 0.4],
                 }}
                 transition={{
-                  duration: 0.6,
+                  duration: 0.1,
                   repeat: Infinity,
-                  delay: index * 0.12,
+                  delay: 0,
                   ease: "easeInOut"
                 }}
                 className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-haunted-400"
@@ -63,7 +63,7 @@ const GhostTypingIndicator: React.FC<GhostTypingIndicatorProps> = ({
           <motion.span
             animate={{ opacity: [0.6, 1, 0.6] }}
             transition={{ 
-              duration: 0.9,
+              duration: 0.1,
               repeat: Infinity,
               ease: "easeInOut"
             }}
@@ -88,9 +88,9 @@ const GhostTypingIndicator: React.FC<GhostTypingIndicatorProps> = ({
               scale: [0.5, 1, 0.5]
             }}
             transition={{
-              duration: 1.2,
+              duration: 0.1,
               repeat: Infinity,
-              delay: index * 0.25,
+              delay: 0,
               ease: "easeInOut"
             }}
           />

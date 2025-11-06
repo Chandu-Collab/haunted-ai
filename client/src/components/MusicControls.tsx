@@ -237,4 +237,4 @@ const MusicControls: React.FC<MusicControlsProps> = ({
   );
 };
 
-export default MusicControls;
+export default React.memo(MusicControls);

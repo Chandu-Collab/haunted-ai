@@ -109,4 +109,4 @@ const GhostAppearanceCustomizer: React.FC = () => {
   );
 };
 
-export default GhostAppearanceCustomizer;
+export default React.memo(GhostAppearanceCustomizer);
