@@ -367,7 +367,6 @@ const App = () => {
     });
   }, [messages, appSettings.ghostPersonality, voiceEffect, speakText, playSyntheticSound, getVoiceForPersonality]);
 
-  // ...existing code...
   const [pendingGhostMsgId, setPendingGhostMsgId] = useState<string | null>(null);
 
   const sendMessage = useCallback((messageContent: string, imageBase64?: string) => {
@@ -425,8 +424,9 @@ const App = () => {
         } else {
           aiReply = data.response || data.reply || '';
         }
+        // Hauntify the ghost reply before displaying
         setMessages(prev => prev.map(msg =>
-          msg.id === ghostMsgId ? { ...msg, content: aiReply } : msg
+          msg.id === ghostMsgId ? { ...msg, content: hauntifyMessage(aiReply) } : msg
         ));
         // Play ghost sound when ghost message is received
         if (appSettings.soundEnabled) {
@@ -442,8 +442,6 @@ const App = () => {
       }
     })();
   }, [appSettings.ghostPersonality, appSettings.soundEnabled, playSyntheticSound, generateId, setMessages, setInput, setIsTyping, sessionId]);
-
-  // ...existing code...
 
   // Handle form submission
   const handleSubmit = (e: FormEvent) => {
@@ -557,6 +555,93 @@ const App = () => {
       </button>
     </div>
   );
+
+  // --- RANDOMIZE/HAUNT THE MESSAGE ---
+  function hauntifyMessage(text: string): string {
+    if (!text) return '';
+    // Ghostly prefixes, suffixes, and interjections
+    const ghostPrefixes = [
+      '👻 Whisper from beyond: ',
+      '💀 The spirits murmur: ',
+      '🌫️ In the mist, a voice: ',
+      '🕯️ A chill in the air: ',
+      '🔮 The veil parts: '
+    ];
+    const ghostSuffixes = [
+      '...from the other side.',
+      '...echoes in the darkness.',
+      '...as the candle flickers.',
+      '...in the haunted halls.',
+      '...whispered by unseen souls.'
+    ];
+    const interjections = [
+      '...psst...',
+      '...beware...',
+      '...can you feel the chill?...',
+      '...shhh... listen...',
+      '...the spirits stir...',
+      '...do you sense it?...',
+      '...the veil is thin tonight...'
+    ];
+    // Shorten the message to 1-3 sentences max
+    let sentencesRaw = text.match(/[^.!?]+[.!?]?/g);
+    let sentences: string[] = Array.isArray(sentencesRaw) ? Array.from(sentencesRaw) : [text];
+    if (sentences.length > 3) {
+      // Randomly pick 1-3 sentences to keep
+      const keepCount = 1 + Math.floor(Math.random() * 3);
+      // Shuffle sentences
+      for (let i = sentences.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [sentences[i], sentences[j]] = [sentences[j], sentences[i]];
+      }
+      sentences = sentences.slice(0, keepCount);
+    }
+    let hauntedText = sentences.join(' ').trim();
+    // Ghostly language replacements
+    hauntedText = hauntedText
+      .replace(/\bhello\b/gi, 'Greetings, mortal')
+      .replace(/\bhi\b/gi, 'Hail, wanderer')
+      .replace(/\bhow are you\b/gi, 'How fares thy soul?')
+      .replace(/\bfriend\b/gi, 'kindred spirit')
+      .replace(/\bI am\b/gi, 'I remain')
+      .replace(/\bmy name is\b/gi, 'They once called me')
+      .replace(/\bsee you\b/gi, 'May our spirits cross again')
+      .replace(/\bgoodbye\b/gi, 'Farewell, until the next haunting')
+      .replace(/\bthanks?\b/gi, 'You have my spectral gratitude')
+      .replace(/\bplease\b/gi, 'I beseech thee')
+      .replace(/\bhelp\b/gi, 'Summon aid from the beyond')
+      .replace(/\bafraid\b/gi, 'shrouded in dread')
+      .replace(/\bscared\b/gi, 'haunted by fear')
+      .replace(/\bsecret\b/gi, 'ancient secret')
+      .replace(/\bmagic\b/gi, 'eldritch magic')
+      .replace(/\bstrange\b/gi, 'otherworldly')
+      .replace(/\bweird\b/gi, 'unnatural')
+      .replace(/\bghost\b/gi, 'restless spirit')
+      .replace(/\bspirit\b/gi, 'wandering soul')
+      .replace(/\bdead\b/gi, 'departed')
+      .replace(/\bdeath\b/gi, 'eternal slumber')
+      .replace(/\bnight\b/gi, 'witching hour')
+      .replace(/\bdark\b/gi, 'shadowed')
+      .replace(/\bchill\b/gi, 'icy chill')
+      .replace(/\bsee\b/gi, 'behold')
+      .replace(/\bwait\b/gi, 'linger')
+      .replace(/\bsoon\b/gi, 'ere long')
+      .replace(/\bnow\b/gi, 'in this very moment')
+      .replace(/\bforever\b/gi, 'for all eternity');
+    // Randomly insert a spirit whisper/interjection in the middle
+    if (hauntedText.length > 30 && Math.random() < 0.5) {
+      const words = hauntedText.split(' ');
+      const insertAt = Math.floor(words.length / 2);
+      words.splice(insertAt, 0, interjections[Math.floor(Math.random() * interjections.length)]);
+      hauntedText = words.join(' ');
+    }
+    // Compose haunted message
+    const prefix = ghostPrefixes[Math.floor(Math.random() * ghostPrefixes.length)];
+    const suffix = ghostSuffixes[Math.floor(Math.random() * ghostSuffixes.length)];
+    const addInterjection = Math.random() < 0.6;
+    const interjection = addInterjection ? `\n${interjections[Math.floor(Math.random() * interjections.length)]}` : '';
+    return `${prefix}${hauntedText}${interjection} ${suffix}`;
+  }
 
   return (
     <>
@@ -1037,6 +1122,24 @@ const App = () => {
                         ghostIntensity={appSettings.ghostIntensity}
                         particleIntensity={appSettings.particleCount}
                       />
+                      {/* Echo/whisper line for ghost messages */}
+                      {message.isGhost && message.content && Math.abs((message.id + message.content).split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % 4 === 0 && (
+                        <div
+                          className="select-none pointer-events-none mt-[-0.5em] mb-2 w-full"
+                          style={{
+                            opacity: 0.32,
+                            filter: 'blur(1.5px) grayscale(0.7)',
+                            transform: 'translateY(0.35em) scale(0.98)',
+                            color: '#bbaaff',
+                            fontStyle: 'italic',
+                            textShadow: '0 0 8px #7c2dff55',
+                            whiteSpace: 'pre-line',
+                          }}
+                          aria-hidden="true"
+                        >
+                          {message.content}
+                        </div>
+                      )}
                       
                       <div className="flex items-center gap-2 mt-2">
                         <span className="text-xs opacity-75" style={{ color: 'inherit' }}>

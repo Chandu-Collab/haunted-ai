@@ -1,6 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
+// Add ghostly glitch/fade/floating effect for ghost messages
+import './ghost-effects.css';
+
 
 interface MessageEffectsProps {
   content: string;
@@ -221,7 +224,63 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
         ...style 
       }}
     >
-      <div style={{ color: 'inherit' }}>
+      {/* Spectral aura for ghost messages */}
+      {isGhost && (
+        <motion.div
+          className="absolute inset-0 pointer-events-none z-0"
+          style={{
+            borderRadius: '1.2em',
+            background: 'radial-gradient(circle, rgba(124,45,255,0.10) 0%, rgba(124,45,255,0.04) 70%, transparent 100%)',
+            filter: 'blur(8px)',
+            mixBlendMode: 'lighten',
+          }}
+          animate={{
+            opacity: [0.7, 0.9, 0.7],
+            scale: [1, 1.04, 1],
+          }}
+          transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      )}
+      {/* Color flicker for ghost messages */}
+      {isGhost && (
+        <motion.div
+          className="absolute inset-0 pointer-events-none z-0"
+          style={{
+            borderRadius: '1.2em',
+            background: 'none',
+            boxShadow: '0 0 32px 8px #7c2dff44',
+            mixBlendMode: 'screen',
+          }}
+          animate={{
+            opacity: [0.18, 0.32, 0.18],
+            filter: [
+              'hue-rotate(0deg) brightness(1)',
+              'hue-rotate(20deg) brightness(1.1)',
+              'hue-rotate(-20deg) brightness(0.95)',
+              'hue-rotate(0deg) brightness(1)'
+            ],
+          }}
+          transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      )}
+      {/* Spectral trails for ghost messages */}
+      {isGhost && (
+        <motion.div
+          className="absolute inset-0 pointer-events-none z-0"
+          style={{
+            borderRadius: '1.2em',
+            background: 'none',
+            boxShadow: '0 0 48px 12px #7c2dff22',
+            mixBlendMode: 'lighten',
+          }}
+          animate={{
+            opacity: [0.08, 0.18, 0.08],
+            scale: [1, 1.08, 1],
+          }}
+          transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      )}
+      <div style={{ color: 'inherit', position: 'relative', zIndex: 1 }}>
         {children}
       </div>
       {/* Overlay effects for ghost messages */}

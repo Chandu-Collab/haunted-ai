@@ -177,28 +177,65 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
       className={`relative w-full max-w-full sm:max-w-xl mx-auto px-2 sm:px-0 ${className}`}
       style={{ color: 'inherit' }}
     >
-      {enableSound && !audioAllowed && (
-        <button
-          className="mb-2 px-3 py-1 bg-purple-700 text-white rounded shadow"
-          onClick={() => setAudioAllowed(true)}
+      {isGhost ? (
+        <span
+          className={"ghost-text block break-words text-base sm:text-lg"}
+          style={{
+            color: '#f1ebff',
+            textShadow: `0 0 ${effects.glowIntensity * 10}px rgba(124, 45, 255, ${effects.glowIntensity})`,
+            fontSize: `clamp(1em, ${effects.emojiScale}em, 1.2em)`,
+            filter: effects.glowIntensity > 0.7 ? `brightness(${1 + effects.glowIntensity * 0.3})` : 'none',
+            wordBreak: 'break-word',
+            overflowWrap: 'break-word',
+            display: 'inline',
+          }}
         >
-          Enable Typing Sound
-        </button>
+          {displayedText.split(/(\s+)/).map((word, idx) => {
+            // Keep spaces as is
+            if (/^\s+$/.test(word)) {
+              return word;
+            }
+            // Animate each word
+            const floatY = Math.random() * 12 + 8; // px
+            const floatDuration = 2.2 + Math.random() * 1.2;
+            const floatDelay = Math.random() * 0.8;
+            return (
+              <motion.span
+                key={idx + word}
+                style={{ display: 'inline-block', position: 'relative', zIndex: 2 }}
+                animate={{
+                  y: [0, -floatY, 0],
+                  opacity: [0.92, 1, 0.92],
+                  rotate: [0, (Math.random() - 0.5) * 8, 0],
+                  scale: [1, 1.04 + Math.random() * 0.04, 1],
+                }}
+                transition={{
+                  duration: floatDuration,
+                  repeat: Infinity,
+                  repeatType: 'loop',
+                  delay: floatDelay,
+                  ease: 'easeInOut',
+                }}
+                className="ghost-float-word"
+              >
+                {word}
+              </motion.span>
+            );
+          })}
+        </span>
+      ) : (
+        <span
+          className="block break-words text-base sm:text-lg"
+          style={{
+            color: '#dbeafe',
+            fontSize: `clamp(1em, 1em, 1.2em)`,
+            wordBreak: 'break-word',
+            overflowWrap: 'break-word',
+          }}
+        >
+          {displayedText}
+        </span>
       )}
-      <span
-        className={`${isGhost ? 'ghost-text' : ''} block break-words text-base sm:text-lg`}
-        style={{
-          color: isGhost ? '#f1ebff' : '#dbeafe',
-          textShadow: isGhost ? `0 0 ${effects.glowIntensity * 10}px rgba(124, 45, 255, ${effects.glowIntensity})` : 'none',
-          transform: isGhost && effects.shakeIntensity > 1 ? `translateX(${Math.sin(Date.now() * 0.01) * effects.shakeIntensity}px)` : 'none',
-          fontSize: isGhost ? `clamp(1em, ${effects.emojiScale}em, 1.2em)` : `clamp(1em, 1em, 1.2em)`,
-          filter: isGhost && effects.glowIntensity > 0.7 ? `brightness(${1 + effects.glowIntensity * 0.3})` : 'none',
-          wordBreak: 'break-word',
-          overflowWrap: 'break-word',
-        }}
-      >
-        {displayedText}
-      </span>
       {!isComplete && (
         <motion.span
           animate={{
