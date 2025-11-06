@@ -1,0 +1,39 @@
+.ghost-message {
+  position: relative;
+  animation: ghost-fade-in 1.2s cubic-bezier(0.4,0,0.2,1);
+  filter: drop-shadow(0 0 8px #7c2dff88);
+}
+
+.ghost-message.glitch-ghost {
+  animation: ghost-glitch 0.7s infinite linear alternate;
+}
+
+@keyframes ghost-fade-in {
+  0% { opacity: 0; filter: blur(4px) brightness(0.7); }
+  60% { opacity: 0.7; filter: blur(2px) brightness(1.1); }
+  100% { opacity: 1; filter: blur(0) brightness(1.2); }
+}
+
+@keyframes ghost-glitch {
+  0% { transform: translateX(0) skewX(0deg); }
+  20% { transform: translateX(-2px) skewX(-2deg); }
+  40% { transform: translateX(2px) skewX(2deg); }
+  60% { transform: translateX(-1px) skewX(-1deg); }
+  80% { transform: translateX(1px) skewX(1deg); }
+  100% { transform: translateX(0) skewX(0deg); }
+}
+
+.ghost-message .typewriter {
+  font-family: 'Creepster', cursive, monospace;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 6px #7c2dff55, 0 0 2px #fff2;
+}
+
+.ghost-message .floating {
+  animation: ghost-float 3.5s ease-in-out infinite alternate;
+}
+
+@keyframes ghost-float {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-8px); }
+}

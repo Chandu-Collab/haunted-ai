@@ -6,6 +6,7 @@ import path from 'path';
 import cors from 'cors';
 import { connectDB } from './config/db';
 import chatRoutes from './routes/chatRoutes';
+// ...existing code...
 import interactionRoutes from './routes/interactionRoutes';
 import authRoutes from './routes/authRoutes';
 import roomRoutes from './routes/roomRoutes';
@@ -98,6 +99,7 @@ testConnection();
 
 // Routes
 app.use('/api/chat', chatLimiter, chatRoutes);
+// ...existing code...
 app.use('/api/rooms', roomRoutes);
 app.use('/api/rooms', roomWallpaperRoutes);
 app.use('/api/ghosts', ghostProfileRoutes);

@@ -342,8 +342,34 @@ const App = () => {
     addNotification({ type: 'info', title: `Ghost personality changed to ${personality.name}` });
   };
 
-  // Enhanced message sending with AI features
-  const sendMessage = useCallback(async (messageContent: string, imageBase64?: string) => {
+  // Track spoken ghost messages to avoid repeat TTS
+  const spokenGhostIds = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    messages.forEach((message) => {
+      if (
+        message.isGhost &&
+        message.content &&
+        !spokenGhostIds.current.has(message.id)
+      ) {
+        speakText(
+          message.content,
+          {
+            rate: appSettings.ghostPersonality.voiceSettings.rate,
+            pitch: appSettings.ghostPersonality.voiceSettings.pitch,
+            volume: appSettings.ghostPersonality.voiceSettings.volume,
+            effect: voiceEffect,
+            voice: getVoiceForPersonality(appSettings.ghostPersonality)
+          }
+        );
+        playSyntheticSound && playSyntheticSound('ghost');
+        spokenGhostIds.current.add(message.id);
+      }
+    });
+  }, [messages, appSettings.ghostPersonality, voiceEffect, speakText, playSyntheticSound, getVoiceForPersonality]);
+
+  const [pendingGhostMsgId, setPendingGhostMsgId] = useState<string | null>(null);
+
+  const sendMessage = useCallback((messageContent: string, imageBase64?: string) => {
     if (!messageContent.trim() && !imageBase64) return;
 
     const userMessage: EnhancedMessage = {
@@ -358,104 +384,64 @@ const App = () => {
     setInput('');
     setIsTyping(true);
 
-    // Play typing sound
+    // Play message sound for user message
     if (appSettings.soundEnabled) {
+      playSyntheticSound('message');
       playSyntheticSound('typing');
     }
 
-    try {
-      const requestBody = {
-        content: messageContent,
-        sessionId,
-        personalityId: appSettings.ghostPersonality.id,
-        ...(imageBase64 && { imageBase64 })
-      };
+    // Add a pending ghost message to the chat (empty until reply arrives)
+    const ghostMsgId = generateId();
+    setPendingGhostMsgId(ghostMsgId);
+    setMessages(prev => [...prev, {
+      id: ghostMsgId,
+      content: '',
+      isGhost: true,
+      timestamp: new Date().toISOString(),
+      personalityId: appSettings.ghostPersonality.id
+    }]);
 
-      const response = await fetch(`${API_URL}/api/chat/send`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      
-      // Handle enhanced response with analysis
-      if (result.messages) {
-        const enhancedMessages = result.messages.map((msg: Message) => ({
-          ...msg,
-          id: msg.id || generateId()
-        }));
-        
-        // Preserve the welcome message if it's not in the backend response
-        const hasWelcomeMessage = enhancedMessages.some(msg => msg.id === 'welcome');
-        const welcomeMessage = messages.find(msg => msg.id === 'welcome');
-        
-        if (!hasWelcomeMessage && welcomeMessage) {
-          setMessages([welcomeMessage, ...enhancedMessages]);
+  // Fetch full AI reply from backend
+    (async () => {
+      try {
+        const response = await fetch(`/api/chat/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content: messageContent,
+            sessionId,
+            personalityId: appSettings.ghostPersonality.id,
+            ...(imageBase64 && { imageBase64 })
+          })
+        });
+        if (!response.ok) throw new Error('Failed to get AI reply');
+        const data = await response.json();
+        // Use the latest ghost message from the returned messages array
+        let aiReply = '';
+        if (data.messages && Array.isArray(data.messages)) {
+          const lastGhost = [...data.messages].reverse().find(m => m.isGhost);
+          aiReply = lastGhost?.content || '';
         } else {
-          setMessages(enhancedMessages);
+          aiReply = data.response || data.reply || '';
         }
-        
-        // Update AI analysis if available
-        if (result.analysis) {
-          setCurrentAnalysis(result.analysis);
-          updateAnalysis(result.analysis);
+        // Hauntify the ghost reply before displaying
+        setMessages(prev => prev.map(msg =>
+          msg.id === ghostMsgId ? { ...msg, content: hauntifyMessage(aiReply) } : msg
+        ));
+        // Play ghost sound when ghost message is received
+        if (appSettings.soundEnabled) {
+          playSyntheticSound('ghost');
         }
-
-        // Get the latest ghost message for voice synthesis
-        const latestGhostMessage = enhancedMessages.filter((msg: Message) => msg.isGhost).pop();
-        if (latestGhostMessage && appSettings.voiceEnabled) {
-          const personality = appSettings.ghostPersonality;
-          speakText(latestGhostMessage.content, {
-            rate: personality.voiceSettings.rate,
-            pitch: personality.voiceSettings.pitch,
-            volume: personality.voiceSettings.volume,
-            effect: voiceEffect
-          });
-        }
+      } catch (err) {
+        setMessages(prev => prev.map(msg =>
+          msg.id === ghostMsgId ? { ...msg, content: '...The ghost is silent (error)...' } : msg
+        ));
+      } finally {
+        setIsTyping(false);
+        setPendingGhostMsgId(null);
       }
-
-      // Show AI insights notification
-      if (result.analysis && appSettings.emotionalAdaptationEnabled) {
-        const userMood = result.analysis.userMood;
-        if (userMood.dominant !== 'neutral') {
-          addNotification({
-            type: 'info',
-            title: `Mood Detected: ${userMood.dominant}`,
-            message: `The ghost senses your ${userMood.sentiment} energy`,
-            duration: 3000
-          });
-        }
-      }
-
-    } catch (error) {
-      console.error('Error sending message:', error);
-      addNotification({
-        type: 'error',
-        title: 'Connection Error',
-        message: 'Failed to reach the spirit realm. Please try again.',
-        duration: 5000
-      });
-    } finally {
-      setIsTyping(false);
-    }
-  }, [
-    sessionId, 
-    appSettings.ghostPersonality, 
-    appSettings.soundEnabled, 
-    appSettings.voiceEnabled,
-    appSettings.emotionalAdaptationEnabled,
-    playSyntheticSound, 
-    speakText, 
-    addNotification,
-    updateAnalysis
-  ]);
+    })();
+  }, [appSettings.ghostPersonality, appSettings.soundEnabled, playSyntheticSound, generateId, setMessages, setInput, setIsTyping, sessionId]);
 
   // Handle form submission
   const handleSubmit = (e: FormEvent) => {
@@ -569,6 +555,93 @@ const App = () => {
       </button>
     </div>
   );
+
+  // --- RANDOMIZE/HAUNT THE MESSAGE ---
+  function hauntifyMessage(text: string): string {
+    if (!text) return '';
+    // Ghostly prefixes, suffixes, and interjections
+    const ghostPrefixes = [
+      '👻 Whisper from beyond: ',
+      '💀 The spirits murmur: ',
+      '🌫️ In the mist, a voice: ',
+      '🕯️ A chill in the air: ',
+      '🔮 The veil parts: '
+    ];
+    const ghostSuffixes = [
+      '...from the other side.',
+      '...echoes in the darkness.',
+      '...as the candle flickers.',
+      '...in the haunted halls.',
+      '...whispered by unseen souls.'
+    ];
+    const interjections = [
+      '...psst...',
+      '...beware...',
+      '...can you feel the chill?...',
+      '...shhh... listen...',
+      '...the spirits stir...',
+      '...do you sense it?...',
+      '...the veil is thin tonight...'
+    ];
+    // Shorten the message to 1-3 sentences max
+    let sentencesRaw = text.match(/[^.!?]+[.!?]?/g);
+    let sentences: string[] = Array.isArray(sentencesRaw) ? Array.from(sentencesRaw) : [text];
+    if (sentences.length > 3) {
+      // Randomly pick 1-3 sentences to keep
+      const keepCount = 1 + Math.floor(Math.random() * 3);
+      // Shuffle sentences
+      for (let i = sentences.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [sentences[i], sentences[j]] = [sentences[j], sentences[i]];
+      }
+      sentences = sentences.slice(0, keepCount);
+    }
+    let hauntedText = sentences.join(' ').trim();
+    // Ghostly language replacements
+    hauntedText = hauntedText
+      .replace(/\bhello\b/gi, 'Greetings, mortal')
+      .replace(/\bhi\b/gi, 'Hail, wanderer')
+      .replace(/\bhow are you\b/gi, 'How fares thy soul?')
+      .replace(/\bfriend\b/gi, 'kindred spirit')
+      .replace(/\bI am\b/gi, 'I remain')
+      .replace(/\bmy name is\b/gi, 'They once called me')
+      .replace(/\bsee you\b/gi, 'May our spirits cross again')
+      .replace(/\bgoodbye\b/gi, 'Farewell, until the next haunting')
+      .replace(/\bthanks?\b/gi, 'You have my spectral gratitude')
+      .replace(/\bplease\b/gi, 'I beseech thee')
+      .replace(/\bhelp\b/gi, 'Summon aid from the beyond')
+      .replace(/\bafraid\b/gi, 'shrouded in dread')
+      .replace(/\bscared\b/gi, 'haunted by fear')
+      .replace(/\bsecret\b/gi, 'ancient secret')
+      .replace(/\bmagic\b/gi, 'eldritch magic')
+      .replace(/\bstrange\b/gi, 'otherworldly')
+      .replace(/\bweird\b/gi, 'unnatural')
+      .replace(/\bghost\b/gi, 'restless spirit')
+      .replace(/\bspirit\b/gi, 'wandering soul')
+      .replace(/\bdead\b/gi, 'departed')
+      .replace(/\bdeath\b/gi, 'eternal slumber')
+      .replace(/\bnight\b/gi, 'witching hour')
+      .replace(/\bdark\b/gi, 'shadowed')
+      .replace(/\bchill\b/gi, 'icy chill')
+      .replace(/\bsee\b/gi, 'behold')
+      .replace(/\bwait\b/gi, 'linger')
+      .replace(/\bsoon\b/gi, 'ere long')
+      .replace(/\bnow\b/gi, 'in this very moment')
+      .replace(/\bforever\b/gi, 'for all eternity');
+    // Randomly insert a spirit whisper/interjection in the middle
+    if (hauntedText.length > 30 && Math.random() < 0.5) {
+      const words = hauntedText.split(' ');
+      const insertAt = Math.floor(words.length / 2);
+      words.splice(insertAt, 0, interjections[Math.floor(Math.random() * interjections.length)]);
+      hauntedText = words.join(' ');
+    }
+    // Compose haunted message
+    const prefix = ghostPrefixes[Math.floor(Math.random() * ghostPrefixes.length)];
+    const suffix = ghostSuffixes[Math.floor(Math.random() * ghostSuffixes.length)];
+    const addInterjection = Math.random() < 0.6;
+    const interjection = addInterjection ? `\n${interjections[Math.floor(Math.random() * interjections.length)]}` : '';
+    return `${prefix}${hauntedText}${interjection} ${suffix}`;
+  }
 
   return (
     <>
@@ -1039,6 +1112,7 @@ const App = () => {
                       )}
                       
                       <TypewriterText 
+                        key={message.id + '-' + message.content}
                         text={message.content}
                         // Use user-configurable typing speed when enabled, otherwise render instantly
                         speed={message.isGhost ? (appSettings.typingAnimationEnabled ? appSettings.typingSpeed : 0) : 0}
@@ -1048,6 +1122,24 @@ const App = () => {
                         ghostIntensity={appSettings.ghostIntensity}
                         particleIntensity={appSettings.particleCount}
                       />
+                      {/* Echo/whisper line for ghost messages */}
+                      {message.isGhost && message.content && Math.abs((message.id + message.content).split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % 4 === 0 && (
+                        <div
+                          className="select-none pointer-events-none mt-[-0.5em] mb-2 w-full"
+                          style={{
+                            opacity: 0.32,
+                            filter: 'blur(1.5px) grayscale(0.7)',
+                            transform: 'translateY(0.35em) scale(0.98)',
+                            color: '#bbaaff',
+                            fontStyle: 'italic',
+                            textShadow: '0 0 8px #7c2dff55',
+                            whiteSpace: 'pre-line',
+                          }}
+                          aria-hidden="true"
+                        >
+                          {message.content}
+                        </div>
+                      )}
                       
                       <div className="flex items-center gap-2 mt-2">
                         <span className="text-xs opacity-75" style={{ color: 'inherit' }}>
@@ -1086,6 +1178,7 @@ const App = () => {
                                     voice: getVoiceForPersonality(appSettings.ghostPersonality)
                                   }
                                 );
+                                playSyntheticSound && playSyntheticSound('ghost');
                               }}
                             >
                               🔊 Speak Again

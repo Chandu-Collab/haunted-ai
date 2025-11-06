@@ -257,6 +257,90 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
           availablePersonalities={availablePersonalities}
         />
       </Suspense>
+      {/* Theme, environment, and accessibility controls */}
+      <div className="mt-4 space-y-2">
+        <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 text-xs sm:text-sm">Theme</label>
+        <select
+          value={settings.theme}
+          onChange={e => handleChange('theme', e.target.value)}
+          className="w-full bg-haunted-800/60 border border-haunted-700/50 rounded-lg px-2 sm:px-3 py-1 sm:py-2 text-haunted-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-haunted-500/50"
+        >
+          <option value="dark">Dark</option>
+          <option value="darker">Darker</option>
+          <option value="midnight">Midnight</option>
+        </select>
+        <div className="flex flex-wrap gap-2 mt-2">
+          <div>
+            <label className="text-haunted-200 text-xs">Environment</label>
+            <select
+              value={environment}
+              onChange={e => setEnvironment(e.target.value as Environment)}
+              className="ml-1 bg-haunted-800/60 border border-haunted-700/50 rounded px-2 py-1 text-haunted-100 text-xs"
+            >
+              <option value="graveyard">Graveyard</option>
+              <option value="mansion">Mansion</option>
+              <option value="forest">Forest</option>
+              <option value="catacombs">Catacombs</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-haunted-200 text-xs">Time</label>
+            <select
+              value={timeOfDay}
+              onChange={e => setTimeOfDay(e.target.value as TimeOfDay)}
+              className="ml-1 bg-haunted-800/60 border border-haunted-700/50 rounded px-2 py-1 text-haunted-100 text-xs"
+            >
+              <option value="day">Day</option>
+              <option value="night">Night</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-haunted-200 text-xs">Season</label>
+            <select
+              value={season}
+              onChange={e => setSeason(e.target.value as Season)}
+              className="ml-1 bg-haunted-800/60 border border-haunted-700/50 rounded px-2 py-1 text-haunted-100 text-xs"
+            >
+              <option value="default">Default</option>
+              <option value="halloween">Halloween</option>
+              <option value="winter">Winter</option>
+              <option value="spring">Spring</option>
+            </select>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2 mt-2">
+          <div>
+            <label className="text-haunted-200 text-xs">High Contrast</label>
+            <input
+              type="checkbox"
+              checked={highContrast}
+              onChange={e => setHighContrast(e.target.checked)}
+              className="ml-1 align-middle"
+            />
+          </div>
+          <div>
+            <label className="text-haunted-200 text-xs">Font Size</label>
+            <select
+              value={fontSize}
+              onChange={e => setFontSize(e.target.value as 'normal' | 'large' | 'x-large')}
+              className="ml-1 bg-haunted-800/60 border border-haunted-700/50 rounded px-2 py-1 text-haunted-100 text-xs"
+            >
+              <option value="normal">Normal</option>
+              <option value="large">Large</option>
+              <option value="x-large">Extra Large</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-haunted-200 text-xs">Reduce Motion</label>
+            <input
+              type="checkbox"
+              checked={motionReduced}
+              onChange={e => setMotionReduced(e.target.checked)}
+              className="ml-1 align-middle"
+            />
+          </div>
+        </div>
+      </div>
       {/* ...existing code for sliders, theme, environment, accessibility, etc... */}
       {/* Memoized heavy components */}
       <Suspense fallback={<div className="text-haunted-400 text-xs">Loading energy bar...</div>}>
