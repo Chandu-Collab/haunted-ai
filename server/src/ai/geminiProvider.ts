@@ -8,6 +8,7 @@ const GEMINI_API_KEY = process.env.GOOGLE_API_KEY;
 const GEMINI_MODEL = 'gemini-flash-latest';
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
+
 export class GeminiProvider implements AIProvider {
   async generateResponse(prompt: string, options?: any): Promise<string> {
     if (!GEMINI_API_KEY) {
@@ -39,4 +40,6 @@ export class GeminiProvider implements AIProvider {
       throw new Error('Failed to get response from Gemini API');
     }
   }
+
+  // Streaming support removed (no longer used)
 }

@@ -21,7 +21,56 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
   ghostIntensity = 100,
   particleIntensity = 60
 }) => {
+  // Memoize particle effects outside of JSX to ensure stable dependency array
+  // (Removed duplicate definition below)
   // Analyze message content for emotions and keywords (memoized so this only runs when inputs change)
+  // Memoize particle effects outside of JSX to ensure stable dependency array
+  const particleEffectsMemo = React.useMemo(() => {
+    if (!(isGhost && ghostIntensity > 70 && particleIntensity > 50)) return null;
+    const count = Math.floor((particleIntensity / 100) * 4);
+    const seed = `${content}|${ghostIntensity}|${particleIntensity}`;
+    function seededRandom(seed: string, i: number) {
+      let h = 5381;
+      for (let j = 0; j < seed.length; j++) h = ((h << 5) + h) + seed.charCodeAt(j);
+      h += i * 9973;
+      return Math.abs(Math.sin(h) * 10000) % 1;
+    }
+    return Array.from({ length: count }).map((_, i) => {
+      const top = seededRandom(seed, i) * 100;
+      const left = seededRandom(seed + 'l', i) * 100;
+      const fontSize = `clamp(0.5rem, 1vw + 0.2rem, 0.9rem)`;
+      const color = `hsl(${280 + seededRandom(seed + 'c', i) * 40}, 90%, ${70 + (ghostIntensity / 100) * 20}%)`;
+      const x = (seededRandom(seed + 'x', i) - 0.5) * 20;
+      const x2 = (seededRandom(seed + 'x2', i) - 0.5) * 40;
+      const delay = 0;
+      return (
+        <motion.div
+          key={`particle-${i}`}
+          className="absolute"
+          style={{
+            top: `${top}%`,
+            left: `${left}%`,
+            fontSize,
+            color
+          }}
+          animate={{
+            opacity: [0, 1, 0],
+            scale: [0, 1 + (ghostIntensity / 100) * 0.5, 0],
+            x: [x, x2],
+            y: [0, -10 - (ghostIntensity / 100) * 10, 0]
+          }}
+          transition={{
+            duration: 0.1,
+            repeat: Infinity,
+            delay: 0,
+            ease: 'easeOut'
+          }}
+        >
+          ✨
+        </motion.div>
+      );
+    });
+  }, [content, ghostIntensity, particleIntensity, isGhost]);
   const effects = React.useMemo(() => {
     const text = (content || '').toLowerCase();
     const intensityModifier = ghostIntensity / 100;
@@ -114,6 +163,53 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
 
   const { initial, animate, transition } = getAnimationVariants();
 
+
+  // Memoize sparkle effects for magical content
+  const sparkleEffectsMemo = React.useMemo(() => {
+    if (!(effects.colorShift || /magic|spell|mystical|supernatural|spirit|soul/i.test(content))) return null;
+    const count = Math.max(3, Math.floor((ghostIntensity / 100) * 6));
+    const seed = `${content}|${ghostIntensity}|sparkle`;
+    function seededRandom(seed: string, i: number) {
+      let h = 5381;
+      for (let j = 0; j < seed.length; j++) h = ((h << 5) + h) + seed.charCodeAt(j);
+      h += i * 9973;
+      return Math.abs(Math.sin(h) * 10000) % 1;
+    }
+    return Array.from({ length: count }).map((_, i) => {
+      const top = 20 + i * 15;
+      const left = 10 + i * 20;
+      const fontSize = `clamp(0.6rem, 1vw + 0.4rem, 1.1rem)`;
+      const delay = 0;
+      const hue = 60 * i + Math.floor(seededRandom(seed, i) * 30);
+      return (
+        <motion.div
+          key={i}
+          className="absolute"
+          style={{
+            top: `${top}%`,
+            left: `${left}%`,
+            fontSize,
+            filter: `brightness(${1 + (ghostIntensity / 100)}) hue-rotate(${hue}deg)`
+          }}
+          animate={{
+            opacity: [0, 1, 0],
+            scale: [0, 1 + (ghostIntensity / 100) * 0.5, 0],
+            rotate: [0, 180, 360],
+            y: [0, -10 - (ghostIntensity / 100) * 10, 0]
+          }}
+          transition={{
+            duration: 0.1,
+            repeat: Infinity,
+            delay: 0,
+            ease: 'easeOut'
+          }}
+        >
+          ✨
+        </motion.div>
+      );
+    });
+  }, [content, ghostIntensity, effects.colorShift]);
+
   return (
     <motion.div
       initial={initial}
@@ -173,50 +269,7 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
       {/* Mystical sparkles for magical content - more sparkles with higher intensity */}
       {(effects.colorShift || /magic|spell|mystical|supernatural|spirit|soul/i.test(content)) && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {React.useMemo(() => {
-            // Use a deterministic seed based on content and ghostIntensity to keep the array stable between renders
-            const count = Math.max(3, Math.floor((ghostIntensity / 100) * 6));
-            const seed = `${content}|${ghostIntensity}|sparkle`;
-            function seededRandom(seed: string, i: number) {
-              let h = 5381;
-              for (let j = 0; j < seed.length; j++) h = ((h << 5) + h) + seed.charCodeAt(j);
-              h += i * 9973;
-              return Math.abs(Math.sin(h) * 10000) % 1;
-            }
-            return Array.from({ length: count }).map((_, i) => {
-              const top = 20 + i * 15;
-              const left = 10 + i * 20;
-                  const fontSize = `clamp(0.6rem, 1vw + 0.4rem, 1.1rem)`;
-              const delay = 0;
-              const hue = 60 * i + Math.floor(seededRandom(seed, i) * 30);
-              return (
-                <motion.div
-                  key={i}
-                  className="absolute"
-                  style={{
-                    top: `${top}%`,
-                    left: `${left}%`,
-                    fontSize,
-                    filter: `brightness(${1 + (ghostIntensity / 100)}) hue-rotate(${hue}deg)`
-                  }}
-                  animate={{
-                    opacity: [0, 1, 0],
-                    scale: [0, 1 + (ghostIntensity / 100) * 0.5, 0],
-                    rotate: [0, 180, 360],
-                    y: [0, -10 - (ghostIntensity / 100) * 10, 0]
-                  }}
-                  transition={{
-                    duration: 0.1,
-                    repeat: Infinity,
-                    delay: 0,
-                    ease: 'easeOut'
-                  }}
-                >
-                  ✨
-                </motion.div>
-              );
-            });
-          }, [content, ghostIntensity])}
+          {sparkleEffectsMemo}
         </div>
       )}
 
@@ -267,51 +320,7 @@ const MessageEffects: React.FC<MessageEffectsProps> = ({
       {/* High-intensity particle effects */}
       {isGhost && ghostIntensity > 70 && particleIntensity > 50 && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {React.useMemo(() => {
-            const count = Math.floor((particleIntensity / 100) * 4);
-            const seed = `${content}|${ghostIntensity}|${particleIntensity}`;
-            function seededRandom(seed: string, i: number) {
-              let h = 5381;
-              for (let j = 0; j < seed.length; j++) h = ((h << 5) + h) + seed.charCodeAt(j);
-              h += i * 9973;
-              return Math.abs(Math.sin(h) * 10000) % 1;
-            }
-            return Array.from({ length: count }).map((_, i) => {
-              const top = seededRandom(seed, i) * 100;
-              const left = seededRandom(seed + 'l', i) * 100;
-              const fontSize = `clamp(0.5rem, 1vw + 0.2rem, 0.9rem)`;
-              const color = `hsl(${280 + seededRandom(seed + 'c', i) * 40}, 90%, ${70 + (ghostIntensity / 100) * 20}%)`;
-              const x = (seededRandom(seed + 'x', i) - 0.5) * 20;
-              const x2 = (seededRandom(seed + 'x2', i) - 0.5) * 40;
-              const delay = 0;
-              return (
-                <motion.div
-                  key={`particle-${i}`}
-                  className="absolute"
-                  style={{
-                    top: `${top}%`,
-                    left: `${left}%`,
-                    fontSize,
-                    color
-                  }}
-                  animate={{
-                    opacity: [0, 1, 0],
-                    scale: [0, 1 + (ghostIntensity / 100) * 0.5, 0],
-                    x: [x, x2],
-                    y: [0, -10 - (ghostIntensity / 100) * 10, 0]
-                  }}
-                  transition={{
-                    duration: 0.1,
-                    repeat: Infinity,
-                    delay: 0,
-                    ease: 'easeOut'
-                  }}
-                >
-                  ✨
-                </motion.div>
-              );
-            });
-          }, [content, ghostIntensity, particleIntensity])}
+          {particleEffectsMemo}
         </div>
       )}
     </motion.div>

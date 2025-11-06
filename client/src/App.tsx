@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, FormEvent } from 'react';
+// ...existing code...
 import useGhostInteractions, { useSeanceMode } from './hooks/useGhostInteractions';
 import useRooms from './hooks/useRooms';
 import GhostProfileManager from './components/GhostProfileManager';
@@ -342,8 +343,11 @@ const App = () => {
     addNotification({ type: 'info', title: `Ghost personality changed to ${personality.name}` });
   };
 
-  // Enhanced message sending with AI features
-  const sendMessage = useCallback(async (messageContent: string, imageBase64?: string) => {
+
+  // ...existing code...
+  const [pendingGhostMsgId, setPendingGhostMsgId] = useState<string | null>(null);
+
+  const sendMessage = useCallback((messageContent: string, imageBase64?: string) => {
     if (!messageContent.trim() && !imageBase64) return;
 
     const userMessage: EnhancedMessage = {
@@ -358,104 +362,65 @@ const App = () => {
     setInput('');
     setIsTyping(true);
 
-    // Play typing sound
+    // Play message sound for user message
     if (appSettings.soundEnabled) {
+      playSyntheticSound('message');
       playSyntheticSound('typing');
     }
 
-    try {
-      const requestBody = {
-        content: messageContent,
-        sessionId,
-        personalityId: appSettings.ghostPersonality.id,
-        ...(imageBase64 && { imageBase64 })
-      };
+    // Add a pending ghost message to the chat (empty until reply arrives)
+    const ghostMsgId = generateId();
+    setPendingGhostMsgId(ghostMsgId);
+    setMessages(prev => [...prev, {
+      id: ghostMsgId,
+      content: '',
+      isGhost: true,
+      timestamp: new Date().toISOString(),
+      personalityId: appSettings.ghostPersonality.id
+    }]);
 
-      const response = await fetch(`${API_URL}/api/chat/send`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      
-      // Handle enhanced response with analysis
-      if (result.messages) {
-        const enhancedMessages = result.messages.map((msg: Message) => ({
-          ...msg,
-          id: msg.id || generateId()
-        }));
-        
-        // Preserve the welcome message if it's not in the backend response
-        const hasWelcomeMessage = enhancedMessages.some(msg => msg.id === 'welcome');
-        const welcomeMessage = messages.find(msg => msg.id === 'welcome');
-        
-        if (!hasWelcomeMessage && welcomeMessage) {
-          setMessages([welcomeMessage, ...enhancedMessages]);
+  // Fetch full AI reply from backend
+    (async () => {
+      try {
+        const response = await fetch(`/api/chat/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content: messageContent,
+            sessionId,
+            personalityId: appSettings.ghostPersonality.id,
+            ...(imageBase64 && { imageBase64 })
+          })
+        });
+        if (!response.ok) throw new Error('Failed to get AI reply');
+        const data = await response.json();
+        // Use the latest ghost message from the returned messages array
+        let aiReply = '';
+        if (data.messages && Array.isArray(data.messages)) {
+          const lastGhost = [...data.messages].reverse().find(m => m.isGhost);
+          aiReply = lastGhost?.content || '';
         } else {
-          setMessages(enhancedMessages);
+          aiReply = data.response || data.reply || '';
         }
-        
-        // Update AI analysis if available
-        if (result.analysis) {
-          setCurrentAnalysis(result.analysis);
-          updateAnalysis(result.analysis);
+        setMessages(prev => prev.map(msg =>
+          msg.id === ghostMsgId ? { ...msg, content: aiReply } : msg
+        ));
+        // Play ghost sound when ghost message is received
+        if (appSettings.soundEnabled) {
+          playSyntheticSound('ghost');
         }
-
-        // Get the latest ghost message for voice synthesis
-        const latestGhostMessage = enhancedMessages.filter((msg: Message) => msg.isGhost).pop();
-        if (latestGhostMessage && appSettings.voiceEnabled) {
-          const personality = appSettings.ghostPersonality;
-          speakText(latestGhostMessage.content, {
-            rate: personality.voiceSettings.rate,
-            pitch: personality.voiceSettings.pitch,
-            volume: personality.voiceSettings.volume,
-            effect: voiceEffect
-          });
-        }
+      } catch (err) {
+        setMessages(prev => prev.map(msg =>
+          msg.id === ghostMsgId ? { ...msg, content: '...The ghost is silent (error)...' } : msg
+        ));
+      } finally {
+        setIsTyping(false);
+        setPendingGhostMsgId(null);
       }
+    })();
+  }, [appSettings.ghostPersonality, appSettings.soundEnabled, playSyntheticSound, generateId, setMessages, setInput, setIsTyping, sessionId]);
 
-      // Show AI insights notification
-      if (result.analysis && appSettings.emotionalAdaptationEnabled) {
-        const userMood = result.analysis.userMood;
-        if (userMood.dominant !== 'neutral') {
-          addNotification({
-            type: 'info',
-            title: `Mood Detected: ${userMood.dominant}`,
-            message: `The ghost senses your ${userMood.sentiment} energy`,
-            duration: 3000
-          });
-        }
-      }
-
-    } catch (error) {
-      console.error('Error sending message:', error);
-      addNotification({
-        type: 'error',
-        title: 'Connection Error',
-        message: 'Failed to reach the spirit realm. Please try again.',
-        duration: 5000
-      });
-    } finally {
-      setIsTyping(false);
-    }
-  }, [
-    sessionId, 
-    appSettings.ghostPersonality, 
-    appSettings.soundEnabled, 
-    appSettings.voiceEnabled,
-    appSettings.emotionalAdaptationEnabled,
-    playSyntheticSound, 
-    speakText, 
-    addNotification,
-    updateAnalysis
-  ]);
+  // ...existing code...
 
   // Handle form submission
   const handleSubmit = (e: FormEvent) => {

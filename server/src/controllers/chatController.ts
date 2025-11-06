@@ -1,4 +1,4 @@
-import { Readable } from 'stream';
+// Streaming import removed
 // Export chat logs as a spooky story (text file)
 export const exportChatLog = async (req: Request, res: Response) => {
   try {
@@ -23,8 +23,8 @@ export const exportChatLog = async (req: Request, res: Response) => {
     }
     res.setHeader('Content-Disposition', 'attachment; filename="spooky_chat_log.txt"');
     res.setHeader('Content-Type', 'text/plain');
-    const stream = Readable.from([story]);
-    stream.pipe(res);
+  // Streaming logic removed; send full story as response
+  res.send(story);
   } catch (error) {
     console.error('Error exporting chat log:', error);
     res.status(500).json({ error: 'Failed to export chat log' });
