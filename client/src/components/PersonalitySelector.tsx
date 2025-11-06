@@ -172,4 +172,4 @@ const PersonalitySelector: React.FC<PersonalitySelectorProps> = ({
   );
 };
 
-export default PersonalitySelector;
+export default React.memo(PersonalitySelector);

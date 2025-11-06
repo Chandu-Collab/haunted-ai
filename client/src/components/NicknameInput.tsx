@@ -43,4 +43,4 @@ const NicknameInput: React.FC = () => {
   );
 };
 
-export default NicknameInput;
+export default React.memo(NicknameInput);

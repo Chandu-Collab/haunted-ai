@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, forwardRef, memo } from 'react';
 import FloatingGhosts from './FloatingGhosts';
 import FloatingGhostOrbs from './FloatingGhostOrbs';
 import FogEffect from './FogEffect';
@@ -20,7 +20,8 @@ const ROOMS = [
 ];
 
 
-export default function RoomExplorer({ isOpen, onClose, sessionId }: Props) {
+
+const RoomExplorerComponent = forwardRef<HTMLDivElement, Props>(function RoomExplorer({ isOpen, onClose, sessionId }, ref) {
   const { exploreRoom, state } = useGhostInteractions(sessionId);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [roomDescription, setRoomDescription] = useState<string | null>(null);
@@ -54,7 +55,7 @@ export default function RoomExplorer({ isOpen, onClose, sessionId }: Props) {
 
   return (
     <Portal>
-  <div className="fixed inset-0 z-[70] flex items-center justify-center p-2 sm:p-4 overflow-hidden">
+  <div ref={ref} className="fixed inset-0 z-[70] flex items-center justify-center p-2 sm:p-4 overflow-hidden">
         {/* Ghostly fog and orbs in the background */}
         <div className="absolute inset-0 pointer-events-none z-0">
           <FogEffect intensity={4} />
@@ -101,4 +102,6 @@ export default function RoomExplorer({ isOpen, onClose, sessionId }: Props) {
       </div>
     </Portal>
   );
-}
+});
+
+export default memo(RoomExplorerComponent);

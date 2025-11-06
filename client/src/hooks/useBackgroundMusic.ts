@@ -219,12 +219,10 @@ export const useBackgroundMusic = (): UseBackgroundMusic => {
         audio = new Audio(targetTrack.url);
         await new Promise((resolve, reject) => {
           if (!audio) return reject(new Error('Audio creation failed'));
-          
           audio.addEventListener('canplay', resolve);
           audio.addEventListener('error', reject);
           audio.load();
-          
-          setTimeout(() => reject(new Error('Audio load timeout')), 2000);
+          // No artificial timeout, let browser handle loading
         });
       } catch {
         console.log(`Creating synthetic audio for: ${targetTrack.name}`);

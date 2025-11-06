@@ -33,7 +33,7 @@ export const AppDataSource = new DataSource({
     // Do not hard-code secrets here; rely on process.env (fall back to empty string).
     password: String(process.env.DB_PASSWORD || ""),
     database: process.env.DB_NAME || "haunted_ai",
-    synchronize: true,
+    synchronize: false,
     logging: true,
     entities: [Message, Interaction, User, Room, GhostProfile],
     subscribers: [],

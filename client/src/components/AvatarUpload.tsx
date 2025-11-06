@@ -57,4 +57,4 @@ const AvatarUpload: React.FC = () => {
   );
 };
 
-export default AvatarUpload;
+export default React.memo(AvatarUpload);

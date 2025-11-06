@@ -105,9 +105,9 @@ const FloatingTextSpirits: React.FC<FloatingTextSpiritsProps> = ({
       }
     };
 
-    const interval = setInterval(spawnRandomSpirit, 5000 + Math.random() * 10000); // 5-15 seconds
-
-    return () => clearInterval(interval);
+  // Instantly spawn a spirit on mount (no delay)
+  spawnRandomSpirit();
+  return () => {};
   }, [messages, spirits.length, maxSpirits, spawnRate, createSpirit]);
 
   // Update spirits

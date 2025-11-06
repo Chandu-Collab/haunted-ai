@@ -79,4 +79,4 @@ const RoomDecoration: React.FC<{ roomId: number }> = ({ roomId }) => {
   );
 };
 
-export default RoomDecoration;
+export default React.memo(RoomDecoration);

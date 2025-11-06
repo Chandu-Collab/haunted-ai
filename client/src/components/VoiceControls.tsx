@@ -125,4 +125,4 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
   );
 };
 
-export default VoiceControls;
+export default React.memo(VoiceControls);
