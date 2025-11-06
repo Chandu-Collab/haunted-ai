@@ -24,6 +24,8 @@ import rateLimit from 'express-rate-limit';
 
 // Initialize Express app
 const app = express();
+import translateMessageRoutes from './routes/translateMessage';
+app.use('/api/translate-message', translateMessageRoutes);
 
 // Middleware: enable CORS for the configured client origin (FIRST)
 const CLIENT_ORIGIN = process.env.CLIENT_URL || 'http://localhost:5173';
