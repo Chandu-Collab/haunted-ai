@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect, useCallback, FormEvent } from 'react';
-// ...existing code...
 import useGhostInteractions, { useSeanceMode } from './hooks/useGhostInteractions';
 import useRooms from './hooks/useRooms';
 import GhostProfileManager from './components/GhostProfileManager';
@@ -343,6 +342,30 @@ const App = () => {
     addNotification({ type: 'info', title: `Ghost personality changed to ${personality.name}` });
   };
 
+  // Track spoken ghost messages to avoid repeat TTS
+  const spokenGhostIds = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    messages.forEach((message) => {
+      if (
+        message.isGhost &&
+        message.content &&
+        !spokenGhostIds.current.has(message.id)
+      ) {
+        speakText(
+          message.content,
+          {
+            rate: appSettings.ghostPersonality.voiceSettings.rate,
+            pitch: appSettings.ghostPersonality.voiceSettings.pitch,
+            volume: appSettings.ghostPersonality.voiceSettings.volume,
+            effect: voiceEffect,
+            voice: getVoiceForPersonality(appSettings.ghostPersonality)
+          }
+        );
+        playSyntheticSound && playSyntheticSound('ghost');
+        spokenGhostIds.current.add(message.id);
+      }
+    });
+  }, [messages, appSettings.ghostPersonality, voiceEffect, speakText, playSyntheticSound, getVoiceForPersonality]);
 
   // ...existing code...
   const [pendingGhostMsgId, setPendingGhostMsgId] = useState<string | null>(null);
@@ -1004,6 +1027,7 @@ const App = () => {
                       )}
                       
                       <TypewriterText 
+                        key={message.id + '-' + message.content}
                         text={message.content}
                         // Use user-configurable typing speed when enabled, otherwise render instantly
                         speed={message.isGhost ? (appSettings.typingAnimationEnabled ? appSettings.typingSpeed : 0) : 0}
@@ -1051,6 +1075,7 @@ const App = () => {
                                     voice: getVoiceForPersonality(appSettings.ghostPersonality)
                                   }
                                 );
+                                playSyntheticSound && playSyntheticSound('ghost');
                               }}
                             >
                               🔊 Speak Again

@@ -22,9 +22,8 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
   ghostIntensity = 100,
   particleIntensity = 60
 }) => {
-  // ...existing code...
-  const [displayedText, setDisplayedText] = useState(text);
-  const [isComplete, setIsComplete] = useState(true);
+  const [displayedText, setDisplayedText] = useState(speed === 0 ? text : '');
+  const [isComplete, setIsComplete] = useState(speed === 0);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioInitializedRef = useRef(false);
   const [audioAllowed, setAudioAllowed] = useState(false);
@@ -106,10 +105,70 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
   };
 
   useEffect(() => {
-    setDisplayedText(text);
-    setIsComplete(true);
-  // ...existing code...
-  }, [text]);
+    if (speed === 0) {
+      setDisplayedText(text);
+      setIsComplete(true);
+      if (onComplete) onComplete();
+      return;
+    }
+    setIsComplete(false);
+    let cancelled = false;
+    // Split text into lines
+    const lines = text.split(/\r?\n/);
+    let currentLine = 0;
+    let currentChar = 0;
+    let output = '';
+
+    // Always show the first line immediately
+    if (lines.length > 0) {
+      output = lines[0];
+      setDisplayedText(output);
+      currentLine = 0;
+      currentChar = lines[0].length;
+    }
+
+    function typeNext() {
+      if (cancelled) return;
+      // If all lines are done
+      if (currentLine >= lines.length) {
+        setIsComplete(true);
+        if (onComplete) onComplete();
+        return;
+      }
+      // Reveal next character in current line (after first line)
+      const line = lines[currentLine];
+      if (currentLine === 0 && currentChar < line.length) {
+        // Already displayed full first line
+        currentChar = line.length;
+      }
+      if (currentChar < line.length) {
+        currentChar++;
+        output = lines.slice(0, currentLine).join('\n');
+        if (currentLine > 0) output += '\n';
+        output += line.slice(0, currentChar);
+        setDisplayedText(output);
+        setTimeout(typeNext, speed);
+      } else if (currentLine + 1 < lines.length) {
+        // Move to next line
+        currentLine++;
+        currentChar = 0;
+        output += '\n';
+        setDisplayedText(output);
+        setTimeout(typeNext, speed);
+      } else {
+        setIsComplete(true);
+        if (onComplete) onComplete();
+      }
+    }
+    if (text && text.length > 0 && lines.length > 1) {
+      setTimeout(typeNext, speed);
+    } else if (!text || text.length === 0) {
+      setDisplayedText('');
+      setIsComplete(true);
+      if (onComplete) onComplete();
+    }
+    return () => { cancelled = true; };
+  }, [text, speed, onComplete]);
 
   // ...existing code...
 
