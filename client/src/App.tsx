@@ -73,6 +73,7 @@ const App = () => {
   const [currentRoom, setCurrentRoom] = useState<{ id: number; name: string; decorations?: any } | null>(null);
   const [roomWallpaper, setRoomWallpaper] = useState<string | null>(null);
   const [showRoomSelector, setShowRoomSelector] = useState(false);
+    const [showSearchBar, setShowSearchBar] = useState(false);
   // Room join handler
   const { user, getToken } = useAuth();
   const { rituals, loading: ritualsLoading, fetchRituals } = usePersonalRituals();
@@ -1074,10 +1075,72 @@ const App = () => {
           {/* Chat Messages */}
     <div className={`flex-1 overflow-y-auto p-2 sm:p-4 space-y-4 ${showAIFeatures ? 'ml-80' : ''} transition-all duration-300 force-visible-text`}
       style={{ color: '#ffffff', backgroundColor: 'rgba(0,0,0,0.1)' }}>
-            {/* Message Search and Export Bar */}
-        <div className="w-full flex justify-center mt-4">
-          <MessageSearch roomId={currentRoom?.id?.toString()} sessionId={sessionId} />
-        </div>
+            {/* Search Bar Trigger and Bar Directly Under Header */}
+            <div className="w-full flex flex-col items-center" style={{ position: 'relative', zIndex: 19 }}>
+              {!showSearchBar && (
+                <motion.div
+                  className="cursor-pointer flex items-center justify-center gap-2 mt-2"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  whileHover={{ scale: 1.1, filter: 'drop-shadow(0 0 8px #a855f7)' }}
+                  onClick={() => setShowSearchBar(true)}
+                  style={{ minHeight: 32 }}
+                >
+                  {/* Replace below with any cool trigger you want! */}
+                  <span className="text-purple-300 text-lg animate-bounce">🔍</span>
+                  <span className="text-purple-300 text-xs ml-2 animate-fade-in">Tap to Search</span>
+                </motion.div>
+              )}
+              <AnimatePresence>
+                {showSearchBar && (
+                  <motion.div
+                    initial={{ y: -40, opacity: 0, boxShadow: '0 0 0px #a855f7' }}
+                    animate={{
+                      y: 0,
+                      opacity: 1,
+                      boxShadow: [
+                        '0 0 0px #a855f7',
+                        '0 0 16px 4px #a855f7',
+                        '0 0 32px 8px #a855f7',
+                        '0 0 16px 4px #a855f7',
+                        '0 0 0px #a855f7'
+                      ]
+                    }}
+                    exit={{ y: -40, opacity: 0, boxShadow: '0 0 0px #a855f7' }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 30, boxShadow: { duration: 1.2, repeat: 1 } }}
+                    className="w-full flex justify-center relative"
+                    style={{ position: 'relative', zIndex: 20 }}
+                  >
+                    {/* Sparkle effects */}
+                    <div className="absolute left-1/2 top-0 -translate-x-1/2 z-10 pointer-events-none" style={{ width: '100%', height: '40px' }}>
+                      {[...Array(7)].map((_, i) => (
+                        <motion.span
+                          key={i}
+                          className="absolute"
+                          style={{
+                            left: `${10 + Math.random() * 80}%`,
+                            top: `${10 + Math.random() * 20}px`,
+                            fontSize: `${0.8 + Math.random() * 0.7}rem`,
+                            color: '#a855f7',
+                            filter: 'blur(0.5px) drop-shadow(0 0 6px #a855f7)'
+                          }}
+                          initial={{ opacity: 0, scale: 0.5 }}
+                          animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.5] }}
+                          transition={{ duration: 1.2, delay: i * 0.15, repeat: Infinity }}
+                        >
+                          ✦
+                        </motion.span>
+                      ))}
+                    </div>
+                    <MessageSearch
+                      roomId={currentRoom?.id?.toString()}
+                      sessionId={sessionId}
+                      onClose={() => setShowSearchBar(false)}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             <AnimatePresence>
         {messages.map((message, index) => (
