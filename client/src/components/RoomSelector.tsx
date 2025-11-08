@@ -4,9 +4,10 @@ import useRooms from '../hooks/useRooms';
 interface RoomSelectorProps {
   onJoin: (room: { id: number; name: string }) => void;
   currentRoomId?: number;
+  onClose?: () => void;
 }
 
-export default function RoomSelector({ onJoin, currentRoomId }: RoomSelectorProps) {
+export default function RoomSelector({ onJoin, currentRoomId, onClose }: RoomSelectorProps) {
   const { rooms, loading, error, fetchRooms } = useRooms();
   const [joining, setJoining] = useState<number | null>(null);
   const [newRoomName, setNewRoomName] = useState('');
@@ -33,8 +34,17 @@ export default function RoomSelector({ onJoin, currentRoomId }: RoomSelectorProp
   };
 
   return (
-    <div className="p-2 sm:p-4 bg-haunted-900 rounded-xl border border-haunted-700 max-w-xs sm:max-w-md w-full mx-auto mt-3 sm:mt-6">
-      <h2 className="text-base sm:text-lg font-bold mb-1 sm:mb-2">Select a Room</h2>
+    <div className="p-2 sm:p-4 bg-haunted-900 rounded-xl border border-haunted-700 max-w-xs sm:max-w-md w-full mx-auto mt-3 sm:mt-6 relative">
+      <div className="flex items-center justify-between mb-1 sm:mb-2">
+        <h2 className="text-base sm:text-lg font-bold">Select a Room</h2>
+        {onClose && (
+          <button
+            className="ml-2 px-2 py-1 bg-haunted-700 rounded text-white text-xs sm:text-sm hover:bg-haunted-600"
+            onClick={onClose}
+            aria-label="Close Room Selector"
+          >Close</button>
+        )}
+      </div>
       {loading && <div className="text-xs sm:text-sm">Loading rooms...</div>}
       {error && <div className="text-red-400 text-xs sm:text-sm">{error}</div>}
       {rooms.length === 0 && !loading && <div className="text-purple-300 mb-1 sm:mb-2 text-xs sm:text-sm">No rooms found. Create one below!</div>}
