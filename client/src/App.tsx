@@ -1061,15 +1061,14 @@ const App = () => {
                   setShowGhostSelector(false);
                 }}
                 currentGhostId={appSettings.ghostPersonality?.id}
+                onClose={() => setShowGhostSelector(false)}
               />
-              <button className="absolute top-4 right-4 p-2 bg-haunted-700 rounded text-white" onClick={() => setShowGhostSelector(false)}>Close</button>
             </div>
           )}
           {/* Room Selector Modal */}
           {showRoomSelector && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60">
-              <RoomSelector onJoin={handleJoinRoom} currentRoomId={currentRoom?.id} />
-              <button className="absolute top-4 right-4 p-2 bg-haunted-700 rounded text-white" onClick={() => setShowRoomSelector(false)}>Close</button>
+              <RoomSelector onJoin={handleJoinRoom} currentRoomId={currentRoom?.id} onClose={() => setShowRoomSelector(false)} />
             </div>
           )}
           {/* Chat Messages */}

@@ -4,15 +4,25 @@ import useGhostProfiles, { GhostProfile } from '../hooks/useGhostProfiles';
 interface GhostProfileSelectorProps {
   onSelect: (ghost: GhostProfile) => void;
   currentGhostId?: string;
+  onClose?: () => void;
 }
 
-export default function GhostProfileSelector({ onSelect, currentGhostId }: GhostProfileSelectorProps) {
+export default function GhostProfileSelector({ onSelect, currentGhostId, onClose }: GhostProfileSelectorProps) {
   const { ghosts, loading, error, fetchGhosts } = useGhostProfiles();
   const [selected, setSelected] = useState<string | null>(currentGhostId || null);
 
   return (
-    <div className="p-2 sm:p-4 bg-haunted-900 rounded-xl border border-haunted-700 max-w-xs sm:max-w-md w-full mx-auto mt-3 sm:mt-6">
-      <h2 className="text-base sm:text-lg font-bold mb-1 sm:mb-2">Select a Ghost</h2>
+    <div className="p-2 sm:p-4 bg-haunted-900 rounded-xl border border-haunted-700 max-w-xs sm:max-w-md w-full mx-auto mt-3 sm:mt-6 relative">
+      <div className="flex items-center justify-between mb-1 sm:mb-2">
+        <h2 className="text-base sm:text-lg font-bold">Select a Ghost</h2>
+        {onClose && (
+          <button
+            className="ml-2 px-2 py-1 bg-haunted-700 rounded text-white text-xs sm:text-sm hover:bg-haunted-600"
+            onClick={onClose}
+            aria-label="Close Ghost Selector"
+          >Close</button>
+        )}
+      </div>
       {loading && <div>Loading ghosts...</div>}
       {error && <div className="text-red-400">{error}</div>}
       {ghosts.length === 0 && !loading && <div className="text-purple-300 mb-1 sm:mb-2">No ghosts found.</div>}
