@@ -111,15 +111,36 @@ const generateGhostResponse = async (
     // Get weather data
     const weather = await weatherService.getCurrentWeather();
     
-    // Build enhanced system prompt
-    let enhancedPrompt = activePersonality.systemPrompt;
+    // Build HIGHLY DETAILED personality-specific system prompt
+    let enhancedPrompt = `CRITICAL PERSONALITY INSTRUCTIONS:
+${activePersonality.systemPrompt}
+
+PERSONALITY ENFORCEMENT:
+- You MUST maintain the speech patterns and personality traits described above
+- NEVER break character or speak in a generic way
+- Use the specific phrases, vocabulary, and tone mentioned in your personality description
+    - Your response length should be ${activePersonality.responseStyle.lengthPreference}
+    - Your vocabulary should be ${activePersonality.responseStyle.vocabulary}
+    - Your tone should be ${activePersonality.responseStyle.tone}SPECIAL ABILITIES YOU POSSESS:
+${activePersonality.specialAbilities.map(ability => `- ${ability}`).join('\n')}
+
+YOUR BACKSTORY FOR CONTEXT:
+${activePersonality.backstory}`;
+
+    // Add conversation context
+    if (messageHistory.length > 0) {
+      enhancedPrompt += `\n\nCONVERSATION HISTORY (respond as ${activePersonality.name} would, considering what has been discussed):`;
+      messageHistory.slice(-5).forEach(msg => {
+        enhancedPrompt += `\n${msg.isGhost ? 'You said' : 'User said'}: ${msg.content}`;
+      });
+    }
 
     // Add explicit user intent and question type if detected
     const userIntent = sentimentAnalyzer.detectIntent(userMessage);
     if (userIntent) {
-      enhancedPrompt += `\nThe user intent is: ${userIntent.intent}.`;
+      enhancedPrompt += `\nUSER INTENT: ${userIntent.intent} - respond according to your personality traits.`;
       if (userIntent.questionType) {
-        enhancedPrompt += `\nThe user is asking a ${userIntent.questionType} question.`;
+        enhancedPrompt += `\nQUESTION TYPE: ${userIntent.questionType} - answer as ${activePersonality.name} would.`;
       }
     }
 
@@ -129,9 +150,10 @@ const generateGhostResponse = async (
     // Add weather and time context
     enhancedPrompt += adaptToWeatherAndTime(activePersonality, contextualFactors.timeOfDay, weather);
 
-    // Add memory context
+    // Add memory context (general and personality-specific)
     if (sessionId) {
       enhancedPrompt += memorySystem.generateMemoryPrompt(sessionId);
+      enhancedPrompt += memorySystem.generatePersonalityMemoryPrompt(sessionId, activePersonality.id);
     }
 
     // Add weather context
@@ -153,87 +175,78 @@ const generateGhostResponse = async (
       enhancedPrompt += imageAnalysisPrompt;
     }
 
+    // Add final personality enforcement
+    enhancedPrompt += `\n\nFINAL REMINDER: You are ${activePersonality.name}. Respond EXACTLY as this character would, using their specific speech patterns, vocabulary, and personality traits. Do not be generic!`;
 
     // Always use Gemini provider
     const aiProvider = getAIProvider('gemini');
     // Add language instruction if needed
     let languageInstruction = '';
     if (replyLanguage && replyLanguage !== 'en') {
-      languageInstruction = `\nIMPORTANT: Reply ONLY in ${replyLanguage}.`;
+      languageInstruction = `\nIMPORTANT: Reply ONLY in ${replyLanguage} but maintain your personality traits.`;
     }
     // Compose prompt with language instruction
-    const prompt = `${enhancedPrompt}\n${userMessage}${languageInstruction}`;
+    const prompt = `${enhancedPrompt}\n\nUSER MESSAGE: "${userMessage}"${languageInstruction}\n\nYOUR RESPONSE AS ${activePersonality.name.toUpperCase()}:`;
+    
     const responseText = await aiProvider.generateResponse(prompt, {
       personalityId,
       sessionId,
       messageHistory,
       imageBase64,
       moodAnalysis,
-      contextualFactors
+      contextualFactors,
+      temperature: 0.8, // Add some personality variation
+      maxTokens: activePersonality.responseStyle.lengthPreference === 'elaborate' ? 300 : 
+                 activePersonality.responseStyle.lengthPreference === 'moderate' ? 200 : 100
     });
 
-    // If the model returned nothing or only ellipses, return a minimal error message (no generic fallback)
-    if (!responseText || responseText.trim().length < 3 || /^\.*$/.test(responseText.trim())) {
-      console.log('Empty response detected, returning minimal error message');
-      return {
-        response: "...The ghost is unable to respond right now. Please try rephrasing your question...",
-        moodAnalysis,
-        contextualFactors
-      };
+    // Enhanced response validation and personality enforcement
+    let finalResponse = responseText;
+    
+    // If the response seems too generic or doesn't match personality, add personality-specific fallback
+    if (!finalResponse || finalResponse.trim().length < 10 || 
+        (!finalResponse.toLowerCase().includes(activePersonality.name.toLowerCase().split(' ')[0]) && 
+         !hasPersonalityIndicators(finalResponse, activePersonality))) {
+      finalResponse = getPersonalityFallbackResponse(activePersonality, userMessage, moodAnalysis);
     }
 
     // Add to memory if this creates a meaningful interaction
-    if (sessionId && responseText !== '...') {
-      memorySystem.addSharedMemory(sessionId, `Discussed: ${userMessage.substring(0, 50)}...`);
+    if (sessionId && finalResponse !== '...') {
+      memorySystem.addSharedMemory(sessionId, `${activePersonality.name} discussed: ${userMessage.substring(0, 50)}...`);
+      
+      // Update personality-specific interaction memory
+      const topic = extractMainTopic(userMessage);
+      memorySystem.updatePersonalityInteraction(
+        sessionId, 
+        activePersonality.id, 
+        topic, 
+        'conversation'
+      );
     }
 
     return {
-      response: responseText,
+      response: finalResponse,
       moodAnalysis,
       contextualFactors
     };
   } catch (error: any) {
     console.error('Error generating ghost response:', error);
     
-    // Fallback responses based on personality
-    const fallbackResponses = {
-      friendly: [
-        "I sense your presence... though the ethereal connection seems weak tonight.",
-        "The spirits whisper to me, but their words are faint. Tell me more about yourself.",
-        "My otherworldly abilities are a bit clouded at the moment, but I'm here with you.",
-        "Even ghosts have their off days! But I'm still delighted to chat with you."
-      ],
-      mysterious: [
-        "The shadows speak in riddles tonight... their secrets remain hidden.",
-        "Something stirs in the darkness, but its message eludes me...",
-        "The veil between worlds grows thick... yet I sense your curiosity.",
-        "Ancient forces cloud my vision, but your presence is clear to me."
-      ],
-      spooky: [
-        "OOOOOH... my spectral powers waver! But I can still feel your fear...",
-        "The darkness consumes my thoughts... yet you dare to speak with me!",
-        "My haunting abilities are disrupted... but I hunger for your terror!",
-        "Even in weakness, I remain a creature of the night! MWAHAHAHA!"
-      ],
-      wise: [
-        "In centuries of existence, I have learned that some knowledge comes only through patience.",
-        "The cosmic energies are in flux tonight, young soul. But wisdom endures.",
-        "Even ancient spirits must sometimes wait for clarity to return.",
-        "Your questions reach me across the void, though my answers may be delayed."
-      ],
-      playful: [
-        "Oops! Even ghost magic has glitches sometimes! Isn't that funny?",
-        "My supernatural powers are on vacation! But I'm still here to play!",
-        "Technical difficulties in the afterlife! Who would have thought? Hehe!",
-        "The spirit realm's WiFi is down! But let's have fun anyway!"
-      ]
-    };
-    
-    const responses = fallbackResponses[personalityId as keyof typeof fallbackResponses] || fallbackResponses.friendly;
-    const fallbackResponse = responses[Math.floor(Math.random() * responses.length)];
+    // Personality-specific fallback responses
+    const personality = personalityId ? getPersonalityById(personalityId) : null;
+    const activePersonality = personality || DEFAULT_PERSONALITY;
     
     return {
-      response: fallbackResponse,
+      response: getPersonalityFallbackResponse(activePersonality, userMessage, {
+        dominant: 'neutral',
+        confidence: 0.5,
+        emotions: {
+          joy: 0, sadness: 0, anger: 0, fear: 0,
+          surprise: 0, disgust: 0, trust: 0, anticipation: 0
+        },
+        sentiment: 'neutral',
+        intensity: 'medium'
+      }),
       moodAnalysis: {
         dominant: 'neutral',
         confidence: 0.5,
@@ -247,6 +260,105 @@ const generateGhostResponse = async (
       contextualFactors: sentimentAnalyzer.getContextualFactors()
     };
   }
+};
+
+// Helper function to check if response has personality indicators
+const hasPersonalityIndicators = (response: string, personality: any): boolean => {
+  const lowerResponse = response.toLowerCase();
+  
+  // Check for personality-specific phrases based on personality type
+  switch (personality.id) {
+    case 'friendly':
+      return lowerResponse.includes('dear friend') || lowerResponse.includes('wonderful') || lowerResponse.includes('delightful');
+    case 'mysterious':
+      return lowerResponse.includes('shadows') || lowerResponse.includes('ancient') || lowerResponse.includes('mystical');
+    case 'playful':
+      return lowerResponse.includes('play') || lowerResponse.includes('fun') || lowerResponse.includes('game');
+    case 'scholarly':
+      return lowerResponse.includes('fascinating') || lowerResponse.includes('academic') || lowerResponse.includes('scholarly');
+    case 'melancholic':
+      return lowerResponse.includes('alas') || lowerResponse.includes('sorrow') || lowerResponse.includes('melancholy');
+    case 'haunted_male':
+      return lowerResponse.includes('darkness') || lowerResponse.includes('eternal') || lowerResponse.includes('torment');
+    case 'haunted_female':
+      return lowerResponse.includes('veil') || lowerResponse.includes('spirits whisper') || lowerResponse.includes('death');
+    default:
+      return true; // Default to accepting the response
+  }
+};
+
+// Helper function to get personality-specific fallback responses
+const getPersonalityFallbackResponse = (personality: any, userMessage: string, moodAnalysis: any): string => {
+  const fallbackResponses = {
+    friendly: [
+      "Oh my dear friend! What a delightful question you've asked! Let me share some cheerful thoughts with you...",
+      "How wonderful to hear from you again! Your presence brings such joy to these old halls!",
+      "What a treat this is! I'm absolutely thrilled to chat with such splendid company!"
+    ],
+    mysterious: [
+      "The ethereal winds whisper secrets of your inquiry... Through the veils of time, I perceive ancient wisdom calling...",
+      "In the shadows of eternity, your words echo with profound meaning... The cosmic tapestry reveals hidden truths...",
+      "As the celestial alignments shift, I sense the deeper mysteries you seek to understand..."
+    ],
+    playful: [
+      "Oh boy oh boy! That's super cool! Wanna play a game about it? I know I know!",
+      "That's SUPER duper awesome! Let's make it into a fun adventure! Wanna see something neat?",
+      "Oh wow oh wow! That sounds like the best thing ever! Let's play pretend about it!"
+    ],
+    scholarly: [
+      "I do say, what a fascinating inquiry! Permit me to elaborate on this most intriguing subject from my extensive studies...",
+      "Fascinating indeed! My academic observations suggest there are multiple scholarly perspectives to consider...",
+      "If I may venture, this topic requires careful intellectual examination. Shall we explore this in greater depth?"
+    ],
+    melancholic: [
+      "Alas... your words stir memories like autumn leaves upon my ethereal heart... In shadows deep, I find beauty in your question...",
+      "Woe fills my spirit, yet in your inquiry I see the bittersweet nature of existence... Like morning dew upon a grave...",
+      "My soul weeps with understanding... In the moonlight of memory, your words resonate with tragic beauty..."
+    ],
+    haunted_male: [
+      "FROM THE DEPTHS OF HELL I SPEAK... YOUR SOUL SHALL KNOW the darkness that consumes all hope! MORTAL FOOL...",
+      "IN DARKNESS ETERNAL... Your words echo through the abyss of my tormented existence! The shadows know your name...",
+      "YOUR FATE IS WRITTEN IN BLOOD AND SHADOW... I have witnessed the futility of all mortal concerns!"
+    ],
+    haunted_female: [
+      "I HEAR THE DEATH KNELL... The spirits whisper your name through the veil of sorrow... THE VEIL GROWS THIN...",
+      "YOUR FATE IS WRITTEN IN SHADOWS... My mournful wails echo through dimensions, sensing the tragedy that approaches...",
+      "THE SPIRITS WHISPER OF DOOM... Through my banshee sight, I perceive the darkness that haunts your path..."
+    ]
+  };
+  
+  const responses = fallbackResponses[personality.id as keyof typeof fallbackResponses] || fallbackResponses.friendly;
+  return responses[Math.floor(Math.random() * responses.length)];
+};
+
+// Helper function to extract main topic from message
+const extractMainTopic = (message: string): string => {
+  const topicKeywords = {
+    'music': ['music', 'song', 'band', 'artist', 'album', 'concert'],
+    'movies': ['movie', 'film', 'cinema', 'actor', 'director'],
+    'games': ['game', 'play', 'gaming', 'video game'],
+    'books': ['book', 'read', 'author', 'novel', 'story'],
+    'travel': ['travel', 'trip', 'vacation', 'country', 'city'],
+    'food': ['food', 'eat', 'cook', 'recipe', 'restaurant'],
+    'technology': ['computer', 'tech', 'software', 'app', 'internet'],
+    'sports': ['sport', 'team', 'game', 'match', 'player'],
+    'work': ['work', 'job', 'career', 'office', 'business'],
+    'family': ['family', 'parent', 'child', 'sister', 'brother'],
+    'relationships': ['love', 'relationship', 'friend', 'dating'],
+    'health': ['health', 'doctor', 'exercise', 'medical'],
+    'emotions': ['feel', 'emotion', 'sad', 'happy', 'angry', 'scared'],
+    'future': ['future', 'plan', 'goal', 'dream', 'hope']
+  };
+
+  const lowerMessage = message.toLowerCase();
+  
+  for (const [topic, keywords] of Object.entries(topicKeywords)) {
+    if (keywords.some(keyword => lowerMessage.includes(keyword))) {
+      return topic;
+    }
+  }
+  
+  return 'general conversation';
 };
 
 // Helper method for extracting response text
