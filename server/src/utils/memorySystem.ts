@@ -27,6 +27,16 @@ export interface UserMemory {
     fears: string[];
     goals: string[];
   };
+  // NEW: Personality-specific memory
+  personalityInteractions: {
+    [personalityId: string]: {
+      conversationCount: number;
+      favoriteTopics: string[];
+      establishedRelationship: string;
+      sharedMemories: string[];
+      personalitySpecificPreferences: string[];
+    };
+  };
 }
 
 export interface ConversationContext {
@@ -68,7 +78,8 @@ export class MemorySystem {
         interests: [],
         fears: [],
         goals: []
-      }
+      },
+      personalityInteractions: {}
     };
 
     this.userMemories.set(sessionId, memory);
@@ -199,6 +210,73 @@ export class MemorySystem {
         userMemory.sharedExperiences.memories = userMemory.sharedExperiences.memories.slice(-10);
       }
     }
+  }
+
+  // NEW: Personality-specific memory methods
+  updatePersonalityInteraction(sessionId: string, personalityId: string, topic: string, interactionType: string): void {
+    const userMemory = this.userMemories.get(sessionId);
+    if (!userMemory) return;
+
+    if (!userMemory.personalityInteractions[personalityId]) {
+      userMemory.personalityInteractions[personalityId] = {
+        conversationCount: 0,
+        favoriteTopics: [],
+        establishedRelationship: 'new',
+        sharedMemories: [],
+        personalitySpecificPreferences: []
+      };
+    }
+
+    const interaction = userMemory.personalityInteractions[personalityId];
+    interaction.conversationCount++;
+    
+    // Track favorite topics with this personality
+    if (topic && !interaction.favoriteTopics.includes(topic)) {
+      interaction.favoriteTopics.push(topic);
+      if (interaction.favoriteTopics.length > 5) {
+        interaction.favoriteTopics = interaction.favoriteTopics.slice(-5);
+      }
+    }
+
+    // Update relationship depth
+    if (interaction.conversationCount > 20) {
+      interaction.establishedRelationship = 'close';
+    } else if (interaction.conversationCount > 10) {
+      interaction.establishedRelationship = 'familiar';
+    } else if (interaction.conversationCount > 3) {
+      interaction.establishedRelationship = 'acquainted';
+    }
+
+    // Add memory of this interaction
+    const memoryEntry = `${interactionType}: ${topic}`;
+    interaction.sharedMemories.push(memoryEntry);
+    if (interaction.sharedMemories.length > 8) {
+      interaction.sharedMemories = interaction.sharedMemories.slice(-8);
+    }
+  }
+
+  generatePersonalityMemoryPrompt(sessionId: string, personalityId: string): string {
+    const userMemory = this.userMemories.get(sessionId);
+    if (!userMemory || !userMemory.personalityInteractions[personalityId]) {
+      return '\\n\\nFIRST INTERACTION: This is your first time meeting this user. Be welcoming but stay in character.\\n';
+    }
+
+    const interaction = userMemory.personalityInteractions[personalityId];
+    let prompt = `\\n\\n--- PERSONALITY MEMORY (${personalityId}) ---\\n`;
+    
+    prompt += `Relationship depth: ${interaction.establishedRelationship}\\n`;
+    prompt += `Previous conversations: ${interaction.conversationCount}\\n`;
+    
+    if (interaction.favoriteTopics.length > 0) {
+      prompt += `Topics you've discussed: ${interaction.favoriteTopics.join(', ')}\\n`;
+    }
+    
+    if (interaction.sharedMemories.length > 0) {
+      prompt += `Shared memories: ${interaction.sharedMemories.slice(-3).join(', ')}\\n`;
+    }
+    
+    prompt += '--- END PERSONALITY MEMORY ---\\n\\n';
+    return prompt;
   }
 
   private extractInterests(message: string): string[] {

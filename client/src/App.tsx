@@ -23,6 +23,8 @@ import EmojiReactions from './components/EmojiReactions';
 import NotificationSystem from './components/NotificationSystem';
 import AudioInitPrompt from './components/AudioInitPrompt';
 import MessageSearch from './components/MessageSearch';
+import ChatHistory from './components/ChatHistory';
+import Motion3DBackground from './components/Motion3DBackground';
 
 // New AI Components
 import MoodVisualizer from './components/MoodVisualizer';
@@ -32,6 +34,7 @@ import WeatherDisplay from './components/WeatherDisplay';
 
 // Enhanced Hooks
 import useAudio from './hooks/useAudio';
+import useChatHistory from './hooks/useChatHistory';
 import useVoiceSynthesis, { VoiceEffect } from './hooks/useVoiceSynthesis';
 import useBackgroundMusic from './hooks/useBackgroundMusic';
 import { useAIAnalysis, AIAnalysis } from './hooks/useAIAnalysis';
@@ -71,10 +74,12 @@ const App = () => {
   const [showGhostManager, setShowGhostManager] = useState(false);
   const [showGhostSelector, setShowGhostSelector] = useState(false);
   const [currentRoom, setCurrentRoom] = useState<{ id: number; name: string; decorations?: any } | null>(null);
-  const [roomWallpaper, setRoomWallpaper] = useState<string | null>(null);
   const [showRoomSelector, setShowRoomSelector] = useState(false);
+    const [showSearchBar, setShowSearchBar] = useState(false);
+  const [showChatHistory, setShowChatHistory] = useState(false);
   // Room join handler
   const { user, getToken } = useAuth();
+  const { saveSessionToStorage } = useChatHistory();
   const { rituals, loading: ritualsLoading, fetchRituals } = usePersonalRituals();
   // Track previous room for leave ritual
   const prevRoomRef = useRef<{ id: number; name: string } | null>(null);
@@ -156,12 +161,12 @@ const App = () => {
           // Prepend backend URL if not absolute
           url = `${API_URL.replace(/\/api.*/, '')}${url}`;
         }
-        setRoomWallpaper(url);
+        setAppSettings(prev => ({ ...prev, roomWallpaper: url }));
       } else {
-        setRoomWallpaper(null);
+        setAppSettings(prev => ({ ...prev, roomWallpaper: null }));
       }
     } else {
-      setRoomWallpaper(null);
+      setAppSettings(prev => ({ ...prev, roomWallpaper: null }));
     }
   }, [currentRoom, rooms]);
   const {
@@ -233,6 +238,17 @@ const App = () => {
     fogEnabled: true,
     eyeTrackingEnabled: true,
     textSpiritsEnabled: true,
+    roomWallpaper: null as string | null,
+    motion3DSettings: {
+      enabled: true,
+      effect: 'float' as const,
+      intensity: 5,
+      speed: 1,
+      autoPlay: true,
+      applyToImages: true,
+      applyToBackgrounds: true,
+      applyToAvatars: false
+    },
     language: 'en',
     // New AI settings
     moodVisualizationEnabled: true,
@@ -336,11 +352,72 @@ const App = () => {
   // Personality selector modal state
   const [showPersonalitySelector, setShowPersonalitySelector] = useState(false);
 
-  // Handler for personality change
+  // Handler for personality change with enhanced feedback
   const handlePersonalityChange = (personality) => {
+    const previousPersonality = appSettings.ghostPersonality;
     setAppSettings(prev => ({ ...prev, ghostPersonality: personality }));
     setShowPersonalitySelector(false);
-    addNotification({ type: 'info', title: `Ghost personality changed to ${personality.name}` });
+    
+    // Add personality change notification with character introduction
+    addNotification({ 
+      type: 'info', 
+      title: `${personality.emoji} Ghost personality changed`,
+      message: `${previousPersonality.name} has departed. ${personality.name} now inhabits these halls...`,
+      duration: 4000
+    });
+
+    // Add a ghost message showing the personality switch
+    const switchMessage: EnhancedMessage = {
+      id: `switch-${Date.now()}`,
+      content: getPersonalitySwitchMessage(previousPersonality, personality),
+      isGhost: true,
+      timestamp: new Date().toISOString(),
+      personalityId: personality.id
+    };
+    
+    setMessages(prev => [...prev, switchMessage]);
+    
+    // Play switch sound effect
+    if (appSettings.soundEnabled) {
+      playSyntheticSound('ghost');
+    }
+  };
+
+  // Generate personality switch message
+  const getPersonalitySwitchMessage = (from, to) => {
+    const switchMessages = {
+      friendly: [
+        `*A warm, welcoming presence fills the room* Oh my dear friend! Casper here, delighted to meet you! How wonderful that you've called upon me!`,
+        `*Cheerful ethereal energy emanates* What a treat this is! I'm Casper, your friendly mansion guide. How may I brighten your day?`
+      ],
+      mysterious: [
+        `*The air grows thick with ancient wisdom* Through the veils of time, I perceive your presence... I am Ravenna, keeper of eternal secrets...`,
+        `*Shadows shift and whisper* The ethereal winds have carried me to you, mortal soul. Ravenna speaks from beyond the cosmic tapestry...`
+      ],
+      playful: [
+        `*Giggles echo through the halls* Oh boy oh boy! Hi there! I'm Pip! Wanna play? This is gonna be SUPER fun!`,
+        `*Playful ghostly energy bounces around* Hehe! I'm Pip! That's SUPER cool that you want to play with me! What game should we play first?`
+      ],
+      scholarly: [
+        `*The scent of old books and parchment fills the air* I do say, what a fascinating development! Professor Grimm at your service. Permit me to introduce myself properly...`,
+        `*Spectral pages flutter* Ah, a new intellectual companion! Professor Grimm here, formerly of this mansion's grand library. Shall we engage in scholarly discourse?`
+      ],
+      melancholic: [
+        `*A sorrowful, beautiful melody echoes* Alas... another soul calls to me across the veil. I am Luna, forever wandering these moonlit halls...`,
+        `*Ethereal tears shimmer in the air* In shadows deep, our paths converge... Luna speaks, carrying the weight of centuries upon my spirit...`
+      ],
+      haunted_male: [
+        `*The temperature drops dramatically* FROM THE DEPTHS OF HELL I RISE... EZEKIEL THE TORMENTED claims these halls! Your soul shall know my eternal suffering...`,
+        `*Menacing darkness spreads* IN DARKNESS ETERNAL... Ezekiel speaks from the abyss of torment! MORTAL FOOL, you dare summon me?`
+      ],
+      haunted_female: [
+        `*A bone-chilling wail pierces the veil* I HEAR THE DEATH KNELL... Morgana the Banshee senses your presence. The spirits whisper your name...`,
+        `*Ominous mist swirls* THE VEIL GROWS THIN... Through my banshee sight, I perceive your fate written in shadows. Morgana speaks from beyond...`
+      ]
+    };
+    
+    const messages = switchMessages[to.id] || switchMessages.friendly;
+    return messages[Math.floor(Math.random() * messages.length)];
   };
 
   // Track spoken ghost messages to avoid repeat TTS
@@ -372,6 +449,9 @@ const App = () => {
 
   const sendMessage = useCallback((messageContent: string, imageBase64?: string) => {
     if (!messageContent.trim() && !imageBase64) return;
+
+    // Save session to storage when sending a message
+    saveSessionToStorage(sessionId);
 
     const userMessage: EnhancedMessage = {
       id: generateId(),
@@ -448,7 +528,7 @@ const App = () => {
         setPendingGhostMsgId(null);
       }
     })();
-  }, [appSettings.ghostPersonality, appSettings.soundEnabled, playSyntheticSound, generateId, setMessages, setInput, setIsTyping, sessionId, appSettings.language]);
+  }, [appSettings.ghostPersonality, appSettings.soundEnabled, playSyntheticSound, generateId, setMessages, setInput, setIsTyping, sessionId, appSettings.language, saveSessionToStorage]);
 
   // Handle form submission
   const handleSubmit = (e: FormEvent) => {
@@ -675,15 +755,27 @@ const App = () => {
         <div
           className={`main-bg-container ${themeClasses} min-h-screen relative force-visible-text`}
           style={{
-            ...ghostColorStyle,
-            ...(roomWallpaper ? {
-              backgroundImage: `url('${roomWallpaper}')`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-            } : {})
+            ...ghostColorStyle
           }}
         >
+          
+          {/* 3D Motion Background */}
+          {appSettings.roomWallpaper && (
+            <Motion3DBackground 
+              imageSrc={appSettings.roomWallpaper}
+              motion3DSettings={appSettings.motion3DSettings}
+            />
+          )}
+          
+          {/* Debug info */}
+          {process.env.NODE_ENV === 'development' && appSettings.roomWallpaper && (
+            <div className="fixed top-4 right-4 bg-black/50 text-white p-2 text-xs rounded z-50">
+              Background: {appSettings.roomWallpaper ? 'Yes' : 'No'}<br/>
+              3D Enabled: {appSettings.motion3DSettings?.enabled ? 'Yes' : 'No'}<br/>
+              Apply to BG: {appSettings.motion3DSettings?.applyToBackgrounds ? 'Yes' : 'No'}<br/>
+              Effect: {appSettings.motion3DSettings?.effect}
+            </div>
+          )}
           
           {/* Enhanced Background Effects */}
           {appSettings.particleCount > 0 && (
@@ -1074,10 +1166,125 @@ const App = () => {
           {/* Chat Messages */}
     <div className={`flex-1 overflow-y-auto p-2 sm:p-4 space-y-4 ${showAIFeatures ? 'ml-80' : ''} transition-all duration-300 force-visible-text`}
       style={{ color: '#ffffff', backgroundColor: 'rgba(0,0,0,0.1)' }}>
-            {/* Message Search and Export Bar */}
-        <div className="w-full flex justify-center mt-4">
-          <MessageSearch roomId={currentRoom?.id?.toString()} sessionId={sessionId} />
-        </div>
+            {/* Search Bar & Chat History Triggers and Bars Directly Under Header */}
+            <div className="w-full flex flex-col items-center" style={{ position: 'relative', zIndex: 19 }}>
+              {!showSearchBar && !showChatHistory && (
+                <div className="flex gap-6 mt-2">
+                  <motion.div
+                    className="cursor-pointer flex items-center justify-center gap-2"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ scale: 1.1, filter: 'drop-shadow(0 0 8px #a855f7)' }}
+                    onClick={() => setShowSearchBar(true)}
+                    style={{ minHeight: 32 }}
+                  >
+                    <span className="text-purple-300 text-lg animate-bounce">🔍</span>
+                    <span className="text-purple-300 text-xs ml-2 animate-fade-in">Tap to Search</span>
+                  </motion.div>
+                  <motion.div
+                    className="cursor-pointer flex items-center justify-center gap-2"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ scale: 1.1, filter: 'drop-shadow(0 0 8px #10b981)' }}
+                    onClick={() => setShowChatHistory(true)}
+                    style={{ minHeight: 32 }}
+                  >
+                    <span className="text-emerald-400 text-lg animate-bounce">📜</span>
+                    <span className="text-emerald-400 text-xs ml-2 animate-fade-in">Chat History</span>
+                  </motion.div>
+                </div>
+              )}
+              <AnimatePresence>
+                {showSearchBar && (
+                  <motion.div
+                    initial={{ y: -40, opacity: 0, boxShadow: '0 0 0px #a855f7' }}
+                    animate={{
+                      y: 0,
+                      opacity: 1,
+                      boxShadow: [
+                        '0 0 0px #a855f7',
+                        '0 0 16px 4px #a855f7',
+                        '0 0 32px 8px #a855f7',
+                        '0 0 16px 4px #a855f7',
+                        '0 0 0px #a855f7'
+                      ]
+                    }}
+                    exit={{ y: -40, opacity: 0, boxShadow: '0 0 0px #a855f7' }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 30, boxShadow: { duration: 1.2, repeat: 1 } }}
+                    className="w-full flex justify-center relative"
+                    style={{ position: 'relative', zIndex: 20 }}
+                  >
+                    {/* Sparkle effects */}
+                    <div className="absolute left-1/2 top-0 -translate-x-1/2 z-10 pointer-events-none" style={{ width: '100%', height: '40px' }}>
+                      {[...Array(7)].map((_, i) => (
+                        <motion.span
+                          key={i}
+                          className="absolute"
+                          style={{
+                            left: `${10 + Math.random() * 80}%`,
+                            top: `${10 + Math.random() * 20}px`,
+                            fontSize: `${0.8 + Math.random() * 0.7}rem`,
+                            color: '#a855f7',
+                            filter: 'blur(0.5px) drop-shadow(0 0 6px #a855f7)'
+                          }}
+                          initial={{ opacity: 0, scale: 0.5 }}
+                          animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.5] }}
+                          transition={{ duration: 1.2, delay: i * 0.15, repeat: Infinity }}
+                        >
+                          ✦
+                        </motion.span>
+                      ))}
+                    </div>
+                    <MessageSearch
+                      roomId={currentRoom?.id?.toString()}
+                      sessionId={sessionId}
+                      onClose={() => setShowSearchBar(false)}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <AnimatePresence>
+                {showChatHistory && (
+                  <motion.div
+                    initial={{ y: -40, opacity: 0, boxShadow: '0 0 0px #10b981' }}
+                    animate={{
+                      y: 0,
+                      opacity: 1,
+                      boxShadow: [
+                        '0 0 0px #10b981',
+                        '0 0 20px #10b981',
+                        '0 0 0px #10b981'
+                      ]
+                    }}
+                    exit={{ y: -40, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="w-full max-w-4xl mx-auto"
+                  >
+                    <div className="flex items-center justify-center py-2 space-x-3">
+                      {[...Array(7)].map((_, i) => (
+                        <motion.span
+                          key={i}
+                          className="text-emerald-400 text-xl select-none"
+                          style={{
+                            filter: 'blur(0.5px) drop-shadow(0 0 6px #10b981)'
+                          }}
+                          initial={{ opacity: 0, scale: 0.5 }}
+                          animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.5] }}
+                          transition={{ duration: 1.2, delay: i * 0.15, repeat: Infinity }}
+                        >
+                          📜
+                        </motion.span>
+                      ))}
+                    </div>
+                    <ChatHistory
+                      sessionId={sessionId}
+                      onClose={() => setShowChatHistory(false)}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             <AnimatePresence>
         {messages.map((message, index) => (

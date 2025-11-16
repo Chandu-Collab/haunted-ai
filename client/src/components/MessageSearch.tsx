@@ -5,9 +5,10 @@ import useGhostProfiles from '../hooks/useGhostProfiles';
 interface MessageSearchProps {
   roomId?: string;
   sessionId?: string;
+  onClose?: () => void;
 }
 
-const MessageSearch: React.FC<MessageSearchProps> = ({ roomId, sessionId }) => {
+const MessageSearch: React.FC<MessageSearchProps> = ({ roomId, sessionId, onClose }) => {
   const [query, setQuery] = useState('');
   const { results, loading, error, searchMessages } = useMessageSearch();
   const { ghosts } = useGhostProfiles();
@@ -40,7 +41,17 @@ const MessageSearch: React.FC<MessageSearchProps> = ({ roomId, sessionId }) => {
   };
 
   return (
-    <div className="p-2 sm:p-4 bg-black/40 rounded-xl border border-purple-700 max-w-xs sm:max-w-lg w-full mx-auto my-2 sm:my-4">
+    <div className="p-2 sm:p-4 bg-black/40 rounded-xl border border-purple-700 max-w-xs sm:max-w-lg w-full mx-auto my-2 sm:my-4 relative">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-base sm:text-lg font-bold text-purple-300">Search Messages</h2>
+        {onClose && (
+          <button
+            className="ml-2 px-2 py-1 bg-haunted-700 rounded text-white text-xs sm:text-sm hover:bg-haunted-600"
+            onClick={onClose}
+            aria-label="Close Search Bar"
+          >Close</button>
+        )}
+      </div>
       <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 mb-2">
         <input
           type="text"
