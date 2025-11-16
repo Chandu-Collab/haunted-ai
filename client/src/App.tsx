@@ -23,6 +23,7 @@ import EmojiReactions from './components/EmojiReactions';
 import NotificationSystem from './components/NotificationSystem';
 import AudioInitPrompt from './components/AudioInitPrompt';
 import MessageSearch from './components/MessageSearch';
+import ChatHistory from './components/ChatHistory';
 
 // New AI Components
 import MoodVisualizer from './components/MoodVisualizer';
@@ -32,6 +33,7 @@ import WeatherDisplay from './components/WeatherDisplay';
 
 // Enhanced Hooks
 import useAudio from './hooks/useAudio';
+import useChatHistory from './hooks/useChatHistory';
 import useVoiceSynthesis, { VoiceEffect } from './hooks/useVoiceSynthesis';
 import useBackgroundMusic from './hooks/useBackgroundMusic';
 import { useAIAnalysis, AIAnalysis } from './hooks/useAIAnalysis';
@@ -74,8 +76,10 @@ const App = () => {
   const [roomWallpaper, setRoomWallpaper] = useState<string | null>(null);
   const [showRoomSelector, setShowRoomSelector] = useState(false);
     const [showSearchBar, setShowSearchBar] = useState(false);
+  const [showChatHistory, setShowChatHistory] = useState(false);
   // Room join handler
   const { user, getToken } = useAuth();
+  const { saveSessionToStorage } = useChatHistory();
   const { rituals, loading: ritualsLoading, fetchRituals } = usePersonalRituals();
   // Track previous room for leave ritual
   const prevRoomRef = useRef<{ id: number; name: string } | null>(null);
@@ -435,6 +439,9 @@ const App = () => {
   const sendMessage = useCallback((messageContent: string, imageBase64?: string) => {
     if (!messageContent.trim() && !imageBase64) return;
 
+    // Save session to storage when sending a message
+    saveSessionToStorage(sessionId);
+
     const userMessage: EnhancedMessage = {
       id: generateId(),
       content: messageContent || '📷 [Shared an image]',
@@ -510,7 +517,7 @@ const App = () => {
         setPendingGhostMsgId(null);
       }
     })();
-  }, [appSettings.ghostPersonality, appSettings.soundEnabled, playSyntheticSound, generateId, setMessages, setInput, setIsTyping, sessionId, appSettings.language]);
+  }, [appSettings.ghostPersonality, appSettings.soundEnabled, playSyntheticSound, generateId, setMessages, setInput, setIsTyping, sessionId, appSettings.language, saveSessionToStorage]);
 
   // Handle form submission
   const handleSubmit = (e: FormEvent) => {
@@ -1136,21 +1143,33 @@ const App = () => {
           {/* Chat Messages */}
     <div className={`flex-1 overflow-y-auto p-2 sm:p-4 space-y-4 ${showAIFeatures ? 'ml-80' : ''} transition-all duration-300 force-visible-text`}
       style={{ color: '#ffffff', backgroundColor: 'rgba(0,0,0,0.1)' }}>
-            {/* Search Bar Trigger and Bar Directly Under Header */}
+            {/* Search Bar & Chat History Triggers and Bars Directly Under Header */}
             <div className="w-full flex flex-col items-center" style={{ position: 'relative', zIndex: 19 }}>
-              {!showSearchBar && (
-                <motion.div
-                  className="cursor-pointer flex items-center justify-center gap-2 mt-2"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  whileHover={{ scale: 1.1, filter: 'drop-shadow(0 0 8px #a855f7)' }}
-                  onClick={() => setShowSearchBar(true)}
-                  style={{ minHeight: 32 }}
-                >
-                  {/* Replace below with any cool trigger you want! */}
-                  <span className="text-purple-300 text-lg animate-bounce">🔍</span>
-                  <span className="text-purple-300 text-xs ml-2 animate-fade-in">Tap to Search</span>
-                </motion.div>
+              {!showSearchBar && !showChatHistory && (
+                <div className="flex gap-6 mt-2">
+                  <motion.div
+                    className="cursor-pointer flex items-center justify-center gap-2"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ scale: 1.1, filter: 'drop-shadow(0 0 8px #a855f7)' }}
+                    onClick={() => setShowSearchBar(true)}
+                    style={{ minHeight: 32 }}
+                  >
+                    <span className="text-purple-300 text-lg animate-bounce">🔍</span>
+                    <span className="text-purple-300 text-xs ml-2 animate-fade-in">Tap to Search</span>
+                  </motion.div>
+                  <motion.div
+                    className="cursor-pointer flex items-center justify-center gap-2"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ scale: 1.1, filter: 'drop-shadow(0 0 8px #10b981)' }}
+                    onClick={() => setShowChatHistory(true)}
+                    style={{ minHeight: 32 }}
+                  >
+                    <span className="text-emerald-400 text-lg animate-bounce">📜</span>
+                    <span className="text-emerald-400 text-xs ml-2 animate-fade-in">Chat History</span>
+                  </motion.div>
+                </div>
               )}
               <AnimatePresence>
                 {showSearchBar && (
@@ -1197,6 +1216,47 @@ const App = () => {
                       roomId={currentRoom?.id?.toString()}
                       sessionId={sessionId}
                       onClose={() => setShowSearchBar(false)}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <AnimatePresence>
+                {showChatHistory && (
+                  <motion.div
+                    initial={{ y: -40, opacity: 0, boxShadow: '0 0 0px #10b981' }}
+                    animate={{
+                      y: 0,
+                      opacity: 1,
+                      boxShadow: [
+                        '0 0 0px #10b981',
+                        '0 0 20px #10b981',
+                        '0 0 0px #10b981'
+                      ]
+                    }}
+                    exit={{ y: -40, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="w-full max-w-4xl mx-auto"
+                  >
+                    <div className="flex items-center justify-center py-2 space-x-3">
+                      {[...Array(7)].map((_, i) => (
+                        <motion.span
+                          key={i}
+                          className="text-emerald-400 text-xl select-none"
+                          style={{
+                            filter: 'blur(0.5px) drop-shadow(0 0 6px #10b981)'
+                          }}
+                          initial={{ opacity: 0, scale: 0.5 }}
+                          animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.5] }}
+                          transition={{ duration: 1.2, delay: i * 0.15, repeat: Infinity }}
+                        >
+                          📜
+                        </motion.span>
+                      ))}
+                    </div>
+                    <ChatHistory
+                      sessionId={sessionId}
+                      onClose={() => setShowChatHistory(false)}
                     />
                   </motion.div>
                 )}
