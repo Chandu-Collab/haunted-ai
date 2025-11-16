@@ -98,6 +98,38 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
   const [hasChanges, setHasChanges] = useState(false);
   const [initialSettings] = useState(localSettings);
   const [selectedTrackIndex, setSelectedTrackIndex] = useState(0); // Track the selected music track
+  
+  // Sync props with local state when settings change externally
+  useEffect(() => {
+    const newSettings = {
+      ...settings,
+      language: settings.language || 'en',
+      lightningEnabled: settings.lightningEnabled ?? true,
+      fogEnabled: settings.fogEnabled ?? true,
+      eyeTrackingEnabled: settings.eyeTrackingEnabled ?? true,
+      textSpiritsEnabled: settings.textSpiritsEnabled ?? true,
+    };
+    
+    console.log('🔄 Settings component: External settings changed, syncing local state', {
+      newPersonality: settings.ghostPersonality.name,
+      currentPersonality: localSettings.ghostPersonality.name,
+      personalityChanged: settings.ghostPersonality.id !== localSettings.ghostPersonality.id
+    });
+    
+    setLocalSettings(newSettings);
+  }, [
+    settings.ghostPersonality.id, 
+    settings.soundEnabled, 
+    settings.musicEnabled, 
+    settings.voiceEnabled,
+    settings.theme,
+    settings.language,
+    settings.lightningEnabled,
+    settings.fogEnabled,
+    settings.eyeTrackingEnabled,
+    settings.textSpiritsEnabled
+  ]);
+  
   // Interactive feature modals
   const [showFortune, setShowFortune] = useState(false);
   const [showSeance, setShowSeance] = useState(false);

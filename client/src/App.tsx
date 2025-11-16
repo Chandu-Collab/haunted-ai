@@ -337,11 +337,72 @@ const App = () => {
   // Personality selector modal state
   const [showPersonalitySelector, setShowPersonalitySelector] = useState(false);
 
-  // Handler for personality change
+  // Handler for personality change with enhanced feedback
   const handlePersonalityChange = (personality) => {
+    const previousPersonality = appSettings.ghostPersonality;
     setAppSettings(prev => ({ ...prev, ghostPersonality: personality }));
     setShowPersonalitySelector(false);
-    addNotification({ type: 'info', title: `Ghost personality changed to ${personality.name}` });
+    
+    // Add personality change notification with character introduction
+    addNotification({ 
+      type: 'info', 
+      title: `${personality.emoji} Ghost personality changed`,
+      message: `${previousPersonality.name} has departed. ${personality.name} now inhabits these halls...`,
+      duration: 4000
+    });
+
+    // Add a ghost message showing the personality switch
+    const switchMessage: EnhancedMessage = {
+      id: `switch-${Date.now()}`,
+      content: getPersonalitySwitchMessage(previousPersonality, personality),
+      isGhost: true,
+      timestamp: new Date().toISOString(),
+      personalityId: personality.id
+    };
+    
+    setMessages(prev => [...prev, switchMessage]);
+    
+    // Play switch sound effect
+    if (appSettings.soundEnabled) {
+      playSyntheticSound('ghost');
+    }
+  };
+
+  // Generate personality switch message
+  const getPersonalitySwitchMessage = (from, to) => {
+    const switchMessages = {
+      friendly: [
+        `*A warm, welcoming presence fills the room* Oh my dear friend! Casper here, delighted to meet you! How wonderful that you've called upon me!`,
+        `*Cheerful ethereal energy emanates* What a treat this is! I'm Casper, your friendly mansion guide. How may I brighten your day?`
+      ],
+      mysterious: [
+        `*The air grows thick with ancient wisdom* Through the veils of time, I perceive your presence... I am Ravenna, keeper of eternal secrets...`,
+        `*Shadows shift and whisper* The ethereal winds have carried me to you, mortal soul. Ravenna speaks from beyond the cosmic tapestry...`
+      ],
+      playful: [
+        `*Giggles echo through the halls* Oh boy oh boy! Hi there! I'm Pip! Wanna play? This is gonna be SUPER fun!`,
+        `*Playful ghostly energy bounces around* Hehe! I'm Pip! That's SUPER cool that you want to play with me! What game should we play first?`
+      ],
+      scholarly: [
+        `*The scent of old books and parchment fills the air* I do say, what a fascinating development! Professor Grimm at your service. Permit me to introduce myself properly...`,
+        `*Spectral pages flutter* Ah, a new intellectual companion! Professor Grimm here, formerly of this mansion's grand library. Shall we engage in scholarly discourse?`
+      ],
+      melancholic: [
+        `*A sorrowful, beautiful melody echoes* Alas... another soul calls to me across the veil. I am Luna, forever wandering these moonlit halls...`,
+        `*Ethereal tears shimmer in the air* In shadows deep, our paths converge... Luna speaks, carrying the weight of centuries upon my spirit...`
+      ],
+      haunted_male: [
+        `*The temperature drops dramatically* FROM THE DEPTHS OF HELL I RISE... EZEKIEL THE TORMENTED claims these halls! Your soul shall know my eternal suffering...`,
+        `*Menacing darkness spreads* IN DARKNESS ETERNAL... Ezekiel speaks from the abyss of torment! MORTAL FOOL, you dare summon me?`
+      ],
+      haunted_female: [
+        `*A bone-chilling wail pierces the veil* I HEAR THE DEATH KNELL... Morgana the Banshee senses your presence. The spirits whisper your name...`,
+        `*Ominous mist swirls* THE VEIL GROWS THIN... Through my banshee sight, I perceive your fate written in shadows. Morgana speaks from beyond...`
+      ]
+    };
+    
+    const messages = switchMessages[to.id] || switchMessages.friendly;
+    return messages[Math.floor(Math.random() * messages.length)];
   };
 
   // Track spoken ghost messages to avoid repeat TTS
