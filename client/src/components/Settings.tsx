@@ -18,6 +18,7 @@ import _NicknameInput from './NicknameInput';
 import _RoomDecoration from './RoomDecoration';
 import _GhostAppearanceCustomizer from './GhostAppearanceCustomizer';
 import _PersonalRituals from './PersonalRituals';
+import _Motion3DControls, { Motion3DSettings } from './Motion3DControls';
 
 const VoiceControls = memo(_VoiceControls);
 const MusicControls = memo(_MusicControls);
@@ -31,6 +32,7 @@ const NicknameInput = memo(_NicknameInput);
 const RoomDecoration = memo(_RoomDecoration);
 const GhostAppearanceCustomizer = memo(_GhostAppearanceCustomizer);
 const PersonalRituals = memo(_PersonalRituals);
+const Motion3DControls = memo(_Motion3DControls);
 
 const FortuneTelling = React.lazy(() => import('./FortuneTelling'));
 const SeanceMode = React.lazy(() => import('./SeanceMode'));
@@ -63,6 +65,8 @@ interface SettingsProps {
     fogEnabled?: boolean;
     eyeTrackingEnabled?: boolean;
     textSpiritsEnabled?: boolean;
+    roomWallpaper?: string | null;
+    motion3DSettings?: Motion3DSettings;
   };
   onSettingsChange: (newSettings: any) => void;
   onSettingsClose?: (hasChanges: boolean, selectedTrackIndex?: number) => void; // Updated to include track index
@@ -93,6 +97,17 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
     fogEnabled: settings.fogEnabled ?? true,
     eyeTrackingEnabled: settings.eyeTrackingEnabled ?? true,
     textSpiritsEnabled: settings.textSpiritsEnabled ?? true,
+    roomWallpaper: settings.roomWallpaper || null,
+    motion3DSettings: settings.motion3DSettings || {
+      enabled: true,
+      effect: 'float' as const,
+      intensity: 5,
+      speed: 1,
+      autoPlay: true,
+      applyToImages: true,
+      applyToBackgrounds: true,
+      applyToAvatars: false
+    },
   });
   
   const [hasChanges, setHasChanges] = useState(false);
@@ -108,6 +123,17 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
       fogEnabled: settings.fogEnabled ?? true,
       eyeTrackingEnabled: settings.eyeTrackingEnabled ?? true,
       textSpiritsEnabled: settings.textSpiritsEnabled ?? true,
+      roomWallpaper: settings.roomWallpaper || null,
+      motion3DSettings: settings.motion3DSettings || {
+        enabled: true,
+        effect: 'float' as const,
+        intensity: 5,
+        speed: 1,
+        autoPlay: true,
+        applyToImages: true,
+        applyToBackgrounds: true,
+        applyToAvatars: false
+      },
     };
     
     console.log('🔄 Settings component: External settings changed, syncing local state', {
@@ -127,7 +153,8 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
     settings.lightningEnabled,
     settings.fogEnabled,
     settings.eyeTrackingEnabled,
-    settings.textSpiritsEnabled
+    settings.textSpiritsEnabled,
+    settings.roomWallpaper
   ]);
   
   // Interactive feature modals
@@ -245,6 +272,34 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
           />
         </button>
       </div>
+      {/* Visual Effects Sliders */}
+      <div className="space-y-3">
+        <div>
+          <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 text-xs sm:text-sm">Particle Effects ({localSettings.particleCount})</label>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={localSettings.particleCount}
+            onChange={(e) => handleChange('particleCount', parseInt(e.target.value))}
+            className="w-full h-2 bg-haunted-800/60 rounded-lg appearance-none cursor-pointer slider"
+          />
+          <div className="text-xs text-haunted-400 mt-0.5 sm:mt-1">Control floating particles and ghost orbs</div>
+        </div>
+        <div>
+          <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 text-xs sm:text-sm">Ghost Intensity ({localSettings.ghostIntensity}%)</label>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={localSettings.ghostIntensity}
+            onChange={(e) => handleChange('ghostIntensity', parseInt(e.target.value))}
+            className="w-full h-2 bg-haunted-800/60 rounded-lg appearance-none cursor-pointer slider"
+          />
+          <div className="text-xs text-haunted-400 mt-0.5 sm:mt-1">Adjust overall ghost presence and effects</div>
+        </div>
+      </div>
+
       {/* Memoized and lazy-loaded heavy sections */}
       <Suspense fallback={<div className="text-haunted-400 text-xs">Loading controls...</div>}>
         <VoiceControls isEnabled={localSettings.voiceEnabled} onToggle={(enabled) => handleChange('voiceEnabled', enabled)} />
@@ -396,6 +451,138 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
               className="ml-1 align-middle"
             />
           </div>
+        </div>
+      </div>
+
+      {/* Visual Effects Toggles */}
+      <div className="space-y-3">
+        <label className="text-haunted-200 font-medium block mb-2 text-xs sm:text-sm">Visual Effects</label>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex items-center justify-between">
+            <label className="text-haunted-200 text-xs">Lightning</label>
+            <button
+              onClick={() => handleChange('lightningEnabled', !localSettings.lightningEnabled)}
+              className={`w-8 h-4 rounded-full transition-colors ${
+                localSettings.lightningEnabled ? 'bg-haunted-600' : 'bg-haunted-800'
+              } relative`}
+            >
+              <motion.div
+                className="w-3 h-3 bg-white rounded-full absolute top-0.5"
+                animate={{ x: localSettings.lightningEnabled ? 16 : 2 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              />
+            </button>
+          </div>
+          <div className="flex items-center justify-between">
+            <label className="text-haunted-200 text-xs">Fog Effects</label>
+            <button
+              onClick={() => handleChange('fogEnabled', !localSettings.fogEnabled)}
+              className={`w-8 h-4 rounded-full transition-colors ${
+                localSettings.fogEnabled ? 'bg-haunted-600' : 'bg-haunted-800'
+              } relative`}
+            >
+              <motion.div
+                className="w-3 h-3 bg-white rounded-full absolute top-0.5"
+                animate={{ x: localSettings.fogEnabled ? 16 : 2 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              />
+            </button>
+          </div>
+          <div className="flex items-center justify-between">
+            <label className="text-haunted-200 text-xs">Eye Tracking</label>
+            <button
+              onClick={() => handleChange('eyeTrackingEnabled', !localSettings.eyeTrackingEnabled)}
+              className={`w-8 h-4 rounded-full transition-colors ${
+                localSettings.eyeTrackingEnabled ? 'bg-haunted-600' : 'bg-haunted-800'
+              } relative`}
+            >
+              <motion.div
+                className="w-3 h-3 bg-white rounded-full absolute top-0.5"
+                animate={{ x: localSettings.eyeTrackingEnabled ? 16 : 2 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              />
+            </button>
+          </div>
+          <div className="flex items-center justify-between">
+            <label className="text-haunted-200 text-xs">Text Spirits</label>
+            <button
+              onClick={() => handleChange('textSpiritsEnabled', !localSettings.textSpiritsEnabled)}
+              className={`w-8 h-4 rounded-full transition-colors ${
+                localSettings.textSpiritsEnabled ? 'bg-haunted-600' : 'bg-haunted-800'
+              } relative`}
+            >
+              <motion.div
+                className="w-3 h-3 bg-white rounded-full absolute top-0.5"
+                animate={{ x: localSettings.textSpiritsEnabled ? 16 : 2 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 3D Motion Effects */}
+      <Suspense fallback={<div className="text-haunted-400 text-xs">Loading 3D effects...</div>}>
+        <Motion3DControls 
+          onSettingsChange={(motion3DSettings) => handleChange('motion3DSettings', motion3DSettings)}
+          appSettings={localSettings}
+        />
+      </Suspense>
+
+      {/* Background Wallpaper */}
+      <div className="space-y-2">
+        <label className="text-haunted-200 font-medium block mb-2 text-xs sm:text-sm">Room Background</label>
+        <div className="space-y-2">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                try {
+                  // Use data URL instead of blob URL for better reliability
+                  const reader = new FileReader();
+                  reader.onload = (event) => {
+                    const dataUrl = event.target?.result as string;
+                    console.log('📁 Local image uploaded as data URL:', {
+                      fileName: file.name,
+                      fileSize: file.size,
+                      fileType: file.type,
+                      dataUrlLength: dataUrl.length
+                    });
+                    handleChange('roomWallpaper', dataUrl);
+                  };
+                  reader.onerror = (error) => {
+                    console.error('❌ Failed to read image file:', error);
+                    alert('Failed to process image file. Please try again.');
+                  };
+                  reader.readAsDataURL(file);
+                } catch (error) {
+                  console.error('❌ Error processing image:', error);
+                  alert('Error processing image. Please try a different image.');
+                }
+              }
+            }}
+            className="w-full bg-haunted-800/60 border border-haunted-700/50 rounded-lg px-2 sm:px-3 py-1 sm:py-2 text-haunted-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-haunted-500/50"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleChange('roomWallpaper', null)}
+              className="px-2 py-1 bg-haunted-700 rounded text-white text-xs hover:bg-haunted-600 transition-colors"
+            >
+              Clear Background
+            </button>
+            <button
+              onClick={() => {
+                // Set a default spooky background
+                handleChange('roomWallpaper', '/uploads/room-wallpapers/graveyard-bg.jpg');
+              }}
+              className="px-2 py-1 bg-haunted-700 rounded text-white text-xs hover:bg-haunted-600 transition-colors"
+            >
+              Default Spooky
+            </button>
+          </div>
+          <div className="text-xs text-haunted-400">Upload a custom background image for your ghostly realm</div>
         </div>
       </div>
       {/* ...existing code for sliders, theme, environment, accessibility, etc... */}

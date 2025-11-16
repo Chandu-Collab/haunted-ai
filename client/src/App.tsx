@@ -24,6 +24,7 @@ import NotificationSystem from './components/NotificationSystem';
 import AudioInitPrompt from './components/AudioInitPrompt';
 import MessageSearch from './components/MessageSearch';
 import ChatHistory from './components/ChatHistory';
+import Motion3DBackground from './components/Motion3DBackground';
 
 // New AI Components
 import MoodVisualizer from './components/MoodVisualizer';
@@ -73,7 +74,6 @@ const App = () => {
   const [showGhostManager, setShowGhostManager] = useState(false);
   const [showGhostSelector, setShowGhostSelector] = useState(false);
   const [currentRoom, setCurrentRoom] = useState<{ id: number; name: string; decorations?: any } | null>(null);
-  const [roomWallpaper, setRoomWallpaper] = useState<string | null>(null);
   const [showRoomSelector, setShowRoomSelector] = useState(false);
     const [showSearchBar, setShowSearchBar] = useState(false);
   const [showChatHistory, setShowChatHistory] = useState(false);
@@ -161,12 +161,12 @@ const App = () => {
           // Prepend backend URL if not absolute
           url = `${API_URL.replace(/\/api.*/, '')}${url}`;
         }
-        setRoomWallpaper(url);
+        setAppSettings(prev => ({ ...prev, roomWallpaper: url }));
       } else {
-        setRoomWallpaper(null);
+        setAppSettings(prev => ({ ...prev, roomWallpaper: null }));
       }
     } else {
-      setRoomWallpaper(null);
+      setAppSettings(prev => ({ ...prev, roomWallpaper: null }));
     }
   }, [currentRoom, rooms]);
   const {
@@ -238,6 +238,17 @@ const App = () => {
     fogEnabled: true,
     eyeTrackingEnabled: true,
     textSpiritsEnabled: true,
+    roomWallpaper: null as string | null,
+    motion3DSettings: {
+      enabled: true,
+      effect: 'float' as const,
+      intensity: 5,
+      speed: 1,
+      autoPlay: true,
+      applyToImages: true,
+      applyToBackgrounds: true,
+      applyToAvatars: false
+    },
     language: 'en',
     // New AI settings
     moodVisualizationEnabled: true,
@@ -744,15 +755,27 @@ const App = () => {
         <div
           className={`main-bg-container ${themeClasses} min-h-screen relative force-visible-text`}
           style={{
-            ...ghostColorStyle,
-            ...(roomWallpaper ? {
-              backgroundImage: `url('${roomWallpaper}')`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-            } : {})
+            ...ghostColorStyle
           }}
         >
+          
+          {/* 3D Motion Background */}
+          {appSettings.roomWallpaper && (
+            <Motion3DBackground 
+              imageSrc={appSettings.roomWallpaper}
+              motion3DSettings={appSettings.motion3DSettings}
+            />
+          )}
+          
+          {/* Debug info */}
+          {process.env.NODE_ENV === 'development' && appSettings.roomWallpaper && (
+            <div className="fixed top-4 right-4 bg-black/50 text-white p-2 text-xs rounded z-50">
+              Background: {appSettings.roomWallpaper ? 'Yes' : 'No'}<br/>
+              3D Enabled: {appSettings.motion3DSettings?.enabled ? 'Yes' : 'No'}<br/>
+              Apply to BG: {appSettings.motion3DSettings?.applyToBackgrounds ? 'Yes' : 'No'}<br/>
+              Effect: {appSettings.motion3DSettings?.effect}
+            </div>
+          )}
           
           {/* Enhanced Background Effects */}
           {appSettings.particleCount > 0 && (
