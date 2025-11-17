@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, FormEvent } from 'reac
 import useGhostInteractions, { useSeanceMode } from './hooks/useGhostInteractions';
 import useRooms from './hooks/useRooms';
 import GhostProfileManager from './components/GhostProfileManager';
-import GhostProfileSelector from './components/GhostProfileSelector';
+import GhostProfileSelector from './components/GhostProfileSelector';//help
 import RoomSelector from './components/RoomSelector';
 import { useTheme } from './context/ThemeContext';
 import useAuth from './hooks/useAuth';
