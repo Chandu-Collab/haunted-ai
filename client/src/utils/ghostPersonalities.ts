@@ -8,7 +8,7 @@ export interface GhostPersonality {
     rate: number;
     pitch: number;
     volume: number;
-  };
+  };//help
   systemPrompt: string;
   responseStyle: {
     tone: string;
