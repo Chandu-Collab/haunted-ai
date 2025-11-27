@@ -1,8 +1,8 @@
-import React from 'react';
+import React from 'react';//help
 import useGhostInteractions from '../hooks/useGhostInteractions';
 
 interface Props {
-  sessionId?: string;
+  sessionId?: string;//help
 }
 
 function AchievementSystem({ sessionId }: Props) {
