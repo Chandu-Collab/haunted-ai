@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import React, { useState, useRef, useEffect, useCallback, FormEvent } from 'react';
 import useGhostInteractions, { useSeanceMode } from './hooks/useGhostInteractions';
 import useRooms from './hooks/useRooms';
