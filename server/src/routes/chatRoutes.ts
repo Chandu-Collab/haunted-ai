@@ -10,6 +10,7 @@ import {
   analyzeImage,
   getMemoryContext,
   getCurrentWeather,
+  getSpiritualAtmosphere,
   getPersonalities,
   exportChatLog
 } from '../controllers/chatController';
@@ -27,6 +28,12 @@ router.get('/greeting', getAIGreeting);
 
 // Search messages by keyword, room, or session
 router.get('/search', searchMessages);
+
+// Get current weather for atmospheric context
+router.get('/weather', getCurrentWeather);
+
+// Get user's geolocation-based spiritual atmosphere
+router.post('/spiritual-atmosphere', getSpiritualAtmosphere);
 
 // Get chat history for a session
 router.get('/history/:sessionId', getChatHistory);
