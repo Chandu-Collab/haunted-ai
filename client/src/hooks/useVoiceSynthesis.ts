@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 
 
-export type VoiceEffect = 'none' | 'echo' | 'reverb' | 'whisper' | 'robot';
+export type VoiceEffect = 'none' | 'echo' | 'reverb' | 'whisper' | 'robot' | 'demonic' | 'ghostly' | 'banshee' | 'ancient' | 'otherworldly' | 'tormented';
 interface VoiceOptions {
   voice?: SpeechSynthesisVoice;
   rate?: number;
@@ -91,24 +91,40 @@ export const useVoiceSynthesis = (): UseVoiceSynthesis => {
           voice.name.toLowerCase().includes('aria')
         );
 
-        // Look for spooky/low voices from English voices only
-        const spookyVoices = englishVoices.filter(voice => 
+        // Look for horror/spooky voices from English voices only
+        const horrorVoices = englishVoices.filter(voice => 
           voice.name.toLowerCase().includes('whisper') ||
           voice.name.toLowerCase().includes('dark') ||
           voice.name.toLowerCase().includes('deep') ||
-          voice.name.toLowerCase().includes('bass')
+          voice.name.toLowerCase().includes('bass') ||
+          voice.name.toLowerCase().includes('low') ||
+          voice.name.toLowerCase().includes('gothic') ||
+          voice.name.toLowerCase().includes('spooky') ||
+          voice.name.toLowerCase().includes('scary')
         );
 
-        // Priority: spooky -> male -> female -> any English voice
-        if (spookyVoices.length > 0) {
-          selectedVoice = spookyVoices[0];
-          console.log('Selected spooky voice:', selectedVoice.name);
+        // Priority: horror -> deep male -> low female -> male -> female -> any English voice
+        if (horrorVoices.length > 0) {
+          selectedVoice = horrorVoices[0];
+          console.log('Selected horror voice:', selectedVoice.name);
         } else if (maleVoices.length > 0) {
-          selectedVoice = maleVoices[0];
-          console.log('Selected male voice:', selectedVoice.name);
+          // Prefer deeper male voices for horror effect
+          const deepMaleVoices = maleVoices.filter(voice => 
+            voice.name.toLowerCase().includes('david') ||
+            voice.name.toLowerCase().includes('daniel') ||
+            voice.name.toLowerCase().includes('mark')
+          );
+          selectedVoice = deepMaleVoices[0] || maleVoices[0];
+          console.log('Selected deep male voice:', selectedVoice.name);
         } else if (femaleVoices.length > 0) {
-          selectedVoice = femaleVoices[0];
-          console.log('Selected female voice:', selectedVoice.name);
+          // Prefer lower female voices for banshee/witch effect
+          const lowFemaleVoices = femaleVoices.filter(voice => 
+            voice.name.toLowerCase().includes('susan') ||
+            voice.name.toLowerCase().includes('hazel') ||
+            voice.name.toLowerCase().includes('karen')
+          );
+          selectedVoice = lowFemaleVoices[0] || femaleVoices[0];
+          console.log('Selected low female voice:', selectedVoice.name);
         } else if (englishVoices.length > 0) {
           // Fallback to first available English voice
           selectedVoice = englishVoices[0];
@@ -160,11 +176,23 @@ export const useVoiceSynthesis = (): UseVoiceSynthesis => {
       // Simulate effects by modifying text or utterance
       let effect = options.effect || 'none';
       if (effect === 'whisper') {
-        cleanText = 'psst... ' + cleanText;
+        cleanText = 'psst... ' + cleanText + '... *whispers fade*';
       } else if (effect === 'robot') {
         cleanText = cleanText.split('').join(' ');
       } else if (effect === 'echo') {
-        cleanText = cleanText + '. ... ' + cleanText.split(' ').slice(-4).join(' ') + '...';
+        cleanText = cleanText + '. ... ' + cleanText.split(' ').slice(-4).join(' ') + '... echo... echo...';
+      } else if (effect === 'demonic') {
+        cleanText = '*growls* ' + cleanText.toUpperCase() + ' *demonic laughter*';
+      } else if (effect === 'ghostly') {
+        cleanText = '*ethereal moan* ' + cleanText + ' *spectral whispers*';
+      } else if (effect === 'banshee') {
+        cleanText = '*wailing cry* ' + cleanText + ' *mournful shriek*';
+      } else if (effect === 'ancient') {
+        cleanText = '*ancient incantation* ' + cleanText + ' *mystical echoes*';
+      } else if (effect === 'otherworldly') {
+        cleanText = '*dimensional rift* ' + cleanText + ' *cosmic whispers*';
+      } else if (effect === 'tormented') {
+        cleanText = '*tortured scream* ' + cleanText + ' *eternal suffering*';
       } else if (effect === 'reverb') {
         cleanText = cleanText + '... ...';
       }
@@ -176,11 +204,46 @@ export const useVoiceSynthesis = (): UseVoiceSynthesis => {
       utterance.rate = options.rate || 0.8;
       utterance.pitch = options.pitch || 0.7;
       utterance.volume = options.volume || 0.8;
-      // Slightly adjust for effect
-      if (effect === 'whisper') utterance.volume = 0.4;
-      if (effect === 'robot') utterance.rate = 0.7;
-      if (effect === 'echo') utterance.rate = 0.9;
-      if (effect === 'reverb') utterance.rate = 0.7;
+      
+      // Adjust voice parameters for horror effects
+      if (effect === 'whisper') {
+        utterance.volume = 0.3;
+        utterance.rate = 0.6;
+        utterance.pitch = 0.5;
+      } else if (effect === 'robot') {
+        utterance.rate = 0.7;
+        utterance.pitch = 0.8;
+      } else if (effect === 'echo') {
+        utterance.rate = 0.9;
+        utterance.volume = 0.7;
+      } else if (effect === 'reverb') {
+        utterance.rate = 0.7;
+        utterance.volume = 0.6;
+      } else if (effect === 'demonic') {
+        utterance.pitch = 0.1;  // Extremely deep
+        utterance.rate = 0.3;   // Slow and menacing
+        utterance.volume = 1.0; // Maximum volume
+      } else if (effect === 'ghostly') {
+        utterance.pitch = 0.4;  // Ethereal depth
+        utterance.rate = 0.5;   // Floating pace
+        utterance.volume = 0.6; // Haunting presence
+      } else if (effect === 'banshee') {
+        utterance.pitch = 0.2;  // Mournful wail
+        utterance.rate = 0.4;   // Slow lament
+        utterance.volume = 0.9; // Piercing cry
+      } else if (effect === 'ancient') {
+        utterance.pitch = 0.3;  // Ancient wisdom
+        utterance.rate = 0.4;   // Deliberate speech
+        utterance.volume = 0.8; // Authoritative
+      } else if (effect === 'otherworldly') {
+        utterance.pitch = 0.35; // Cosmic depth
+        utterance.rate = 0.45;  // Interdimensional
+        utterance.volume = 0.85; // Supernatural
+      } else if (effect === 'tormented') {
+        utterance.pitch = 0.15; // Tortured soul
+        utterance.rate = 0.35;  // Agonizing pace
+        utterance.volume = 0.95; // Suffering intensity
+      }
       utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => { setIsSpeaking(false); utteranceRef.current = null; resolve(); };
       utterance.onerror = () => { setIsSpeaking(false); utteranceRef.current = null; resolve(); };

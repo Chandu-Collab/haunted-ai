@@ -28,7 +28,20 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
       stop();
     } else {
       try {
-        await speak("Greetings from beyond the veil, mortal. Can you hear my spectral voice?");
+        // Use a horror-themed test message
+        const horrorTestMessages = [
+          "From beyond the veil, I speak to you, mortal soul...",
+          "The darkness calls, and I answer with my spectral voice...", 
+          "In the depths of eternity, my ghostly words echo...",
+          "Hear my voice from the realm of shadows and mystery...",
+          "Through the mists of time, my haunting voice reaches you..."
+        ];
+        const randomMessage = horrorTestMessages[Math.floor(Math.random() * horrorTestMessages.length)];
+        await speak(randomMessage, {
+          rate: 0.6,    // Slower for dramatic effect
+          pitch: 0.4,   // Lower for horror atmosphere  
+          volume: 0.8   // Clear but haunting
+        });
       } catch (error) {
         console.error('Voice test failed:', error);
       }
@@ -50,13 +63,13 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
         <label className="text-haunted-200 font-medium text-base sm:text-lg">Ghost Voice</label>
         <button
           onClick={() => onToggle(!isEnabled)}
-          className={`w-14 sm:w-12 h-7 sm:h-6 rounded-full transition-colors ${
-            isEnabled ? 'bg-haunted-600' : 'bg-haunted-800'
-          } relative flex-shrink-0`}
+          className={`w-11 sm:w-12 h-6 sm:h-7 rounded-full transition-colors ${
+            isEnabled ? 'bg-green-600' : 'bg-haunted-800'
+          } relative flex items-center p-0.5 flex-shrink-0`}
         >
           <motion.div
-            className="w-6 sm:w-5 h-6 sm:h-5 bg-white rounded-full absolute top-0.5"
-            animate={{ x: isEnabled ? 28 : 2 }}
+            className="w-5 sm:w-6 h-5 sm:h-6 bg-white rounded-full shadow-md"
+            animate={{ x: isEnabled ? 20 : 0 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           />
         </button>
