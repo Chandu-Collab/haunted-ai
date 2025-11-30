@@ -87,13 +87,13 @@ const MusicControls: React.FC<MusicControlsProps> = ({
               stop();
             }
           }}
-          className={`w-10 sm:w-12 h-5 sm:h-6 rounded-full transition-colors ${
-            isEnabled ? 'bg-haunted-600' : 'bg-haunted-800'
-          } relative`}
+          className={`w-11 sm:w-12 h-6 sm:h-7 rounded-full transition-colors ${
+            isEnabled ? 'bg-green-600' : 'bg-haunted-800'
+          } relative flex items-center p-0.5`}
         >
           <motion.div
-            className="w-4 sm:w-5 h-4 sm:h-5 bg-white rounded-full absolute top-0.5"
-            animate={{ x: isEnabled ? 20 : 2 }}
+            className="w-5 sm:w-6 h-5 sm:h-6 bg-white rounded-full shadow-md"
+            animate={{ x: isEnabled ? 20 : 0 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           />
         </button>

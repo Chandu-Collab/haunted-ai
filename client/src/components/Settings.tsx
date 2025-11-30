@@ -1,5 +1,5 @@
 // Voice effect type for settings
-type VoiceEffectOption = 'none' | 'echo' | 'reverb' | 'whisper' | 'robot';
+type VoiceEffectOption = 'none' | 'echo' | 'reverb' | 'whisper' | 'robot' | 'demonic' | 'ghostly' | 'banshee' | 'ancient' | 'otherworldly' | 'tormented';
 import React, { Suspense, memo, useState, useEffect, useCallback, useRef } from 'react';
 import { useTheme, Environment, TimeOfDay, Season } from '../context/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -263,11 +263,13 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
         <label className="text-haunted-200 font-medium text-xs sm:text-sm">Sound Effects</label>
         <button
           onClick={() => handleChange('soundEnabled', !localSettings.soundEnabled)}
-          className={`w-10 sm:w-12 h-5 sm:h-6 rounded-full transition-colors ${localSettings.soundEnabled ? 'bg-haunted-600' : 'bg-haunted-800'} relative`}
+          className={`w-11 sm:w-12 h-6 sm:h-7 rounded-full transition-colors ${
+            localSettings.soundEnabled ? 'bg-green-600' : 'bg-haunted-800'
+          } relative flex items-center p-0.5`}
         >
           <motion.div
-            className="w-4 sm:w-5 h-4 sm:h-5 bg-white rounded-full absolute top-0.5"
-            animate={{ x: localSettings.soundEnabled ? 20 : 2 }}
+            className="w-5 sm:w-6 h-5 sm:h-6 bg-white rounded-full shadow-md"
+            animate={{ x: localSettings.soundEnabled ? 20 : 0 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           />
         </button>
@@ -313,10 +315,16 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
             className="w-full bg-haunted-800/60 border border-haunted-700/50 rounded-lg px-2 sm:px-3 py-1 sm:py-2 text-haunted-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-haunted-500/50"
           >
             <option value="none">None (Normal Ghost)</option>
-            <option value="whisper">Whisper</option>
-            <option value="echo">Echo</option>
-            <option value="reverb">Reverb</option>
-            <option value="robot">Robot</option>
+            <option value="whisper">👻 Whisper</option>
+            <option value="ghostly">🌫️ Ghostly</option>
+            <option value="demonic">👹 Demonic</option>
+            <option value="banshee">😱 Banshee Wail</option>
+            <option value="ancient">🏛️ Ancient Spirit</option>
+            <option value="otherworldly">🌌 Otherworldly</option>
+            <option value="tormented">💀 Tormented Soul</option>
+            <option value="echo">📢 Echo</option>
+            <option value="reverb">🔊 Reverb</option>
+            <option value="robot">🤖 Robot</option>
           </select>
           <div className="text-xs text-haunted-400 mt-0.5 sm:mt-1">Try different effects for extra spooky voices!</div>
         </div>
@@ -462,13 +470,13 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
             <label className="text-haunted-200 text-xs">Lightning</label>
             <button
               onClick={() => handleChange('lightningEnabled', !localSettings.lightningEnabled)}
-              className={`w-8 h-4 rounded-full transition-colors ${
-                localSettings.lightningEnabled ? 'bg-haunted-600' : 'bg-haunted-800'
-              } relative`}
+              className={`w-9 h-5 rounded-full transition-colors ${
+                localSettings.lightningEnabled ? 'bg-green-600' : 'bg-haunted-800'
+              } relative flex items-center p-0.5`}
             >
               <motion.div
-                className="w-3 h-3 bg-white rounded-full absolute top-0.5"
-                animate={{ x: localSettings.lightningEnabled ? 16 : 2 }}
+                className="w-4 h-4 bg-white rounded-full shadow-md"
+                animate={{ x: localSettings.lightningEnabled ? 16 : 0 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
               />
             </button>
@@ -477,13 +485,13 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
             <label className="text-haunted-200 text-xs">Fog Effects</label>
             <button
               onClick={() => handleChange('fogEnabled', !localSettings.fogEnabled)}
-              className={`w-8 h-4 rounded-full transition-colors ${
-                localSettings.fogEnabled ? 'bg-haunted-600' : 'bg-haunted-800'
-              } relative`}
+              className={`w-9 h-5 rounded-full transition-colors ${
+                localSettings.fogEnabled ? 'bg-green-600' : 'bg-haunted-800'
+              } relative flex items-center p-0.5`}
             >
               <motion.div
-                className="w-3 h-3 bg-white rounded-full absolute top-0.5"
-                animate={{ x: localSettings.fogEnabled ? 16 : 2 }}
+                className="w-4 h-4 bg-white rounded-full shadow-md"
+                animate={{ x: localSettings.fogEnabled ? 16 : 0 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
               />
             </button>
@@ -492,13 +500,13 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
             <label className="text-haunted-200 text-xs">Eye Tracking</label>
             <button
               onClick={() => handleChange('eyeTrackingEnabled', !localSettings.eyeTrackingEnabled)}
-              className={`w-8 h-4 rounded-full transition-colors ${
-                localSettings.eyeTrackingEnabled ? 'bg-haunted-600' : 'bg-haunted-800'
-              } relative`}
+              className={`w-9 h-5 rounded-full transition-colors ${
+                localSettings.eyeTrackingEnabled ? 'bg-green-600' : 'bg-haunted-800'
+              } relative flex items-center p-0.5`}
             >
               <motion.div
-                className="w-3 h-3 bg-white rounded-full absolute top-0.5"
-                animate={{ x: localSettings.eyeTrackingEnabled ? 16 : 2 }}
+                className="w-4 h-4 bg-white rounded-full shadow-md"
+                animate={{ x: localSettings.eyeTrackingEnabled ? 16 : 0 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
               />
             </button>
@@ -507,13 +515,13 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
             <label className="text-haunted-200 text-xs">Text Spirits</label>
             <button
               onClick={() => handleChange('textSpiritsEnabled', !localSettings.textSpiritsEnabled)}
-              className={`w-8 h-4 rounded-full transition-colors ${
-                localSettings.textSpiritsEnabled ? 'bg-haunted-600' : 'bg-haunted-800'
-              } relative`}
+              className={`w-9 h-5 rounded-full transition-colors ${
+                localSettings.textSpiritsEnabled ? 'bg-green-600' : 'bg-haunted-800'
+              } relative flex items-center p-0.5`}
             >
               <motion.div
-                className="w-3 h-3 bg-white rounded-full absolute top-0.5"
-                animate={{ x: localSettings.textSpiritsEnabled ? 16 : 2 }}
+                className="w-4 h-4 bg-white rounded-full shadow-md"
+                animate={{ x: localSettings.textSpiritsEnabled ? 16 : 0 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
               />
             </button>

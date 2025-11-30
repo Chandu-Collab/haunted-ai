@@ -13,7 +13,17 @@ export const getRoomDescription = async (req: Request, res: Response) => {
     const description = await ai.generateResponse(prompt);
     res.json({ description: description.trim() });
   } catch (e) {
-    res.status(500).json({ description: 'The spirits are silent... No vision appears.' });
+    const errorMessages = [
+      'The mists grow too thick to see clearly...',
+      'An otherworldly force blocks your vision...',
+      'The ethereal realm refuses to reveal its secrets...',
+      'Ancient magic obscures the path ahead...',
+      'The veil between worlds grows too dense...',
+      'Spectral interference clouds your sight...',
+      'The ghostly realm withdraws into shadow...'
+    ];
+    const randomError = errorMessages[Math.floor(Math.random() * errorMessages.length)];
+    res.status(500).json({ description: randomError });
   }
 };
 // Update room decorations

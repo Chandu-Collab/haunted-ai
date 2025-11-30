@@ -172,9 +172,30 @@ export default function useGhostInteractions(sessionId?: string) {
       });
       if (!res.ok) throw new Error('Failed to fetch fortune');
       const data = await res.json();
-      return data.fortune || 'The spirits are silent...';
+      
+      const fortuneFallbacks = [
+        'The crystal ball grows cloudy...',
+        'The tarot cards scatter in an otherworldly wind...',
+        'Ancient prophecies fade from view...',
+        'The mystical visions slip away...',
+        'Cosmic energies shift beyond perception...',
+        'The ethereal realm conceals its wisdom...',
+        'Future threads tangle in astral mists...'
+      ];
+      
+      return data.fortune || fortuneFallbacks[Math.floor(Math.random() * fortuneFallbacks.length)];
     } catch (e) {
-      return 'The spirits are silent...';
+      const errorFallbacks = [
+        'The spirits whisper in languages long forgotten...',
+        'Mystical forces resist divination today...',
+        'The veil between worlds grows too thick...',
+        'Ancient protections shield the future...',
+        'Supernatural interference clouds the vision...',
+        'The cosmic tapestry weaves in silence...',
+        'Ethereal energies retreat from mortal sight...'
+      ];
+      
+      return errorFallbacks[Math.floor(Math.random() * errorFallbacks.length)];
     }
   };
 

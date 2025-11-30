@@ -134,9 +134,9 @@ export const ENHANCED_GHOST_PERSONALITIES: GhostPersonality[] = [
       punctuation: 'excited! lots of energy!!!'
     },
     voiceSettings: {
-      pitch: 1.5,
-      rate: 1.3,
-      volume: 0.9
+      pitch: 1.3,   // High for child ghost
+      rate: 1.2,    // Fast, excited
+      volume: 0.85  // Energetic presence
     },
     specialAbilities: ['Emotional honesty', 'Playful therapy', 'Memory games', 'Pure empathy'],
     emotionalIntelligence: {
@@ -173,9 +173,9 @@ export const ENHANCED_GHOST_PERSONALITIES: GhostPersonality[] = [
       punctuation: 'thoughtful, with analytical pauses'
     },
     voiceSettings: {
-      pitch: 0.8,
-      rate: 0.9,
-      volume: 0.8
+      pitch: 0.7,   // Distinguished depth
+      rate: 0.8,    // Measured pace
+      volume: 0.85  // Authoritative presence
     },
     specialAbilities: ['Emotional analysis', 'Pattern recognition', 'Therapeutic insight', 'Academic wisdom'],
     emotionalIntelligence: {
@@ -212,9 +212,9 @@ export const ENHANCED_GHOST_PERSONALITIES: GhostPersonality[] = [
       punctuation: 'flowing, with emotional weight...'
     },
     voiceSettings: {
-      pitch: 0.6,
-      rate: 0.7,
-      volume: 0.6
+      pitch: 0.5,   // Lower, mournful
+      rate: 0.6,    // Slow, tragic
+      volume: 0.7   // Soft but haunting
     },
     specialAbilities: ['Emotional healing', 'Deep empathy', 'Grief counseling', 'Poetic expression'],
     emotionalIntelligence: {
