@@ -700,6 +700,75 @@ const getCurrentWeather = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
+// Get spiritual atmosphere based on user's location
+const getSpiritualAtmosphere = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { lat, lon } = req.body;
+    
+    if (!lat || !lon) {
+      res.status(400).json({
+        error: 'Latitude and longitude are required',
+        success: false
+      });
+      return;
+    }
+    
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lon);
+    
+    if (isNaN(latitude) || isNaN(longitude)) {
+      res.status(400).json({
+        error: 'Invalid coordinates provided',
+        success: false
+      });
+      return;
+    }
+    
+    const weather = await weatherService.getCurrentWeather(latitude, longitude);
+    
+    if (!weather) {
+      res.status(500).json({
+        error: 'Unable to fetch spiritual atmosphere data',
+        success: false
+      });
+      return;
+    }
+    
+    // Extract spiritual atmosphere data
+    const spiritualData = {
+      location: weather.location,
+      spiritualIntensity: weather.spiritualIntensity,
+      paranormalActivity: weather.paranormalActivity,
+      veilThinness: weather.veilThinness,
+      moonPhase: weather.moonPhase,
+      mood: weather.mood,
+      isNight: weather.isNight,
+      weather: {
+        condition: weather.condition,
+        description: weather.description,
+        temperature: weather.temperature
+      },
+      atmosphericFactors: {
+        humidity: weather.humidity,
+        pressure: weather.barometricPressure,
+        windSpeed: weather.windSpeed,
+        visibility: weather.visibility
+      }
+    };
+    
+    res.json({
+      success: true,
+      data: spiritualData
+    });
+  } catch (error) {
+    console.error('Error fetching spiritual atmosphere:', error);
+    res.status(500).json({
+      error: 'Internal server error while fetching spiritual atmosphere',
+      success: false
+    });
+  }
+};
+
 export {
   getChatHistory,
   sendMessage,
@@ -708,7 +777,8 @@ export {
   getAvailableStories,
   analyzeImage,
   getMemoryContext,
-  getCurrentWeather
+  getCurrentWeather,
+  getSpiritualAtmosphere
 };
 
 // Return the list of enhanced personalities for client consumption
