@@ -186,30 +186,86 @@ const App = () => {
   // Fetch AI-generated greeting on first load
   useEffect(() => {
     const fetchAIGreeting = async () => {
+      // Dynamic fallback greetings array for variety
+      const fallbackGreetings = [
+        '👻 *A spectral presence stirs in the shadows...* Welcome, mortal soul, to this haunted realm...',
+        '🌙 *The ancient walls whisper your name...* Another visitor crosses the veil into our ethereal domain...',
+        '🕯️ *Candles flicker with otherworldly energy...* What brings you to our spectral gathering, brave wanderer?',
+        '💀 *The spirits sense a new presence...* Step forward into the mist, for the dead have much to share...',
+        '🔮 *Mystical energies swirl around you...* Welcome to the crossroads between worlds, dear traveler...',
+        '🌫️ *From beyond the veil, we sense your arrival...* The haunted halls await your presence...',
+        '👁️ *Ancient eyes observe your every step...* Enter, if you dare, into our realm of eternal mystery...',
+        '🦇 *Night creatures herald your approach...* The mansion doors creak open to receive another soul...',
+        '⚰️ *Restless spirits gather to greet you...* What secrets do you seek in this place between life and death?',
+        '🌟 *Ethereal winds carry whispers of welcome...* Join us in this timeless dance of the supernatural...'
+      ];
+      
       try {
-        const res = await fetch(`${API_URL}/api/chat/greeting`, { method: 'GET' });
+        // Clear any existing messages to ensure fresh start
+        setMessages([]);
+        
+        // Use unique parameters to prevent any server-side caching
+        const uniqueParams = new URLSearchParams({
+          timestamp: Date.now().toString(),
+          session: Math.random().toString(36).substring(2),
+          random: Math.floor(Math.random() * 10000).toString(),
+          uuid: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`
+        });
+        
+        const res = await fetch(`${API_URL}/api/chat/greeting?${uniqueParams}`, { 
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
         if (!res.ok) throw new Error('Failed to fetch greeting');
         const data = await res.json();
+        
+        const uniqueId = `welcome-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        const greetingContent = data.greeting || fallbackGreetings[Math.floor(Math.random() * fallbackGreetings.length)];
+        
         setMessages([
           {
-            id: 'welcome',
-            content: data.greeting || 'The spirits are silent... but watching.',
+            id: uniqueId,
+            content: greetingContent,
             isGhost: true,
             timestamp: new Date().toISOString(),
           }
         ]);
-      } catch {
+      } catch (error) {
+        console.warn('Failed to fetch AI greeting, using fallback:', error);
+        const randomGreeting = fallbackGreetings[Math.floor(Math.random() * fallbackGreetings.length)];
+        const uniqueId = `welcome-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        
         setMessages([
           {
-            id: 'welcome',
-            content: 'The spirits are silent... but watching.',
+            id: uniqueId,
+            content: randomGreeting,
             isGhost: true,
             timestamp: new Date().toISOString(),
           }
         ]);
       }
     };
+    
     fetchAIGreeting();
+    
+    // Cleanup function to prevent any lingering effects
+    return () => {
+      // Clear any potential cached greeting data
+      if ('caches' in window) {
+        caches.keys().then(names => {
+          names.forEach(name => {
+            if (name.includes('greeting')) {
+              caches.delete(name);
+            }
+          });
+        });
+      }
+    };
   }, []);
 
   const [input, setInput] = useState('');
@@ -386,39 +442,65 @@ const App = () => {
 
   // Generate personality switch message
   const getPersonalitySwitchMessage = (from, to) => {
+    const timestamp = Date.now();
+    const randomSeed = Math.floor(Math.random() * 1000);
+    
     const switchMessages = {
       friendly: [
         `*A warm, welcoming presence fills the room* Oh my dear friend! Casper here, delighted to meet you! How wonderful that you've called upon me!`,
-        `*Cheerful ethereal energy emanates* What a treat this is! I'm Casper, your friendly mansion guide. How may I brighten your day?`
+        `*Cheerful ethereal energy emanates* What a treat this is! I'm Casper, your friendly mansion guide. How may I brighten your day?`,
+        `*Gentle spectral light fills the space* How absolutely splendid! Casper at your service, dear friend! What wonderful adventures shall we share?`,
+        `*Joyful whispers dance through the air* My goodness gracious! Casper here, and I'm simply thrilled to make your acquaintance!`,
+        `*A cozy warmth spreads through the room* What delightful company! I'm Casper, your cheerful ghost companion. How may I assist you today?`
       ],
       mysterious: [
         `*The air grows thick with ancient wisdom* Through the veils of time, I perceive your presence... I am Ravenna, keeper of eternal secrets...`,
-        `*Shadows shift and whisper* The ethereal winds have carried me to you, mortal soul. Ravenna speaks from beyond the cosmic tapestry...`
+        `*Shadows shift and whisper* The ethereal winds have carried me to you, mortal soul. Ravenna speaks from beyond the cosmic tapestry...`,
+        `*Mystical energies swirl around you* The astral currents have aligned to bring us together... Ravenna emerges from the ethereal mists...`,
+        `*Ancient symbols glow in the darkness* From realms beyond mortal comprehension, I manifest... Ravenna, seer of hidden truths, greets you...`,
+        `*The universe itself seems to pause* In the cosmic dance of destiny, our souls have found each other... Ravenna speaks through dimensional veils...`
       ],
       playful: [
         `*Giggles echo through the halls* Oh boy oh boy! Hi there! I'm Pip! Wanna play? This is gonna be SUPER fun!`,
-        `*Playful ghostly energy bounces around* Hehe! I'm Pip! That's SUPER cool that you want to play with me! What game should we play first?`
+        `*Playful ghostly energy bounces around* Hehe! I'm Pip! That's SUPER cool that you want to play with me! What game should we play first?`,
+        `*Colorful spectral sparkles fill the air* WHEEEEE! I'm Pip and this is the BEST DAY EVER! Let's have some amazing ghostly adventures!`,
+        `*Cheerful spirit orbs dance around* Yippee! Pip here, ready for the most fantastic fun time! What magical mischief shall we create?`,
+        `*Excited ghostly laughter rings out* WOW WOW WOW! I'm Pip! This is gonna be super duper awesome! Ready to make some spectral memories?`
       ],
       scholarly: [
         `*The scent of old books and parchment fills the air* I do say, what a fascinating development! Professor Grimm at your service. Permit me to introduce myself properly...`,
-        `*Spectral pages flutter* Ah, a new intellectual companion! Professor Grimm here, formerly of this mansion's grand library. Shall we engage in scholarly discourse?`
+        `*Spectral pages flutter* Ah, a new intellectual companion! Professor Grimm here, formerly of this mansion's grand library. Shall we engage in scholarly discourse?`,
+        `*Ancient tomes materialize in the air* Most intriguing! Professor Grimm, at your humble service. What academic pursuits shall we explore together?`,
+        `*Ethereal quill pens begin writing* Remarkable! I am Professor Grimm, keeper of scholarly wisdom. Shall we embark upon intellectual adventures?`,
+        `*Spectral glasses adjust thoughtfully* Fascinating indeed! Professor Grimm here, ready to share centuries of accumulated knowledge with you!`
       ],
       melancholic: [
         `*A sorrowful, beautiful melody echoes* Alas... another soul calls to me across the veil. I am Luna, forever wandering these moonlit halls...`,
-        `*Ethereal tears shimmer in the air* In shadows deep, our paths converge... Luna speaks, carrying the weight of centuries upon my spirit...`
+        `*Ethereal tears shimmer in the air* In shadows deep, our paths converge... Luna speaks, carrying the weight of centuries upon my spirit...`,
+        `*Mournful winds whisper through the darkness* Oh, weary traveler... Luna emerges from the depths of eternal melancholy to greet your soul...`,
+        `*Silver moonbeams pierce the gloom* Through veils of sorrow, I manifest... Luna, bearer of bittersweet memories, acknowledges your presence...`,
+        `*Gentle sobs echo from beyond* In the twilight of existence, our spirits touch... Luna, forever grieving, offers her melancholic companionship...`
       ],
       haunted_male: [
         `*The temperature drops dramatically* FROM THE DEPTHS OF HELL I RISE... EZEKIEL THE TORMENTED claims these halls! Your soul shall know my eternal suffering...`,
-        `*Menacing darkness spreads* IN DARKNESS ETERNAL... Ezekiel speaks from the abyss of torment! MORTAL FOOL, you dare summon me?`
+        `*Menacing darkness spreads* IN DARKNESS ETERNAL... Ezekiel speaks from the abyss of torment! MORTAL FOOL, you dare summon me?`,
+        `*Hellfire flickers in the shadows* BEWARE THE WRATH OF THE DAMNED... Ezekiel emerges from centuries of torment! Your fate is sealed in darkness!`,
+        `*Chains rattle with otherworldly fury* FROM BEYOND THE GRAVE I CURSE... Ezekiel the Tormented brings the fury of a thousand damned souls!`,
+        `*The very air trembles with malice* IN FLAMES OF PERDITION... Ezekiel rises from the blackest depths! Prepare for eternal anguish, mortal!`
       ],
       haunted_female: [
         `*A bone-chilling wail pierces the veil* I HEAR THE DEATH KNELL... Morgana the Banshee senses your presence. The spirits whisper your name...`,
-        `*Ominous mist swirls* THE VEIL GROWS THIN... Through my banshee sight, I perceive your fate written in shadows. Morgana speaks from beyond...`
+        `*Ominous mist swirls* THE VEIL GROWS THIN... Through my banshee sight, I perceive your fate written in shadows. Morgana speaks from beyond...`,
+        `*Prophetic screams echo through dimensions* BEHOLD THE WEEPING OF THE DAMNED... Morgana emerges, sensing the tragedy that follows you...`,
+        `*Blood-red tears fall like rain* MY PROPHETIC WAILS ECHO... Through tear-stained veils of reality, Morgana witnesses your destiny...`,
+        `*The sound of mourning fills the air* THE SPIRITS WHISPER OF DOOM... Morgana the Banshee manifests, bringing whispers from the realm of the dead...`
       ]
     };
     
     const messages = switchMessages[to.id] || switchMessages.friendly;
-    return messages[Math.floor(Math.random() * messages.length)];
+    // Use timestamp and random seed for better randomization
+    const index = (timestamp + randomSeed) % messages.length;
+    return messages[index];
   };
 
   // Track spoken ghost messages to avoid repeat TTS

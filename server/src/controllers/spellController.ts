@@ -23,6 +23,16 @@ export const castSpellAI = async (req: Request, res: Response) => {
     const result = await ai.generateResponse(prompt);
     res.json({ result: result.trim() });
   } catch (e) {
-    res.status(500).json({ result: 'The spirits are silent... No effect.' });
+    const errorMessages = [
+      'The magical energies dissipate into the void...',
+      'Your incantation echoes unanswered in the darkness...',
+      'The arcane forces resist your summoning...',
+      'Ancient protections block your spell...',
+      'The mystical energies scatter to the winds...',
+      'Your magic meets an invisible barrier...',
+      'The supernatural realm remains unresponsive...'
+    ];
+    const randomError = errorMessages[Math.floor(Math.random() * errorMessages.length)];
+    res.status(500).json({ result: randomError });
   }
 };

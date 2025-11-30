@@ -289,46 +289,86 @@ const hasPersonalityIndicators = (response: string, personality: any): boolean =
 
 // Helper function to get personality-specific fallback responses
 const getPersonalityFallbackResponse = (personality: any, userMessage: string, moodAnalysis: any): string => {
+  const timestamp = Date.now();
+  const randomSeed = Math.floor(Math.random() * 1000);
+  
   const fallbackResponses = {
     friendly: [
       "Oh my dear friend! What a delightful question you've asked! Let me share some cheerful thoughts with you...",
       "How wonderful to hear from you again! Your presence brings such joy to these old halls!",
-      "What a treat this is! I'm absolutely thrilled to chat with such splendid company!"
+      "What a treat this is! I'm absolutely thrilled to chat with such splendid company!",
+      "My goodness gracious! Your words warm my spectral heart with such joy and light!",
+      "Absolutely splendid to converse with you! What fascinating topics you bring to our ghostly gatherings!",
+      "How delightfully refreshing! Your presence makes these ancient corridors feel so much brighter!",
+      "What wonderful company you are! I haven't felt this cheerful in decades, dear friend!",
+      "Oh, what a marvelous soul you have! Your questions spark such delightful conversations!"
     ],
     mysterious: [
       "The ethereal winds whisper secrets of your inquiry... Through the veils of time, I perceive ancient wisdom calling...",
       "In the shadows of eternity, your words echo with profound meaning... The cosmic tapestry reveals hidden truths...",
-      "As the celestial alignments shift, I sense the deeper mysteries you seek to understand..."
+      "As the celestial alignments shift, I sense the deeper mysteries you seek to understand...",
+      "From realms beyond mortal comprehension, ancient knowledge flows... Your soul calls to forgotten wisdom...",
+      "The astral currents carry whispers of destiny... In the twilight between worlds, answers await...",
+      "Through the mists of time and space, I perceive the threads of fate weaving around your inquiry...",
+      "The cosmic winds speak of secrets hidden in starlight... Your question resonates across dimensions...",
+      "In the ethereal silence between heartbeats, the universe reveals its deepest mysteries to those who seek..."
     ],
     playful: [
       "Oh boy oh boy! That's super cool! Wanna play a game about it? I know I know!",
       "That's SUPER duper awesome! Let's make it into a fun adventure! Wanna see something neat?",
-      "Oh wow oh wow! That sounds like the best thing ever! Let's play pretend about it!"
+      "Oh wow oh wow! That sounds like the best thing ever! Let's play pretend about it!",
+      "Yippee! That's the most exciting thing I've heard all century! Can we make it into a treasure hunt?",
+      "Wheee! What a fantastic idea! I bet we could turn this into the most amazing ghostly game ever!",
+      "Ooh ooh! That gives me the most wonderful idea for a spooky adventure! Ready to have some fun?",
+      "Holy spectral socks! That's incredible! I'm bouncing around the walls with excitement!",
+      "WOW WOW WOW! This is gonna be the best ghostly fun time ever! Let's make some magical memories!"
     ],
     scholarly: [
       "I do say, what a fascinating inquiry! Permit me to elaborate on this most intriguing subject from my extensive studies...",
       "Fascinating indeed! My academic observations suggest there are multiple scholarly perspectives to consider...",
-      "If I may venture, this topic requires careful intellectual examination. Shall we explore this in greater depth?"
+      "If I may venture, this topic requires careful intellectual examination. Shall we explore this in greater depth?",
+      "Remarkable! My centuries of scholarly pursuit have revealed many facets to this particular phenomenon...",
+      "Most illuminating! Allow me to share some insights from my ethereal research into this compelling matter...",
+      "How intellectually stimulating! My academic spirit is quite invigorated by such thoughtful discourse...",
+      "Splendid inquiry! Let me consult the vast libraries of knowledge I've accumulated over the ages...",
+      "Ah, a question worthy of deep contemplation! My scholarly investigations suggest several intriguing possibilities..."
     ],
     melancholic: [
       "Alas... your words stir memories like autumn leaves upon my ethereal heart... In shadows deep, I find beauty in your question...",
       "Woe fills my spirit, yet in your inquiry I see the bittersweet nature of existence... Like morning dew upon a grave...",
-      "My soul weeps with understanding... In the moonlight of memory, your words resonate with tragic beauty..."
+      "My soul weeps with understanding... In the moonlight of memory, your words resonate with tragic beauty...",
+      "Oh, sorrowful winds carry your question to my melancholy heart... In darkness, I find profound meaning...",
+      "The tears of eternity fall like gentle rain upon your words... Such poignant wisdom in your inquiry...",
+      "Through veils of sadness, your question touches the depths of my weary spirit... Beauty in sorrow...",
+      "Alas, sweet melancholy embraces your words like mist upon a moonlit grave... So hauntingly beautiful...",
+      "In the shadows of my eternal grief, your question blooms like a pale flower... Bittersweet understanding..."
     ],
     haunted_male: [
       "FROM THE DEPTHS OF HELL I SPEAK... YOUR SOUL SHALL KNOW the darkness that consumes all hope! MORTAL FOOL...",
       "IN DARKNESS ETERNAL... Your words echo through the abyss of my tormented existence! The shadows know your name...",
-      "YOUR FATE IS WRITTEN IN BLOOD AND SHADOW... I have witnessed the futility of all mortal concerns!"
+      "YOUR FATE IS WRITTEN IN BLOOD AND SHADOW... I have witnessed the futility of all mortal concerns!",
+      "BEWARE THE WRATH OF THE DAMNED... Your question awakens the fury of a thousand tormented souls!",
+      "FROM BEYOND THE GRAVE I CURSE... The very air trembles with the weight of my eternal anguish!",
+      "IN FLAMES OF PERDITION... Your mortal mind cannot comprehend the horror that awaits all living things!",
+      "DARKNESS CONSUMES ALL... Through centuries of torment, I have learned the terrible truth of existence!",
+      "THE VOID CALLS YOUR NAME... In the blackest depths of despair, your question finds its answer in suffering!"
     ],
     haunted_female: [
       "I HEAR THE DEATH KNELL... The spirits whisper your name through the veil of sorrow... THE VEIL GROWS THIN...",
       "YOUR FATE IS WRITTEN IN SHADOWS... My mournful wails echo through dimensions, sensing the tragedy that approaches...",
-      "THE SPIRITS WHISPER OF DOOM... Through my banshee sight, I perceive the darkness that haunts your path..."
+      "THE SPIRITS WHISPER OF DOOM... Through my banshee sight, I perceive the darkness that haunts your path...",
+      "BEHOLD THE WEEPING OF THE DAMNED... Your words pierce the silence of eternal mourning... I SEE YOUR END...",
+      "IN SORROW EVERLASTING... The winds of death carry whispers of your inevitable destiny... THE HOUR DRAWS NEAR...",
+      "MY PROPHETIC WAILS ECHO... Through tear-stained veils of reality, I witness the shadows that follow you...",
+      "THE MOURNING NEVER ENDS... In the mists between worlds, your question awakens the crying of lost souls...",
+      "THROUGH TEARS OF BLOOD... The spectral realm reveals the tragic truths that mortals fear to know..."
     ]
   };
   
   const responses = fallbackResponses[personality.id as keyof typeof fallbackResponses] || fallbackResponses.friendly;
-  return responses[Math.floor(Math.random() * responses.length)];
+  // Use timestamp and random seed to ensure different selection each time
+  const index = (timestamp + randomSeed) % responses.length;
+  return responses[index];
 };
 
 // Helper function to extract main topic from message
