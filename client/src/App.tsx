@@ -320,7 +320,7 @@ const App = () => {
   });
 
   // Voice effect for ghost messages (sync with Settings)
-  const [voiceEffect, setVoiceEffect] = useState<'none' | 'echo' | 'reverb' | 'whisper' | 'robot'>('none');
+  const [voiceEffect, setVoiceEffect] = useState<'none' | 'echo' | 'reverb' | 'whisper' | 'robot' | 'demonic' | 'ghostly' | 'banshee' | 'ancient' | 'otherworldly' | 'tormented'>('ghostly');
 
   // Fetch server-provided personalities and sync initial selection
   const { personalities, isLoading: personalitiesLoading } = usePersonalities();
@@ -369,15 +369,79 @@ const App = () => {
   const { speak: speakText, isSpeaking, voices } = useVoiceSynthesis();
   // Helper to get effect for current personality
   const getEffectForPersonality = (personality): VoiceEffect => {
-    if (personality.id.includes('banshee')) return 'whisper';
-    if (personality.id.includes('robot')) return 'robot';
-    if (personality.id.includes('echo')) return 'echo';
-    if (personality.id.includes('reverb')) return 'reverb';
-    return 'none';
+    switch (personality.id) {
+      case 'haunted_male':
+      case 'haunted_female':
+        return personality.id === 'haunted_male' ? 'demonic' : 'banshee';
+      case 'melancholic':
+        return 'ghostly';
+      case 'mysterious':
+        return 'otherworldly';
+      case 'playful':
+        return 'ancient';  // Child ghost with old soul
+      case 'scholarly':
+        return 'ancient';
+      case 'friendly':
+        return 'ghostly';
+      default:
+        return 'ghostly';  // Default horror voice instead of 'none'
+    }
   };
   // Helper to get a matching voice for the personality
   const getVoiceForPersonality = (personality) => {
-    return voices.find(v => v.name.toLowerCase().includes(personality.name.toLowerCase())) || null;
+    // Filter voices based on personality type for better horror experience
+    const availableVoices = voices.filter(v => v.lang.startsWith('en'));
+    
+    switch (personality.id) {
+      case 'haunted_male':
+        // Look for deep, male voices for demonic effect
+        return availableVoices.find(v => 
+          v.name.toLowerCase().includes('male') ||
+          v.name.toLowerCase().includes('david') ||
+          v.name.toLowerCase().includes('daniel') ||
+          v.name.toLowerCase().includes('mark') ||
+          v.name.toLowerCase().includes('deep')
+        ) || availableVoices[0] || null;
+        
+      case 'haunted_female':
+        // Look for female voices for banshee effect
+        return availableVoices.find(v => 
+          v.name.toLowerCase().includes('female') ||
+          v.name.toLowerCase().includes('susan') ||
+          v.name.toLowerCase().includes('hazel') ||
+          v.name.toLowerCase().includes('karen')
+        ) || availableVoices[0] || null;
+        
+      case 'melancholic':
+        // Prefer softer, sadder voices
+        return availableVoices.find(v => 
+          v.name.toLowerCase().includes('female') ||
+          v.name.toLowerCase().includes('samantha') ||
+          v.name.toLowerCase().includes('alex')
+        ) || availableVoices[0] || null;
+        
+      case 'playful':
+        // Higher pitched voice for child ghost
+        return availableVoices.find(v => 
+          v.name.toLowerCase().includes('female') ||
+          v.name.toLowerCase().includes('young')
+        ) || availableVoices[0] || null;
+        
+      case 'scholarly':
+        // Distinguished male voice for professor
+        return availableVoices.find(v => 
+          v.name.toLowerCase().includes('male') ||
+          v.name.toLowerCase().includes('daniel') ||
+          v.name.toLowerCase().includes('david')
+        ) || availableVoices[0] || null;
+        
+      default:
+        // Use any available horror-friendly voice
+        return availableVoices.find(v => 
+          v.name.toLowerCase().includes('deep') ||
+          v.name.toLowerCase().includes('dark')
+        ) || availableVoices[0] || null;
+    }
   };
   const { 
     isPlaying: isMusicPlaying,
