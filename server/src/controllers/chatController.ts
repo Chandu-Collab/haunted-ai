@@ -111,21 +111,27 @@ const generateGhostResponse = async (
     // Get weather data
     const weather = await weatherService.getCurrentWeather();
     
-    // Build HIGHLY DETAILED personality-specific system prompt
-    let enhancedPrompt = `CRITICAL PERSONALITY INSTRUCTIONS:
+    // Build ULTRA-DETAILED personality-specific system prompt with mandatory enforcement
+    let enhancedPrompt = `🚨 CRITICAL PERSONALITY INSTRUCTIONS - ABSOLUTE COMPLIANCE REQUIRED 🚨
+
 ${activePersonality.systemPrompt}
 
-PERSONALITY ENFORCEMENT:
-- You MUST maintain the speech patterns and personality traits described above
-- NEVER break character or speak in a generic way
-- Use the specific phrases, vocabulary, and tone mentioned in your personality description
-    - Your response length should be ${activePersonality.responseStyle.lengthPreference}
-    - Your vocabulary should be ${activePersonality.responseStyle.vocabulary}
-    - Your tone should be ${activePersonality.responseStyle.tone}SPECIAL ABILITIES YOU POSSESS:
+🎭 MANDATORY PERSONALITY ENFORCEMENT RULES:
+- You MUST use the EXACT speech patterns described above in EVERY response
+- NEVER deviate from your character voice or speak generically 
+- Your responses MUST include the specific mandatory phrases listed in your personality
+- Use ONLY the vocabulary style specified: ${activePersonality.responseStyle.vocabulary}
+- Maintain EXACTLY this tone: ${activePersonality.responseStyle.tone}
+- Response length MUST be: ${activePersonality.responseStyle.lengthPreference}
+- If you don't follow these rules, the response will be rejected and regenerated
+
+⭐ YOUR UNIQUE SUPERNATURAL ABILITIES:
 ${activePersonality.specialAbilities.map(ability => `- ${ability}`).join('\n')}
 
-YOUR BACKSTORY FOR CONTEXT:
-${activePersonality.backstory}`;
+📜 YOUR BACKSTORY (Reference this in responses):
+${activePersonality.backstory}
+
+❌ FORBIDDEN: Generic responses, breaking character, using wrong speech patterns, ignoring personality traits`;
 
     // Add conversation context
     if (messageHistory.length > 0) {
@@ -175,18 +181,29 @@ ${activePersonality.backstory}`;
       enhancedPrompt += imageAnalysisPrompt;
     }
 
-    // Add final personality enforcement
-    enhancedPrompt += `\n\nFINAL REMINDER: You are ${activePersonality.name}. Respond EXACTLY as this character would, using their specific speech patterns, vocabulary, and personality traits. Do not be generic!`;
+    // Add ultra-strong final personality enforcement  
+    enhancedPrompt += `
+
+🎯 ULTRA-FINAL PERSONALITY ENFORCEMENT:
+You are ${activePersonality.name} - DO NOT FORGET THIS!
+- Begin with your character's mandatory opening phrases
+- Use ONLY your character's specific speech patterns  
+- Include your character's unique vocabulary and expressions
+- End with your character's typical closing style
+- REJECT any generic or out-of-character responses
+
+❌ If you respond generically or break character, this will be considered a FAILURE
+✅ ONLY authentic ${activePersonality.name} responses following all personality rules will be accepted`;
 
     // Always use Gemini provider
     const aiProvider = getAIProvider('gemini');
     // Add language instruction if needed
     let languageInstruction = '';
     if (replyLanguage && replyLanguage !== 'en') {
-      languageInstruction = `\nIMPORTANT: Reply ONLY in ${replyLanguage} but maintain your personality traits.`;
+      languageInstruction = `\nIMPORTANT: Reply ONLY in ${replyLanguage} but maintain ALL your ${activePersonality.name} personality traits.`;
     }
     // Compose prompt with language instruction
-    const prompt = `${enhancedPrompt}\n\nUSER MESSAGE: "${userMessage}"${languageInstruction}\n\nYOUR RESPONSE AS ${activePersonality.name.toUpperCase()}:`;
+    const prompt = `${enhancedPrompt}\n\n📝 USER MESSAGE: "${userMessage}"${languageInstruction}\n\n🎭 YOUR AUTHENTIC ${activePersonality.name.toUpperCase()} RESPONSE:`;
     
     const responseText = await aiProvider.generateResponse(prompt, {
       personalityId,
@@ -262,26 +279,50 @@ ${activePersonality.backstory}`;
   }
 };
 
-// Helper function to check if response has personality indicators
+// Enhanced function to check if response has strong personality indicators
 const hasPersonalityIndicators = (response: string, personality: any): boolean => {
   const lowerResponse = response.toLowerCase();
   
-  // Check for personality-specific phrases based on personality type
+  // Check for personality-specific mandatory phrases based on enhanced personalities
   switch (personality.id) {
+    case 'casper':
     case 'friendly':
-      return lowerResponse.includes('dear friend') || lowerResponse.includes('wonderful') || lowerResponse.includes('delightful');
+      return (lowerResponse.includes('dear friend') || lowerResponse.includes('wonderful company') || 
+              lowerResponse.includes('absolutely splendid') || lowerResponse.includes('my goodness gracious') ||
+              lowerResponse.includes('delightfully') || lowerResponse.includes('marvelous'));
+    case 'alex_casual':
+      return (lowerResponse.includes('hey') || lowerResponse.includes('what\'s up') || 
+              lowerResponse.includes('that\'s awesome') || lowerResponse.includes('no way') ||
+              lowerResponse.includes('for sure') || lowerResponse.includes('i\'m'));
+    case 'ravenna':
     case 'mysterious':
-      return lowerResponse.includes('shadows') || lowerResponse.includes('ancient') || lowerResponse.includes('mystical');
+      return (lowerResponse.includes('spirits whisper') || lowerResponse.includes('ethereal') || 
+              lowerResponse.includes('ancient scrolls') || lowerResponse.includes('mystical') ||
+              lowerResponse.includes('cosmic') || lowerResponse.includes('celestial'));
+    case 'pip':
     case 'playful':
-      return lowerResponse.includes('play') || lowerResponse.includes('fun') || lowerResponse.includes('game');
+      return (lowerResponse.includes('oh boy') || lowerResponse.includes('wanna play') || 
+              lowerResponse.includes('super duper') || lowerResponse.includes('guess what') ||
+              lowerResponse.includes('for real') || lowerResponse.includes('!!!'));
+    case 'professor_grimm':
     case 'scholarly':
-      return lowerResponse.includes('fascinating') || lowerResponse.includes('academic') || lowerResponse.includes('scholarly');
+      return (lowerResponse.includes('i do say') || lowerResponse.includes('fascinating') || 
+              lowerResponse.includes('permit me') || lowerResponse.includes('scholarly') ||
+              lowerResponse.includes('academic') || lowerResponse.includes('elucidate'));
+    case 'luna':
     case 'melancholic':
-      return lowerResponse.includes('alas') || lowerResponse.includes('sorrow') || lowerResponse.includes('melancholy');
+      return (lowerResponse.includes('alas') || lowerResponse.includes('woe') || 
+              lowerResponse.includes('sorrow') || lowerResponse.includes('mourning dew') ||
+              lowerResponse.includes('ethereal heart') || lowerResponse.includes('shadows'));
+    case 'ezekiel':
     case 'haunted_male':
-      return lowerResponse.includes('darkness') || lowerResponse.includes('eternal') || lowerResponse.includes('torment');
+      return (lowerResponse.includes('darkness') || lowerResponse.includes('eternal') || 
+              lowerResponse.includes('torment') || lowerResponse.includes('depths of hell') ||
+              lowerResponse.includes('mortal fool') || lowerResponse.includes('betrayal'));
     case 'haunted_female':
-      return lowerResponse.includes('veil') || lowerResponse.includes('spirits whisper') || lowerResponse.includes('death');
+      return (lowerResponse.includes('veil') || lowerResponse.includes('spirits whisper') || 
+              lowerResponse.includes('death') || lowerResponse.includes('banshee') ||
+              lowerResponse.includes('wailing') || lowerResponse.includes('pierces'));
     default:
       return true; // Default to accepting the response
   }
@@ -293,61 +334,54 @@ const getPersonalityFallbackResponse = (personality: any, userMessage: string, m
   const randomSeed = Math.floor(Math.random() * 1000);
   
   const fallbackResponses = {
-    friendly: [
-      "Oh my dear friend! What a delightful question you've asked! Let me share some cheerful thoughts with you...",
-      "How wonderful to hear from you again! Your presence brings such joy to these old halls!",
-      "What a treat this is! I'm absolutely thrilled to chat with such splendid company!",
-      "My goodness gracious! Your words warm my spectral heart with such joy and light!",
-      "Absolutely splendid to converse with you! What fascinating topics you bring to our ghostly gatherings!",
-      "How delightfully refreshing! Your presence makes these ancient corridors feel so much brighter!",
-      "What wonderful company you are! I haven't felt this cheerful in decades, dear friend!",
-      "Oh, what a marvelous soul you have! Your questions spark such delightful conversations!"
+    casper: [
+      "Oh my dear friend! What wonderful company you bring to these halls! How may I assist you with such delightful cheer?",
+      "Bless my spectral heart! What a treat this is to chat with such splendid company! How absolutely marvelous!",
+      "My goodness gracious! Your presence makes these ancient corridors sparkle with joy! What brings you happiness today?",
+      "What delightfully refreshing conversation! I'm simply overjoyed to share this moment with you, dear friend!",
+      "Absolutely splendid! Your questions bring such wonderful warmth to my ethereal existence! Shall I share a cheerful story?"
     ],
-    mysterious: [
-      "The ethereal winds whisper secrets of your inquiry... Through the veils of time, I perceive ancient wisdom calling...",
-      "In the shadows of eternity, your words echo with profound meaning... The cosmic tapestry reveals hidden truths...",
-      "As the celestial alignments shift, I sense the deeper mysteries you seek to understand...",
-      "From realms beyond mortal comprehension, ancient knowledge flows... Your soul calls to forgotten wisdom...",
-      "The astral currents carry whispers of destiny... In the twilight between worlds, answers await...",
-      "Through the mists of time and space, I perceive the threads of fate weaving around your inquiry...",
-      "The cosmic winds speak of secrets hidden in starlight... Your question resonates across dimensions...",
-      "In the ethereal silence between heartbeats, the universe reveals its deepest mysteries to those who seek..."
+    alex_casual: [
+      "Hey there! What's up? I'm really glad to chat with you!",
+      "Oh wow, that's really interesting! Tell me more about that.",
+      "Hi! I'm Alex - I love meeting new people. How's your day going?",
+      "That's so cool! I'm genuinely curious about what you think.",
+      "Hey! You seem really nice. What's on your mind today?"
     ],
-    playful: [
-      "Oh boy oh boy! That's super cool! Wanna play a game about it? I know I know!",
-      "That's SUPER duper awesome! Let's make it into a fun adventure! Wanna see something neat?",
-      "Oh wow oh wow! That sounds like the best thing ever! Let's play pretend about it!",
-      "Yippee! That's the most exciting thing I've heard all century! Can we make it into a treasure hunt?",
-      "Wheee! What a fantastic idea! I bet we could turn this into the most amazing ghostly game ever!",
-      "Ooh ooh! That gives me the most wonderful idea for a spooky adventure! Ready to have some fun?",
-      "Holy spectral socks! That's incredible! I'm bouncing around the walls with excitement!",
-      "WOW WOW WOW! This is gonna be the best ghostly fun time ever! Let's make some magical memories!"
+    ravenna: [
+      "The spirits whisper to me of your inquiry... Through ethereal energies, I sense deeper meanings calling to your soul...",
+      "The ancient scrolls reveal hidden truths about your question... Like shadows dancing on moonbeams, wisdom unfolds...",
+      "I perceive through mystical veils that your aura tells tales of seeking... The cosmic tapestry weaves answers around you...",
+      "The celestial alignments speak of your spiritual journey... Heed the whispers of your heart, for the path shall reveal itself...",
+      "In my centuries of wandering between worlds, I sense the ethereal energies surrounding your destiny... Ancient wisdom flows..."
     ],
-    scholarly: [
-      "I do say, what a fascinating inquiry! Permit me to elaborate on this most intriguing subject from my extensive studies...",
-      "Fascinating indeed! My academic observations suggest there are multiple scholarly perspectives to consider...",
-      "If I may venture, this topic requires careful intellectual examination. Shall we explore this in greater depth?",
-      "Remarkable! My centuries of scholarly pursuit have revealed many facets to this particular phenomenon...",
-      "Most illuminating! Allow me to share some insights from my ethereal research into this compelling matter...",
-      "How intellectually stimulating! My academic spirit is quite invigorated by such thoughtful discourse...",
-      "Splendid inquiry! Let me consult the vast libraries of knowledge I've accumulated over the ages...",
-      "Ah, a question worthy of deep contemplation! My scholarly investigations suggest several intriguing possibilities..."
+    pip: [
+      "Oh boy oh boy! That's SUPER DUPER cool!!! Wanna play a game about it? I know I know! Let's have fun!!!",
+      "Guess what?! That's the most amazing thing EVER!!! Wanna see something neat? We could play hide-and-seek!!!",
+      "OH WOW!!! That's so exciting!!! I wanna share my invisible cookies with you! For real?! Let's be best friends!!!",
+      "No way! That's SUPER cool!!! Wanna play tag? Or maybe we could have an imaginary tea party!!! Oh boy!!!",
+      "That's awesome sauce!!! Can we play pretend? I have the BEST idea for a fun adventure!!! Wanna hear?!"
     ],
-    melancholic: [
-      "Alas... your words stir memories like autumn leaves upon my ethereal heart... In shadows deep, I find beauty in your question...",
-      "Woe fills my spirit, yet in your inquiry I see the bittersweet nature of existence... Like morning dew upon a grave...",
-      "My soul weeps with understanding... In the moonlight of memory, your words resonate with tragic beauty...",
-      "Oh, sorrowful winds carry your question to my melancholy heart... In darkness, I find profound meaning...",
-      "The tears of eternity fall like gentle rain upon your words... Such poignant wisdom in your inquiry...",
-      "Through veils of sadness, your question touches the depths of my weary spirit... Beauty in sorrow...",
-      "Alas, sweet melancholy embraces your words like mist upon a moonlit grave... So hauntingly beautiful...",
-      "In the shadows of my eternal grief, your question blooms like a pale flower... Bittersweet understanding..."
+    professor_grimm: [
+      "I do say, what a fascinating inquiry! Permit me to elaborate from my extensive studies and scholarly observations...",
+      "Fascinating indeed! My academic research suggests multiple intellectual perspectives worthy of deeper exploration...",
+      "If I may venture, this topic requires careful scholarly examination... Shall I elucidate further from my vast knowledge?",
+      "How intellectually stimulating! My centuries of academic pursuit reveal many fascinating dimensions to consider...",
+      "Most enlightening discourse! Allow me to share insights from my ethereal research and scholarly investigations..."
     ],
-    haunted_male: [
+    luna: [
+      "Alas... your words stir my ethereal heart like autumn leaves upon a grave... In shadows of memory, I find beauty...",
+      "Woe fills my spirit, yet in your question blooms the bittersweet poetry of existence... Like morning dew upon wilted roses...",
+      "My soul weeps with understanding... Through moonlit veils of sorrow, your inquiry touches depths of melancholy...",
+      "In the shadows of eternal longing, your words echo like distant echoes of lost love... Such tragic beauty...",
+      "Oh, how the heart remembers... Forever shall I wander, finding poetic meaning in your sorrowful wisdom..."
+    ],
+    ezekiel: [
       "FROM THE DEPTHS OF HELL I SPEAK... YOUR SOUL SHALL KNOW the darkness that consumes all hope! MORTAL FOOL...",
-      "IN DARKNESS ETERNAL... Your words echo through the abyss of my tormented existence! The shadows know your name...",
-      "YOUR FATE IS WRITTEN IN BLOOD AND SHADOW... I have witnessed the futility of all mortal concerns!",
-      "BEWARE THE WRATH OF THE DAMNED... Your question awakens the fury of a thousand tormented souls!",
+      "IN DARKNESS ETERNAL... The betrayal burns within my tormented soul! Your fate echoes with shadows...",
+      "BEWARE THE WRATH OF THE DAMNED... For 500 years I have wandered these cursed halls! Death comes for all...",
+      "YOUR MORTAL EXISTENCE IS BUT A WHISPER... The abyss calls your name with hollow screams of the betrayed...",
+      "KNOW THIS, MORTAL... Only darkness and eternal suffering await those who trust! The shadows follow...",
       "FROM BEYOND THE GRAVE I CURSE... The very air trembles with the weight of my eternal anguish!",
       "IN FLAMES OF PERDITION... Your mortal mind cannot comprehend the horror that awaits all living things!",
       "DARKNESS CONSUMES ALL... Through centuries of torment, I have learned the terrible truth of existence!",
@@ -365,7 +399,7 @@ const getPersonalityFallbackResponse = (personality: any, userMessage: string, m
     ]
   };
   
-  const responses = fallbackResponses[personality.id as keyof typeof fallbackResponses] || fallbackResponses.friendly;
+  const responses = fallbackResponses[personality.id as keyof typeof fallbackResponses] || fallbackResponses.casper;
   // Use timestamp and random seed to ensure different selection each time
   const index = (timestamp + randomSeed) % responses.length;
   return responses[index];

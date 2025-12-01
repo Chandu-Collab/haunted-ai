@@ -1,8 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Fira+Code:wght@400;500&family=Creepster&family=Nosifer&display=swap');
+
 /* Spell casting slow spin */
 .animate-spin-slow {
   animation: spin 2.5s linear infinite;
 }
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Fira+Code:wght@400;500&family=Creepster&family=Nosifer&display=swap');
 /* Candle flame animation for SeanceMode */
 .animate-candle-flame {
   animation: candle-flame 1.1s infinite alternate cubic-bezier(0.4,0,0.2,1);
