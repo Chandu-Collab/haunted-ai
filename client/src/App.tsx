@@ -582,6 +582,7 @@ const App = () => {
             rate: appSettings.ghostPersonality.voiceSettings.rate,
             pitch: appSettings.ghostPersonality.voiceSettings.pitch,
             volume: appSettings.ghostPersonality.voiceSettings.volume,
+            gender: appSettings.ghostPersonality.voiceSettings.gender,
             effect: voiceEffect,
             voice: getVoiceForPersonality(appSettings.ghostPersonality)
           }
@@ -711,7 +712,10 @@ const App = () => {
     setMessages(prev => [...prev, storyMessage]);
     
     if (appSettings.voiceEnabled) {
-      speakText(storyText, appSettings.ghostPersonality.voiceSettings);
+      speakText(storyText, {
+        ...appSettings.ghostPersonality.voiceSettings,
+        gender: appSettings.ghostPersonality.voiceSettings.gender
+      });
     }
   }, [appSettings.voiceEnabled, appSettings.ghostPersonality.voiceSettings, speakText]);
 
@@ -1534,6 +1538,7 @@ const App = () => {
                                     rate: appSettings.ghostPersonality.voiceSettings.rate,
                                     pitch: appSettings.ghostPersonality.voiceSettings.pitch,
                                     volume: appSettings.ghostPersonality.voiceSettings.volume,
+                                    gender: appSettings.ghostPersonality.voiceSettings.gender,
                                     effect: voiceEffect,
                                     voice: getVoiceForPersonality(appSettings.ghostPersonality)
                                   }

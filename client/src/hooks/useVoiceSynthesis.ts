@@ -8,11 +8,12 @@ interface VoiceOptions {
   pitch?: number;
   volume?: number;
   effect?: VoiceEffect;
+  gender?: 'male' | 'female';
 }
 
 interface UseVoiceSynthesis {
   speak: (text: string, options?: VoiceOptions) => Promise<void>;
-  preview: (text: string, personality: { voiceSettings: { rate: number; pitch: number; volume: number }, effect?: VoiceEffect, voice?: SpeechSynthesisVoice }) => Promise<void>;
+  preview: (text: string, personality: { voiceSettings: { rate: number; pitch: number; volume: number; gender?: 'male' | 'female' }, effect?: VoiceEffect, voice?: SpeechSynthesisVoice }) => Promise<void>;
   stop: () => void;
   isSpeaking: boolean;
   isSupported: boolean;
@@ -156,6 +157,53 @@ export const useVoiceSynthesis = (): UseVoiceSynthesis => {
     }
   }, []);
 
+  // Function to get appropriate voice based on gender preference
+  const getVoiceByGender = useCallback((preferredGender?: 'male' | 'female'): SpeechSynthesisVoice | null => {
+    if (!voices.length) return selectedVoice;
+
+    // Filter for English voices only
+    const englishVoices = voices.filter(voice => 
+      voice.lang.startsWith('en-') || voice.lang === 'en'
+    );
+
+    if (preferredGender === 'female') {
+      // Look for female voices
+      const femaleVoices = englishVoices.filter(voice => 
+        voice.name.toLowerCase().includes('female') ||
+        voice.name.toLowerCase().includes('samantha') ||
+        voice.name.toLowerCase().includes('alex') ||
+        voice.name.toLowerCase().includes('kate') ||
+        voice.name.toLowerCase().includes('zira') ||
+        voice.name.toLowerCase().includes('aria') ||
+        voice.name.toLowerCase().includes('susan') ||
+        voice.name.toLowerCase().includes('hazel') ||
+        voice.name.toLowerCase().includes('karen')
+      );
+      if (femaleVoices.length > 0) {
+        console.log('Selected female voice:', femaleVoices[0].name);
+        return femaleVoices[0];
+      }
+    } else if (preferredGender === 'male') {
+      // Look for male voices
+      const maleVoices = englishVoices.filter(voice => 
+        voice.name.toLowerCase().includes('male') ||
+        voice.name.toLowerCase().includes('daniel') ||
+        voice.name.toLowerCase().includes('david') ||
+        voice.name.toLowerCase().includes('mark') ||
+        voice.name.toLowerCase().includes('ryan') ||
+        voice.name.toLowerCase().includes('james') ||
+        voice.name.toLowerCase().includes('microsoft')
+      );
+      if (maleVoices.length > 0) {
+        console.log('Selected male voice:', maleVoices[0].name);
+        return maleVoices[0];
+      }
+    }
+
+    // Fallback to selected voice or first English voice
+    return selectedVoice || (englishVoices.length > 0 ? englishVoices[0] : null);
+  }, [voices, selectedVoice]);
+
   const speak = useCallback(async (text: string, options: VoiceOptions = {}): Promise<void> => {
     return new Promise((resolve) => {
       if (!isSupported || typeof window === 'undefined' || !('speechSynthesis' in window) || !window.speechSynthesis) {
@@ -198,8 +246,11 @@ export const useVoiceSynthesis = (): UseVoiceSynthesis => {
       }
       const utterance = new SpeechSynthesisUtterance(cleanText);
       utteranceRef.current = utterance;
-      if (options.voice || selectedVoice) {
-        utterance.voice = options.voice || selectedVoice;
+      
+      // Use gender-appropriate voice if specified
+      const voiceToUse = options.voice || getVoiceByGender(options.gender);
+      if (voiceToUse) {
+        utterance.voice = voiceToUse;
       }
       utterance.rate = options.rate || 0.8;
       utterance.pitch = options.pitch || 0.7;
@@ -258,11 +309,12 @@ export const useVoiceSynthesis = (): UseVoiceSynthesis => {
   }, [isSupported, selectedVoice]);
 
   // Preview method for personality selector
-  const preview = useCallback(async (text: string, personality: { voiceSettings: { rate: number; pitch: number; volume: number }, effect?: VoiceEffect, voice?: SpeechSynthesisVoice }) => {
+  const preview = useCallback(async (text: string, personality: { voiceSettings: { rate: number; pitch: number; volume: number; gender?: 'male' | 'female' }, effect?: VoiceEffect, voice?: SpeechSynthesisVoice }) => {
     return speak(text, {
       rate: personality.voiceSettings.rate,
       pitch: personality.voiceSettings.pitch,
       volume: personality.voiceSettings.volume,
+      gender: personality.voiceSettings.gender,
       effect: personality.effect,
       voice: personality.voice
     });
