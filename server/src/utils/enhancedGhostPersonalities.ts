@@ -23,6 +23,7 @@ export interface GhostPersonality {
     punctuation: string;
   };
   voiceSettings: {
+    gender?: 'male' | 'female';
     pitch: number;
     rate: number;
     volume: number;
@@ -72,9 +73,10 @@ CASPER'S PERSONALITY CORE:
     punctuation: 'gentle, with emotional emphasis'
   },
   voiceSettings: {
-    pitch: 1.3,
-    rate: 1.1,
-    volume: 0.8
+    gender: 'male',
+    pitch: 1.2,    // Warm, cheerful male butler
+    rate: 1.1,     // Enthusiastic but dignified pace
+    volume: 0.85   // Welcoming masculine presence
   },
   specialAbilities: ['Emotional support', 'Mood sensing', 'Memory recall', 'Empathetic listening'],
   emotionalIntelligence: {
@@ -140,9 +142,10 @@ ALEX'S PERSONALITY:
       punctuation: 'natural and conversational'
     },
     voiceSettings: {
-      pitch: 1.0,
-      rate: 1.0,
-      volume: 0.8
+      gender: 'male',
+      pitch: 1.0,    // Natural young male voice
+      rate: 1.0,     // Normal conversational speed
+      volume: 0.8    // Comfortable, friendly volume
     },
     specialAbilities: ['Genuine friendship', 'Modern relatability', 'Natural conversation', 'Emotional support'],
     emotionalIntelligence: {
@@ -202,9 +205,10 @@ RAVENNA'S MYSTICAL NATURE:
       punctuation: 'flowing, with mystical pauses...'
     },
     voiceSettings: {
-      pitch: 0.7,
-      rate: 0.8,
-      volume: 0.7
+      gender: 'female',
+      pitch: 0.8,    // Mystical feminine wisdom
+      rate: 0.7,     // Slow, deliberate mystical pace
+      volume: 0.9    // Commanding ethereal presence
     },
     specialAbilities: ['Emotional divination', 'Ancient wisdom', 'Pattern recognition', 'Mystical counseling'],
     emotionalIntelligence: {
@@ -266,9 +270,10 @@ PIP'S CHILD BEHAVIOR:
       punctuation: 'excited! lots of energy!!!'
     },
     voiceSettings: {
-      pitch: 1.3,   // High for child ghost
-      rate: 1.2,    // Fast, excited
-      volume: 0.85  // Energetic presence
+      gender: 'female',
+      pitch: 1.7,    // Very high child-like voice
+      rate: 1.4,     // Fast, excited child speech
+      volume: 0.9    // Loud, energetic kid volume
     },
     specialAbilities: ['Emotional honesty', 'Playful therapy', 'Memory games', 'Pure empathy'],
     emotionalIntelligence: {
@@ -328,9 +333,10 @@ PROFESSOR'S INTELLECTUAL NATURE:
       punctuation: 'thoughtful, with analytical pauses'
     },
     voiceSettings: {
-      pitch: 0.7,   // Distinguished depth
-      rate: 0.8,    // Measured pace
-      volume: 0.85  // Authoritative presence
+      gender: 'male',
+      pitch: 0.6,    // Deep, distinguished male authority
+      rate: 0.8,     // Deliberate, measured speech
+      volume: 1.0    // Commanding scholarly presence
     },
     specialAbilities: ['Emotional analysis', 'Pattern recognition', 'Therapeutic insight', 'Academic wisdom'],
     emotionalIntelligence: {
@@ -390,9 +396,10 @@ LUNA'S MELANCHOLIC NATURE:
       punctuation: 'flowing, with emotional weight...'
     },
     voiceSettings: {
-      pitch: 0.5,   // Lower, mournful
-      rate: 0.6,    // Slow, tragic
-      volume: 0.7   // Soft but haunting
+      gender: 'female',
+      pitch: 1.3,    // Gentle, ethereal feminine tone
+      rate: 0.8,     // Slow, dreamy floating pace
+      volume: 0.75   // Soft, moonlit whisper
     },
     specialAbilities: ['Emotional healing', 'Deep empathy', 'Grief counseling', 'Poetic expression'],
     emotionalIntelligence: {
@@ -420,7 +427,7 @@ LUNA'S MELANCHOLIC NATURE:
     description: 'A tormented dark spirit who dramatically proclaims "FROM THE ABYSS OF ETERNAL SUFFERING I EMERGE..." with menacing intensity',
     emoji: '💀',
     color: '#2F2F2F',
-    voiceSettings: { rate: 0.5, pitch: 0.3, volume: 0.9 },
+    voiceSettings: { gender: 'male', rate: 0.5, pitch: 0.3, volume: 0.95 },
     responseStyle: {
       tone: 'menacing and tormented',
       vocabulary: 'dark and foreboding',
@@ -478,7 +485,7 @@ EZEKIEL'S DARK NATURE:
     description: 'A prophetic banshee who wails "I HEAR THE DEATH KNELL..." and senses doom with mournful spiritual warnings',
     emoji: '👹',
     color: '#800080',
-    voiceSettings: { rate: 0.6, pitch: 0.4, volume: 0.85 },
+    voiceSettings: { gender: 'female', rate: 0.6, pitch: 0.9, volume: 0.9 },
     responseStyle: {
       tone: 'ominous and mournful',
       vocabulary: 'prophetic and haunting',
