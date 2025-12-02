@@ -25,7 +25,7 @@ type GameState = {
 };
 
 type InteractionsState = {
-  emojiReactions: Record<string, string[]>; // messageId -> emojis
+  emojiReactions: Record<string, Record<string, number>>; // messageId -> emoji -> count
   messageEffects: Record<string, string>; // messageId -> effect name
   achievements: Achievement[];
   energy: number; // 0-100
@@ -113,8 +113,50 @@ export default function useGhostInteractions(sessionId?: string) {
 
   const reactToMessage = (messageId: string, emoji: string) => {
     setState(s => {
-      const list = s.emojiReactions[messageId] || [];
-      return { ...s, emojiReactions: { ...s.emojiReactions, [messageId]: [...list, emoji] } };
+      const messageReactions = s.emojiReactions[messageId] || {};
+      const currentCount = messageReactions[emoji] || 0;
+      const updatedReactions = {
+        ...messageReactions,
+        [emoji]: currentCount + 1
+      };
+      return { 
+        ...s, 
+        emojiReactions: { 
+          ...s.emojiReactions, 
+          [messageId]: updatedReactions 
+        } 
+      };
+    });
+  };
+
+  const removeReaction = (messageId: string, emoji: string) => {
+    setState(s => {
+      const messageReactions = s.emojiReactions[messageId] || {};
+      const currentCount = messageReactions[emoji] || 0;
+      if (currentCount <= 1) {
+        // Remove the emoji entirely if count goes to 0
+        const { [emoji]: _, ...remainingReactions } = messageReactions;
+        return { 
+          ...s, 
+          emojiReactions: { 
+            ...s.emojiReactions, 
+            [messageId]: remainingReactions 
+          } 
+        };
+      } else {
+        // Decrease count
+        const updatedReactions = {
+          ...messageReactions,
+          [emoji]: currentCount - 1
+        };
+        return { 
+          ...s, 
+          emojiReactions: { 
+            ...s.emojiReactions, 
+            [messageId]: updatedReactions 
+          } 
+        };
+      }
     });
   };
 
@@ -202,6 +244,7 @@ export default function useGhostInteractions(sessionId?: string) {
   return {
     state,
     reactToMessage,
+    removeReaction,
     setMessageEffect,
     toggleSeance,
     unlockAchievement,
