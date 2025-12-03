@@ -7,6 +7,7 @@ import {
   startStory, 
   makeStoryChoice, 
   getAvailableStories,
+  generateCustomStory,
   analyzeImage,
   getMemoryContext,
   getCurrentWeather,
@@ -45,6 +46,7 @@ router.post('/send', sendMessage);
 router.get('/stories', getAvailableStories);
 router.post('/story/start', startStory);
 router.post('/story/choice', makeStoryChoice);
+router.post('/story/generate', generateCustomStory);
 
 // AI analysis routes
 router.post('/analyze-image', analyzeImage);

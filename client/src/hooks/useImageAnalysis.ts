@@ -13,13 +13,41 @@ export interface ImageAnalysis {
     intensity: 'low' | 'medium' | 'high';
     associations: string[];
   };
+  // Enhanced analysis fields
+  visualThemes?: string[];
+  narrativeGenres?: string[];
+  storyPotential?: {
+    genre: string;
+    mood: string;
+    elements: string[];
+    plotSuggestions: string[];
+  };
+  artisticAnalysis?: {
+    style: string;
+    composition: string;
+    lighting: string;
+    symbolism: string[];
+  };
+  contextualMeaning?: {
+    culturalReferences: string[];
+    historicalContext?: string;
+    symbolicInterpretation: string;
+  };
 }
 
 export const useImageAnalysis = () => {
   const [currentAnalysis, setCurrentAnalysis] = useState<ImageAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const analyzeImage = useCallback(async (imageFile: File, personalityId?: string): Promise<ImageAnalysis | null> => {
+  const analyzeImage = useCallback(async (
+    imageFile: File, 
+    personalityId?: string,
+    preferences?: {
+      genre?: string;
+      mood?: string;
+      analysisDepth?: 'basic' | 'detailed' | 'artistic';
+    }
+  ): Promise<ImageAnalysis | null> => {
     setIsAnalyzing(true);
     try {
       // Convert image to base64
@@ -32,7 +60,8 @@ export const useImageAnalysis = () => {
         },
         body: JSON.stringify({
           imageBase64: base64.split(',')[1], // Remove data:image/jpeg;base64, prefix
-          personalityId
+          personalityId,
+          preferences
         }),
       });
 
