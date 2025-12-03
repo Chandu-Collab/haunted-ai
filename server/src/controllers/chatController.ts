@@ -681,14 +681,25 @@ const getAvailableStories = async (req: Request, res: Response): Promise<void> =
 // Analyze uploaded image
 const analyzeImage = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { imageBase64, personalityId } = req.body;
+    const { imageBase64, personalityId, preferences } = req.body;
     
     if (!imageBase64) {
       res.status(400).json({ error: 'No image provided' });
       return;
     }
     
-    const analysis = await imageAnalysisService.analyzeImage(imageBase64, personalityId);
+    // Use enhanced analysis if preferences provided
+    let analysis;
+    if (preferences && Object.keys(preferences).length > 0) {
+      analysis = await imageAnalysisService.analyzeImageWithPreferences(imageBase64, {
+        genre: preferences.genre,
+        mood: preferences.mood,
+        analysisDepth: preferences.analysisDepth || 'detailed',
+        personalityId
+      });
+    } else {
+      analysis = await imageAnalysisService.analyzeImage(imageBase64, personalityId);
+    }
     
     res.json({
       analysis,
@@ -838,4 +849,82 @@ const getPersonalities = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export { getPersonalities };
+// Generate custom story with genre and mood preferences
+const generateCustomStory = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { sessionId, preferences } = req.body;
+    
+    if (!sessionId || !preferences) {
+      res.status(400).json({ error: 'Session ID and preferences required' });
+      return;
+    }
+    
+    const { genre, mood, length, userName } = preferences;
+    
+    if (!genre || !mood || !length) {
+      res.status(400).json({ error: 'Genre, mood, and length are required' });
+      return;
+    }
+    
+    // Create a custom story with the specified preferences
+    const customStory = await storytellingSystem.generateCustomStory({
+      genre: genre as any,
+      mood: mood as any,
+      length: length as any,
+      playerName: userName || 'mysterious visitor',
+      sessionId
+    });
+    
+    if (customStory) {
+      res.json({
+        success: true,
+        segment: {
+          text: customStory.content,
+          mood: customStory.mood,
+          choices: customStory.currentSegment?.choices || []
+        },
+        storyLength: customStory.storyLength,
+        currentPart: customStory.currentPart,
+        totalParts: customStory.totalParts,
+        isMultiPart: customStory.isMultiPart
+      });
+    } else {
+      res.status(500).json({ error: 'Failed to generate custom story' });
+    }
+  } catch (error) {
+    console.error('Error generating custom story:', error);
+    res.status(500).json({ error: 'Failed to generate custom story' });
+  }
+};
+
+// Continue to next part of a multi-part story
+const continueStory = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { sessionId } = req.body;
+    
+    if (!sessionId) {
+      res.status(400).json({ error: 'Session ID is required' });
+      return;
+    }
+    
+    const result = await storytellingSystem.continueStoryPart(sessionId);
+    
+    if (result) {
+      res.json({
+        success: true,
+        segment: result.segment,
+        currentPart: result.currentPart,
+        totalParts: result.totalParts,
+        storyLength: result.storyLength,
+        isStoryActive: result.isStoryActive
+      });
+    } else {
+      res.status(400).json({ error: 'No active multi-part story found or story is complete' });
+    }
+  } catch (error) {
+    console.error('Error continuing story:', error);
+    res.status(500).json({ error: 'Failed to continue story' });
+  }
+};
+
+export { getPersonalities, generateCustomStory, continueStory };

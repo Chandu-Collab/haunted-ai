@@ -13,6 +13,26 @@ export interface ImageAnalysis {
     intensity: 'low' | 'medium' | 'high';
     associations: string[];
   };
+  // Enhanced vision features
+  visualThemes: string[];
+  narrativeGenres: string[];
+  storyPotential: {
+    genre: 'horror' | 'mystery' | 'romance' | 'adventure' | 'psychological' | 'gothic' | 'supernatural' | 'thriller';
+    mood: 'suspenseful' | 'mysterious' | 'frightening' | 'melancholic' | 'hopeful' | 'romantic' | 'dark' | 'whimsical' | 'intense' | 'peaceful';
+    elements: string[];
+    plotSuggestions: string[];
+  };
+  artisticAnalysis: {
+    style: string;
+    composition: string;
+    lighting: string;
+    symbolism: string[];
+  };
+  contextualMeaning: {
+    culturalReferences: string[];
+    historicalContext?: string;
+    symbolicInterpretation: string;
+  };
 }
 
 export class ImageAnalysisService {
@@ -27,7 +47,7 @@ export class ImageAnalysisService {
       const model = this.genAI.getGenerativeModel({ 
         model: 'gemini-pro-latest',
         generationConfig: {
-          maxOutputTokens: 500,
+          maxOutputTokens: 800,
           temperature: 0.7,
         },
       });
@@ -50,6 +70,44 @@ export class ImageAnalysisService {
       return this.parseAnalysisResponse(analysisText);
     } catch (error) {
       console.error('Error analyzing image:', error);
+      return this.getDefaultAnalysis();
+    }
+  }
+
+  // Enhanced analysis with genre and mood preferences
+  async analyzeImageWithPreferences(imageBase64: string, preferences: {
+    genre?: string;
+    mood?: string;
+    analysisDepth?: 'basic' | 'detailed' | 'artistic';
+    personalityId?: string;
+  }): Promise<ImageAnalysis> {
+    try {
+      const model = this.genAI.getGenerativeModel({ 
+        model: 'gemini-pro-latest',
+        generationConfig: {
+          maxOutputTokens: 1000,
+          temperature: 0.8,
+        },
+      });
+
+      const prompt = this.buildEnhancedAnalysisPrompt(preferences);
+
+      const result = await model.generateContent([
+        prompt,
+        {
+          inlineData: {
+            data: imageBase64,
+            mimeType: 'image/jpeg'
+          }
+        }
+      ]);
+
+      const response = await result.response;
+      const analysisText = response.text();
+
+      return this.parseEnhancedAnalysisResponse(analysisText, preferences);
+    } catch (error) {
+      console.error('Error analyzing image with preferences:', error);
       return this.getDefaultAnalysis();
     }
   }
@@ -220,6 +278,126 @@ Format your response as JSON with these fields:
       console.error('Error generating image summary:', error);
       return 'An image that caught the ghost\'s ethereal attention';
     }
+  }
+
+  // Enhanced analysis methods for genre and mood-based vision
+  private buildEnhancedAnalysisPrompt(preferences: {
+    genre?: string;
+    mood?: string;
+    analysisDepth?: 'basic' | 'detailed' | 'artistic';
+    personalityId?: string;
+  }): string {
+    let prompt = `Analyze this image through the lens of supernatural perception`;
+    
+    if (preferences.genre) {
+      prompt += ` with a focus on ${preferences.genre} genre elements`;
+    }
+    
+    if (preferences.mood) {
+      prompt += ` emphasizing ${preferences.mood} mood and atmosphere`;
+    }
+    
+    prompt += `.\n\nProvide analysis covering:\n\n`;
+    
+    if (preferences.analysisDepth === 'artistic') {
+      prompt += `ARTISTIC FOCUS:\n- Visual composition and techniques\n- Color theory and emotional impact\n- Symbolism and metaphors\n- Style influences\n\n`;
+    }
+    
+    prompt += `SUPERNATURAL INTERPRETATION:\n1. Ethereal elements and ghostly significance\n2. Emotional and spiritual atmosphere\n3. Hidden meanings and otherworldly connections\n4. Potential for supernatural storytelling\n\nSTORY POTENTIAL (Genre: ${preferences.genre || 'any'}, Mood: ${preferences.mood || 'any'}):\n- How this image could inspire supernatural narratives\n- Character possibilities and plot elements\n- Atmospheric details for storytelling\n\nFormat as enhanced JSON with expanded fields.`;
+    
+    if (preferences.personalityId) {
+      prompt += `\n\nAnalyze through ghost personality: ${preferences.personalityId}`;
+    }
+    
+    return prompt;
+  }
+
+  private parseEnhancedAnalysisResponse(responseText: string, preferences: any): ImageAnalysis {
+    try {
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const analysis = JSON.parse(jsonMatch[0]);
+        return this.validateEnhancedAnalysis(analysis, preferences);
+      }
+    } catch (error) {
+      console.error('Error parsing enhanced analysis:', error);
+    }
+    
+    return this.getEnhancedFallbackAnalysis(preferences);
+  }
+
+  private validateEnhancedAnalysis(analysis: any, preferences: any): ImageAnalysis {
+    return {
+      description: analysis.description || 'A mysterious image that captures the ghost\'s ethereal attention',
+      mood: analysis.mood || preferences.mood || 'mysterious',
+      objects: Array.isArray(analysis.objects) ? analysis.objects : [],
+      colors: Array.isArray(analysis.colors) ? analysis.colors : [],
+      atmosphere: analysis.atmosphere || 'ethereal and otherworldly',
+      ghostReaction: analysis.ghostReaction || 'The ghost gazes with supernatural interest',
+      suggestions: Array.isArray(analysis.suggestions) ? analysis.suggestions : ['Tell me about this vision'],
+      emotionalContext: {
+        dominantEmotion: analysis.emotionalContext?.dominantEmotion || 'curiosity',
+        intensity: analysis.emotionalContext?.intensity || 'medium',
+        associations: Array.isArray(analysis.emotionalContext?.associations) ? 
+          analysis.emotionalContext.associations : []
+      },
+      visualThemes: Array.isArray(analysis.visualThemes) ? analysis.visualThemes : ['mystery', 'ethereal'],
+      narrativeGenres: Array.isArray(analysis.narrativeGenres) ? analysis.narrativeGenres : ['supernatural'],
+      storyPotential: {
+        genre: analysis.storyPotential?.genre || preferences.genre || 'supernatural',
+        mood: analysis.storyPotential?.mood || preferences.mood || 'mysterious',
+        elements: Array.isArray(analysis.storyPotential?.elements) ? analysis.storyPotential.elements : [],
+        plotSuggestions: Array.isArray(analysis.storyPotential?.plotSuggestions) ? analysis.storyPotential.plotSuggestions : []
+      },
+      artisticAnalysis: {
+        style: analysis.artisticAnalysis?.style || 'ethereal composition',
+        composition: analysis.artisticAnalysis?.composition || 'balanced and mysterious',
+        lighting: analysis.artisticAnalysis?.lighting || 'dramatic with supernatural qualities',
+        symbolism: Array.isArray(analysis.artisticAnalysis?.symbolism) ? analysis.artisticAnalysis.symbolism : []
+      },
+      contextualMeaning: {
+        culturalReferences: Array.isArray(analysis.contextualMeaning?.culturalReferences) ? 
+          analysis.contextualMeaning.culturalReferences : [],
+        historicalContext: analysis.contextualMeaning?.historicalContext,
+        symbolicInterpretation: analysis.contextualMeaning?.symbolicInterpretation || 'A window into the supernatural realm'
+      }
+    };
+  }
+
+  private getEnhancedFallbackAnalysis(preferences: any): ImageAnalysis {
+    return {
+      description: 'A mysterious image that speaks to the supernatural realm',
+      mood: preferences.mood || 'mysterious',
+      objects: ['ethereal elements'],
+      colors: ['supernatural hues'],
+      atmosphere: 'otherworldly and enchanting',
+      ghostReaction: 'The ghost senses deep meaning in this ethereal vision',
+      suggestions: ['Tell me what you see in the spirit realm', 'What emotions does this evoke?'],
+      emotionalContext: {
+        dominantEmotion: 'wonder',
+        intensity: 'medium',
+        associations: ['mystery', 'supernatural', 'ethereal']
+      },
+      visualThemes: ['mystery', 'supernatural', 'ethereal'],
+      narrativeGenres: [preferences.genre || 'supernatural'],
+      storyPotential: {
+        genre: (preferences.genre || 'supernatural') as any,
+        mood: (preferences.mood || 'mysterious') as any,
+        elements: ['supernatural presence', 'ethereal atmosphere'],
+        plotSuggestions: ['A spirit communicates through visions', 'Hidden meanings reveal themselves']
+      },
+      artisticAnalysis: {
+        style: 'ethereal and mysterious',
+        composition: 'balanced with supernatural elements',
+        lighting: 'otherworldly illumination',
+        symbolism: ['spiritual significance', 'hidden meanings']
+      },
+      contextualMeaning: {
+        culturalReferences: ['spiritual traditions'],
+        historicalContext: 'Timeless supernatural elements',
+        symbolicInterpretation: 'A bridge between the physical and spiritual realms'
+      }
+    };
   }
 }
 
