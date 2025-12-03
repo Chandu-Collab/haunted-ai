@@ -232,12 +232,6 @@ const StoryInterface: React.FC<StoryInterfaceProps> = ({
               </div>
             </div>
           )}
-          {/* Debug info - remove this after testing */}
-          <div className="mt-2 text-xs text-purple-400 bg-purple-900/20 p-2 rounded">
-            Debug: Length={activeStory.storyLength}, Part={activeStory.currentPart}/{activeStory.totalParts}, 
-            MultiPart={activeStory.isMultiPart ? 'Yes' : 'No'}, 
-            Choices={activeStory.currentSegment.choices.length}
-          </div>
         </div>
 
         {activeStory.currentSegment.choices.length > 0 && (

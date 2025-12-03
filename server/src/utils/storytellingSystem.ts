@@ -54,6 +54,63 @@ export interface ActiveStory {
 
 export class StorytellingSystem {
   private activeStories: Map<string, ActiveStory> = new Map();
+  private usedStoryElements: Map<string, Set<string>> = new Map(); // Track used story elements per session
+  private storyTemplates: Map<StoryGenre, string[]> = new Map();
+  
+  constructor() {
+    this.initializeStoryTemplates();
+  }
+  
+  private initializeStoryTemplates() {
+    // Initialize story template pools for each genre
+    this.storyTemplates.set('horror', [
+      'abandoned_asylum', 'cursed_doll', 'forest_cabin', 'underground_catacombs', 
+      'haunted_lighthouse', 'old_cemetery', 'possessed_mirror', 'witch_cottage',
+      'ghost_ship', 'demonic_church', 'nightmare_hotel', 'blood_mansion'
+    ]);
+    
+    this.storyTemplates.set('mystery', [
+      'missing_person', 'stolen_artifact', 'secret_society', 'hidden_treasure',
+      'mysterious_letter', 'locked_room', 'vanished_village', 'coded_diary',
+      'phantom_thief', 'ancient_riddle', 'disappeared_train', 'false_identity'
+    ]);
+    
+    this.storyTemplates.set('romance', [
+      'lost_love_letters', 'wedding_veil_ghost', 'star_crossed_spirits', 'eternal_dance',
+      'love_across_time', 'guardian_angel', 'reincarnated_lovers', 'spirit_bride',
+      'ghost_musician', 'tragic_artist', 'lighthouse_keeper', 'garden_spirit'
+    ]);
+    
+    this.storyTemplates.set('adventure', [
+      'treasure_hunt', 'spirit_realm', 'magical_quest', 'time_portal',
+      'mystical_journey', 'ancient_temple', 'elemental_trials', 'cosmic_voyage',
+      'otherworld_expedition', 'enchanted_forest', 'sky_castle', 'underwater_kingdom'
+    ]);
+    
+    this.storyTemplates.set('psychological', [
+      'memory_fragments', 'dual_personality', 'reality_distortion', 'consciousness_split',
+      'dream_layers', 'mind_maze', 'identity_crisis', 'perception_shift',
+      'psychological_mirror', 'mental_labyrinth', 'thought_echo', 'shadow_self'
+    ]);
+    
+    this.storyTemplates.set('gothic', [
+      'cathedral_shadows', 'noble_curse', 'family_portrait', 'ancient_bloodline',
+      'gothic_romance', 'monastery_secrets', 'aristocrat_ghost', 'medieval_castle',
+      'dark_cathedral', 'vampire_lineage', 'stone_gargoyle', 'forbidden_library'
+    ]);
+    
+    this.storyTemplates.set('supernatural', [
+      'spirit_guardian', 'dimensional_rift', 'astral_projection', 'psychic_awakening',
+      'elemental_spirits', 'cosmic_entities', 'soul_journey', 'ethereal_realm',
+      'spirit_medium', 'otherworld_guide', 'mystical_energy', 'supernatural_powers'
+    ]);
+    
+    this.storyTemplates.set('thriller', [
+      'supernatural_chase', 'ghostly_stalker', 'phantom_pursuit', 'spirit_revenge',
+      'haunted_escape', 'spectral_hunter', 'otherworld_trap', 'time_race',
+      'soul_thief', 'entity_hunt', 'paranormal_conspiracy', 'spirit_war'
+    ]);
+  }
   
   private storyMetadata: Record<string, StoryMetadata> = {
     'mansion_mystery': {
@@ -492,42 +549,231 @@ export class StorytellingSystem {
   }
 
   private generateInitialStoryContent(genre: StoryGenre, mood: StoryMood, length: StoryLength, playerName: string, currentPart: number, totalParts: number): string {
-    const genreIntros: Record<StoryGenre, string> = {
-      horror: `${playerName} approaches a decrepit mansion under the pale moonlight, its windows like hollow eyes watching your every step. The wind carries whispers of the long dead...`,
-      mystery: `${playerName} receives a cryptic letter leading to an abandoned estate where secrets lie buried beneath layers of time and dust...`,
-      romance: `${playerName} discovers an old love letter in the attic, its words speaking of a passion that transcends death itself...`,
-      adventure: `${playerName} stands at the threshold of an otherworldly journey, where spirits guide and danger lurks in ethereal shadows...`,
-      psychological: `${playerName}'s mind begins to blur the lines between reality and the supernatural, as ghostly voices echo thoughts you've never spoken...`,
-      gothic: `${playerName} enters a cathedral of shadows where gargoyles weep stone tears and the very architecture seems alive with spectral energy...`,
-      supernatural: `${playerName} crosses into a realm where the veil between worlds grows thin, and phantoms walk among the living...`,
-      thriller: `${playerName} races against time in a supernatural chase where ghostly pursuers follow your every move through the ethereal plane...`
-    };
+    // Get a unique story template for this genre
+    const sessionKey = `${genre}-${mood}-${Date.now()}`;
+    const template = this.getUniqueStoryTemplate(genre, sessionKey);
     
-    const moodModifiers: Record<StoryMood, string> = {
-      mysterious: ' Ancient symbols glow faintly on the walls, their meaning lost to mortal understanding.',
-      frightening: ' Terror grips your heart as shadows move with malevolent intent.',
-      romantic: ' The air shimmers with the essence of eternal love, beautiful and haunting.',
-      dark: ' Oppressive darkness seems to have its own consciousness, watching and waiting.',
-      hopeful: ' Despite the supernatural atmosphere, a gentle warmth suggests protection from benevolent spirits.',
-      melancholic: ' A profound sadness permeates the air, the weight of countless untold stories.',
-      suspenseful: ' Every creak and whisper builds tension as you sense you are not alone.',
-      whimsical: ' Playful spirits dance in the moonbeams, their laughter like distant wind chimes.',
-      intense: ' The supernatural energy crackles with overwhelming power, demanding your attention.',
-      peaceful: ' Serene spiritual energy flows around you like a gentle, otherworldly embrace.'
-    };
-
-    let storyContent = genreIntros[genre] + moodModifiers[mood];
-
+    const storyContent = this.generateStoryContentFromTemplate(template, genre, mood, playerName);
+    
     // Add part indicator for multi-part stories
     if (totalParts > 1) {
       const lengthDescriptors = {
         medium: 'This tale unfolds in parts, each revealing deeper mysteries...',
         long: 'This epic narrative spans multiple chapters, each more captivating than the last...'
       };
-      storyContent += `\n\n*${lengthDescriptors[length as 'medium' | 'long'] || 'Your story begins...'} Part ${currentPart} of ${totalParts}*`;
+      return storyContent + `\n\n*${lengthDescriptors[length as 'medium' | 'long'] || 'Your story begins...'} Part ${currentPart} of ${totalParts}*`;
     }
     
     return storyContent;
+  }
+
+  private getUniqueStoryTemplate(genre: StoryGenre, sessionKey: string): string {
+    const templates = this.storyTemplates.get(genre) || [];
+    if (!this.usedStoryElements.has(sessionKey)) {
+      this.usedStoryElements.set(sessionKey, new Set());
+    }
+    
+    const usedElements = this.usedStoryElements.get(sessionKey)!;
+    const availableTemplates = templates.filter(template => !usedElements.has(template));
+    
+    // If all templates have been used, reset the used elements for this session
+    if (availableTemplates.length === 0) {
+      usedElements.clear();
+      availableTemplates.push(...templates);
+    }
+    
+    const selectedTemplate = availableTemplates[Math.floor(Math.random() * availableTemplates.length)];
+    usedElements.add(selectedTemplate);
+    
+    return selectedTemplate;
+  }
+
+  private generateStoryContentFromTemplate(template: string, genre: StoryGenre, mood: StoryMood, playerName: string): string {
+    const storyElements = this.getStoryElements(template, genre);
+    const moodModifier = this.getMoodModifier(mood);
+    const setting = this.generateSetting(genre, template);
+    const character = this.generateCharacter(genre, template);
+    const conflict = this.generateConflict(genre, mood, template);
+    
+    return `${playerName} ${storyElements.opening} ${setting}. ${character} ${moodModifier} ${conflict}`;
+  }
+
+  private getStoryElements(template: string, genre: StoryGenre) {
+    const elements: Record<string, any> = {
+      // Horror templates
+      abandoned_asylum: {
+        opening: "approaches the crumbling gates of Ravenshollow Asylum, where screams once echoed through the night",
+        setting: "broken windows stare like hollow eyes, and ivy crawls over walls stained with decades of despair"
+      },
+      cursed_doll: {
+        opening: "discovers an antique porcelain doll in the dusty corner of an estate sale",
+        setting: "its glassy eyes seem to follow every movement, and its smile holds secrets too dark to imagine"
+      },
+      forest_cabin: {
+        opening: "stumbles upon a weathered cabin deep in the Whispering Woods",
+        setting: "ancient trees lean inward like gnarled fingers, and shadows dance with malevolent intent"
+      },
+      
+      // Mystery templates  
+      missing_person: {
+        opening: "receives a cryptic phone call about a person who vanished without a trace",
+        setting: "the last known location holds clues that defy logical explanation"
+      },
+      stolen_artifact: {
+        opening: "is hired to investigate the theft of a mysterious ancient relic",
+        setting: "the museum's security footage shows impossible phenomena surrounding the artifact's disappearance"
+      },
+      secret_society: {
+        opening: "uncovers evidence of a clandestine organization operating in the shadows",
+        setting: "their symbols appear in the most unexpected places, hinting at a conspiracy beyond comprehension"
+      },
+      
+      // Romance templates
+      lost_love_letters: {
+        opening: "finds a bundle of love letters tied with a faded ribbon in an old trunk",
+        setting: "each letter speaks of a passion that transcends death itself"
+      },
+      wedding_veil_ghost: {
+        opening: "encounters the spirit of a bride who never made it to her wedding day",
+        setting: "her ethereal form appears in mirrors, searching for the love that was stolen from her"
+      },
+      star_crossed_spirits: {
+        opening: "witnesses two ghostly figures meeting under the pale moonlight",
+        setting: "their love story spans centuries, doomed to repeat until their souls find peace"
+      },
+      
+      // Adventure templates
+      treasure_hunt: {
+        opening: "discovers a map leading to a treasure hidden in the spirit realm",
+        setting: "each step forward takes them deeper into a world where the impossible becomes reality"
+      },
+      spirit_realm: {
+        opening: "crosses the threshold into a dimension where spirits dwell freely",
+        setting: "the landscape shifts like living dreams, and every path leads to new wonders and dangers"
+      },
+      magical_quest: {
+        opening: "is chosen by an ancient spirit to undertake a mystical journey",
+        setting: "the quest will test not just courage, but the very essence of their soul"
+      },
+      
+      // Psychological templates
+      memory_fragments: {
+        opening: "begins experiencing memories that don't belong to them",
+        setting: "reality blurs as past and present merge in their mind"
+      },
+      dual_personality: {
+        opening: "realizes they're sharing their consciousness with another entity",
+        setting: "the boundary between self and other dissolves in terrifying ways"
+      },
+      reality_distortion: {
+        opening: "questions everything they thought they knew about reality",
+        setting: "the world around them shifts like a nightmare that refuses to end"
+      },
+      
+      // Gothic templates
+      cathedral_shadows: {
+        opening: "enters an ancient cathedral where shadows hold their own communion",
+        setting: "stained glass windows cast eerie patterns that seem to move with divine malevolence"
+      },
+      noble_curse: {
+        opening: "inherits an ancestral estate along with its terrible family curse",
+        setting: "portraits of long-dead relatives seem to watch with knowing, sorrowful eyes"
+      },
+      family_portrait: {
+        opening: "notices their face appearing in a centuries-old family painting",
+        setting: "the portrait changes each time they look away, revealing dark family secrets"
+      },
+      
+      // Supernatural templates
+      spirit_guardian: {
+        opening: "discovers they have a supernatural protector watching over them",
+        setting: "signs of otherworldly intervention appear in the most mundane moments"
+      },
+      dimensional_rift: {
+        opening: "accidentally opens a gateway between the world of the living and the dead",
+        setting: "entities from beyond begin to seep through, changing everything they touch"
+      },
+      psychic_awakening: {
+        opening: "suddenly develops the ability to see and communicate with spirits",
+        setting: "the supernatural world that was always hidden now demands their attention"
+      },
+      
+      // Thriller templates
+      supernatural_chase: {
+        opening: "finds themselves being pursued by an entity that exists beyond physical laws",
+        setting: "no hiding place is safe when your pursuer can phase through walls and appear in dreams"
+      },
+      ghostly_stalker: {
+        opening: "realizes they're being watched by a presence that grows stronger each day",
+        setting: "signs of the entity's attention escalate from whispers to violent manifestations"
+      },
+      phantom_pursuit: {
+        opening: "must outrun a vengeful spirit across multiple planes of existence",
+        setting: "the chase spans both the physical world and the realm of nightmares"
+      }
+    };
+    
+    return elements[template] || {
+      opening: "finds themselves in an extraordinary supernatural situation",
+      setting: "where the ordinary rules of reality no longer apply"
+    };
+  }
+
+  private getMoodModifier(mood: StoryMood): string {
+    const modifiers: Record<StoryMood, string> = {
+      mysterious: 'Ancient symbols glow faintly on nearby surfaces, their meaning lost to mortal understanding.',
+      frightening: 'Terror grips the air itself as malevolent forces stir in the darkness.',
+      romantic: 'The atmosphere shimmers with the bittersweet essence of eternal love.',
+      dark: 'Oppressive shadows seem to have their own consciousness, watching and waiting.',
+      hopeful: 'Despite the supernatural atmosphere, a gentle warmth suggests protection from benevolent forces.',
+      melancholic: 'A profound sadness permeates everything, the weight of countless untold stories.',
+      suspenseful: 'Every sound and movement builds tension as unseen eyes watch from the void.',
+      whimsical: 'Playful spiritual energy dances through the air, bringing both wonder and uncertainty.',
+      intense: 'The supernatural forces crackle with overwhelming power that demands immediate attention.',
+      peaceful: 'Serene otherworldly energy flows around like a gentle embrace from beyond.'
+    };
+    
+    return modifiers[mood];
+  }
+
+  private generateSetting(genre: StoryGenre, template: string): string {
+    // Generate dynamic setting descriptions based on genre and template
+    const timeOfDay = ['dawn', 'midday', 'dusk', 'midnight', 'the witching hour'][Math.floor(Math.random() * 5)];
+    const weather = ['misty', 'stormy', 'eerily calm', 'windy', 'moonlit'][Math.floor(Math.random() * 5)];
+    
+    return `The ${weather} ${timeOfDay} creates an otherworldly atmosphere`;
+  }
+
+  private generateCharacter(genre: StoryGenre, template: string): string {
+    const characters: Record<StoryGenre, string[]> = {
+      horror: ['A malevolent presence lurks nearby', 'Shadows take on forms of their own', 'An ancient evil stirs'],
+      mystery: ['Clues appear in unexpected places', 'A mysterious figure watches from afar', 'Evidence points to the impossible'],
+      romance: ['A gentle spirit reaches out across the veil', 'Love transcends the boundary of death', 'Two souls recognize each other'],
+      adventure: ['A mystical guide appears', 'The spirit realm beckons', 'Ancient powers awaken'],
+      psychological: ['Reality begins to shift and bend', 'The mind struggles with new perceptions', 'Truth and illusion merge'],
+      gothic: ['The weight of history presses down', 'Ancestral voices whisper secrets', 'Time itself seems suspended'],
+      supernatural: ['Otherworldly energies gather', 'The veil between worlds grows thin', 'Spiritual forces converge'],
+      thriller: ['Danger approaches from beyond', 'Time is running out', 'The supernatural pursuit begins']
+    };
+    
+    const genreChars = characters[genre] || ['Something supernatural stirs'];
+    return genreChars[Math.floor(Math.random() * genreChars.length)];
+  }
+
+  private generateConflict(genre: StoryGenre, mood: StoryMood, template: string): string {
+    const conflicts: Record<StoryGenre, string[]> = {
+      horror: ['What unspeakable horror will be unleashed?', 'Can sanity survive what lurks in the darkness?', 'Will evil claim another soul?'],
+      mystery: ['What truth lies hidden in the supernatural mystery?', 'Can the puzzle be solved before it\'s too late?', 'What secrets will the investigation reveal?'],
+      romance: ['Can love conquer even death itself?', 'Will two hearts find peace across the divide?', 'Can true love break the curse of separation?'],
+      adventure: ['What challenges await in the mystical journey ahead?', 'Will courage be enough to face the unknown?', 'What wonders and perils lie beyond?'],
+      psychological: ['Can the mind distinguish reality from illusion?', 'What truths lie buried in the psyche?', 'Will consciousness survive the supernatural encounter?'],
+      gothic: ['What family secrets will come to light?', 'Can the curse of the past be broken?', 'Will tradition triumph over change?'],
+      supernatural: ['What powers will be awakened?', 'Can mortal understanding grasp the otherworldly truth?', 'Will the supernatural forces be friend or foe?'],
+      thriller: ['Can escape be found from the supernatural pursuit?', 'Will time run out before safety is reached?', 'What price will survival demand?']
+    };
+    
+    const genreConflicts = conflicts[genre] || ['What will this supernatural encounter reveal?'];
+    return genreConflicts[Math.floor(Math.random() * genreConflicts.length)];
   }
 
   private getStoryStructure(length: StoryLength): { totalParts: number; isMultiPart: boolean } {
@@ -599,15 +845,27 @@ export class StorytellingSystem {
     const nextPart = activeStory.currentPart + 1;
     
     if (nextPart > activeStory.totalParts) {
-      // Story is complete
-      this.activeStories.delete(sessionId);
+      // Story is complete - generate a unique ending
+      const endingVariations = [
+        'The ghost steps back into the shadows, your tale now complete. The echoes of your choices will linger in the ethereal realm forever...',
+        'As the final chapter closes, the spirits whisper their gratitude for sharing in your story. The supernatural realm remembers...',
+        'Your journey through the otherworld reaches its end, but the connections forged will endure beyond the veil of reality...',
+        'The tale concludes as all great stories must, but the magic created will continue to ripple through dimensions unseen...',
+        'With the story\'s completion, you feel the presence of countless spirits who have witnessed your journey and found meaning in your choices...'
+      ];
+      
+      const randomEnding = endingVariations[Math.floor(Math.random() * endingVariations.length)];
+      
+      // Mark story as completed to prevent repetition
+      this.completeStory(sessionId);
+      
       return {
         segment: {
           id: 'story-complete',
-          text: 'The ghost steps back into the shadows, your tale now complete. The echoes of your choices will linger in the ethereal realm forever...',
+          text: randomEnding,
           choices: [],
           mood: activeStory.selectedMood,
-          atmosphere: 'A sense of completion and mystery',
+          atmosphere: 'A sense of completion and transcendent mystery',
           emotionalIntensity: 'low'
         },
         currentPart: activeStory.totalParts,
@@ -656,73 +914,269 @@ export class StorytellingSystem {
   }
 
   private generateNextPartContent(genre: StoryGenre, mood: StoryMood, length: StoryLength, playerName: string, currentPart: number, totalParts: number): string {
-    const partProgressions: Record<StoryGenre, string[]> = {
-      horror: [
-        `As ${playerName} delves deeper into the darkness, the supernatural forces grow stronger and more malevolent...`,
-        `The true horror reveals itself as ${playerName} uncovers the mansion's bloody history...`,
-        `In the climactic confrontation, ${playerName} must face the source of the evil...`,
-        `The final revelation threatens to consume ${playerName}'s very soul...`,
-        `In the ultimate test of courage, ${playerName} confronts the ancient evil that has awakened...`
-      ],
-      mystery: [
-        `New clues emerge as ${playerName} pieces together the puzzle of the disappearances...`,
-        `The investigation leads ${playerName} to a shocking discovery that changes everything...`,
-        `Hidden passages reveal secrets that someone desperately wanted to keep buried...`,
-        `The truth begins to surface as ${playerName} confronts the guilty party...`,
-        `In the final revelation, ${playerName} exposes the mastermind behind the mystery...`
-      ],
-      romance: [
-        `The connection between ${playerName} and the spirit grows stronger, transcending the boundaries of life and death...`,
-        `A tragic backstory unfolds, revealing the circumstances that bound the spirit to this realm...`,
-        `${playerName} must choose between the world of the living and eternal love with a ghost...`,
-        `The power of love itself becomes the key to resolving the spirit's unfinished business...`,
-        `In a bittersweet finale, ${playerName} helps the spirit find peace, forever changed by their love...`
-      ],
-      adventure: [
-        `${playerName} ventures deeper into the supernatural realm, facing new challenges and mystical creatures...`,
-        `Ancient guardians test ${playerName}'s resolve as the quest reaches its most dangerous phase...`,
-        `A crucial ally reveals themselves as ${playerName} approaches the heart of the mystery...`,
-        `The final trial demands everything ${playerName} has learned on this supernatural journey...`,
-        `In the epic conclusion, ${playerName} must make a choice that will affect both worlds...`
-      ],
-      psychological: [
-        `Reality continues to fracture as ${playerName} questions what is real and what is manifestation of a troubled mind...`,
-        `The line between supernatural and psychological completely dissolves as ${playerName} confronts inner demons...`,
-        `Past traumas surface through ghostly manifestations, forcing ${playerName} to face painful truths...`,
-        `The ghost's identity becomes shockingly personal as ${playerName} realizes the connection...`,
-        `In the psychological climax, ${playerName} must integrate the shadow aspects of their psyche...`
-      ],
-      gothic: [
-        `The gothic atmosphere intensifies as ${playerName} discovers the dark family secrets hidden within the ancient walls...`,
-        `Ancestral curses and forbidden knowledge draw ${playerName} deeper into a web of supernatural intrigue...`,
-        `The architecture itself seems alive as ${playerName} navigates hidden chambers and secret passages...`,
-        `Gothic romance and horror intertwine as ${playerName} uncovers a tragic love story from centuries past...`,
-        `In the gothic finale, ${playerName} must break an ancient curse or become its next victim...`
-      ],
-      supernatural: [
-        `The veil between worlds grows thinner as ${playerName} gains the ability to see and interact with spirits...`,
-        `Multiple supernatural entities vie for ${playerName}'s attention, each with their own agenda...`,
-        `${playerName} discovers their own latent psychic abilities awakening in response to the supernatural energy...`,
-        `The spiritual realm reveals its complex hierarchy as ${playerName} becomes embroiled in otherworldly politics...`,
-        `In the supernatural climax, ${playerName} must choose their allegiance in a battle between opposing spiritual forces...`
-      ],
-      thriller: [
-        `The supernatural pursuit intensifies as ${playerName} races against time to escape an otherworldly threat...`,
-        `New dangers emerge as ${playerName} realizes they're being hunted by something far more powerful than imagined...`,
-        `A desperate chase through the spirit realm tests ${playerName}'s wit and determination...`,
-        `The stakes escalate dramatically as ${playerName} discovers the true scope of the supernatural conspiracy...`,
-        `In the thrilling conclusion, ${playerName} must outsmart supernatural forces in a final deadly game...`
-      ]
-    };
-
-    const progressions = partProgressions[genre];
-    const partIndex = Math.min(currentPart - 1, progressions.length - 1);
-    let content = progressions[partIndex];
-
+    const sessionKey = `${genre}-${mood}`;
+    const template = this.getUniqueStoryTemplate(genre, sessionKey);
+    
+    // Generate dynamic progression based on the story template and part number
+    const progression = this.generatePartProgression(genre, mood, template, currentPart, totalParts);
+    const storyArc = this.getStoryArc(currentPart, totalParts);
+    const dynamicElements = this.generateDynamicElements(genre, mood, currentPart);
+    
+    let content = `${progression} ${storyArc} ${dynamicElements}`;
+    
     // Add part indicator
     content += `\n\n*Part ${currentPart} of ${totalParts}*`;
 
     return content;
+  }
+
+  private generatePartProgression(genre: StoryGenre, mood: StoryMood, template: string, currentPart: number, totalParts: number): string {
+    const progressionTemplates: Record<StoryGenre, Record<number, string[]>> = {
+      horror: {
+        2: [
+          'The supernatural presence grows stronger, manifesting in increasingly terrifying ways',
+          'Ancient evil awakens from its slumber, hungry for souls to claim',
+          'The boundary between reality and nightmare dissolves completely',
+          'Malevolent forces gather, preparing for their final assault on sanity'
+        ],
+        3: [
+          'The horror reaches its peak as the truth behind the haunting is revealed',
+          'A final confrontation with pure evil determines the fate of all involved',
+          'The climactic battle between good and evil reaches its terrifying conclusion',
+          'The ultimate horror emerges from the shadows for the final encounter'
+        ],
+        4: [
+          'The aftermath of terror leaves permanent scars on reality itself',
+          'New mysteries emerge from the ashes of the previous horror',
+          'The evil adapts and evolves, becoming something far worse than before',
+          'Hope and despair wage war in the ruins of what once was normal'
+        ],
+        5: [
+          'The final revelation reshapes everything previously understood about the horror',
+          'In the ultimate confrontation, the very nature of evil is challenged',
+          'The conclusion brings either salvation or eternal damnation',
+          'The last chapter writes itself in blood and shadow'
+        ]
+      },
+      mystery: {
+        2: [
+          'New clues emerge that contradict everything previously discovered',
+          'The investigation takes an unexpected turn as hidden connections surface',
+          'A breakthrough revelation changes the entire direction of the mystery',
+          'The puzzle pieces begin forming a picture more complex than imagined'
+        ],
+        3: [
+          'The truth behind the mystery is more shocking than anyone could have predicted',
+          'All the clues finally converge to reveal the stunning conclusion',
+          'The final piece of the puzzle unlocks the entire mystery',
+          'Justice and revelation arrive in an unexpected climax'
+        ],
+        4: [
+          'The resolution of one mystery reveals the existence of an even deeper conspiracy',
+          'New questions arise from the ashes of the solved case',
+          'The truth proves to be just the tip of an enormous iceberg',
+          'Victory feels hollow as greater mysteries loom on the horizon'
+        ],
+        5: [
+          'The ultimate truth ties together all the previous mysteries in an epic conclusion',
+          'The final revelation explains not just the crime, but the nature of truth itself',
+          'In the end, solving the mystery becomes a journey of self-discovery',
+          'The last clue reveals that the greatest mystery was within all along'
+        ]
+      },
+      romance: {
+        2: [
+          'The spiritual connection deepens as two souls recognize their eternal bond',
+          'Love transcends the boundaries between life and death in beautiful ways',
+          'The romantic tension builds as supernatural forces either help or hinder the connection',
+          'Hearts begin to heal across the divide that separates the living and the dead'
+        ],
+        3: [
+          'True love proves stronger than death itself in a climactic romantic revelation',
+          'The power of eternal love reshapes reality to allow the impossible',
+          'Two hearts finally unite, creating a love story for the ages',
+          'The romantic conclusion proves that some bonds can never be broken'
+        ],
+        4: [
+          'The established love faces new challenges that test its eternal strength',
+          'Supernatural romance evolves into something even more profound and beautiful',
+          'Love conquers new obstacles and grows stronger with each victory',
+          'The romantic journey continues into uncharted emotional territory'
+        ],
+        5: [
+          'The ultimate love story concludes with a romance that reshapes the very nature of existence',
+          'Eternal love becomes a force that transforms not just two hearts, but the entire world',
+          'The final romantic revelation proves love truly is the most powerful force in any realm',
+          'Two souls achieve a unity that becomes legend for all who hear their story'
+        ]
+      },
+      adventure: {
+        2: [
+          'The mystical journey leads to realms where magic and wonder rule supreme',
+          'New allies and enemies emerge as the adventure takes increasingly dangerous turns',
+          'The quest reveals hidden powers and abilities that change everything',
+          'Ancient mysteries unfold as the adventure reaches its most challenging phase'
+        ],
+        3: [
+          'The climactic adventure tests every skill and courage gained along the journey',
+          'The final quest challenges not just physical abilities but the very essence of heroism',
+          'In the ultimate adventure, the fate of multiple worlds hangs in the balance',
+          'The conclusion of the quest brings rewards beyond imagination'
+        ],
+        4: [
+          'New adventures emerge from the success of the previous quest',
+          'The hero\'s journey continues into even more wondrous and dangerous realms',
+          'Greater challenges arise that require all the wisdom gained from past adventures',
+          'The adventure evolves as new mysteries and wonders await discovery'
+        ],
+        5: [
+          'The ultimate adventure reshapes the hero\'s understanding of their true purpose',
+          'In the final quest, the adventurer becomes legend through their incredible journey',
+          'The epic conclusion proves that the greatest adventures transform not just the world, but the soul',
+          'The last chapter of the adventure opens doorways to infinite possibilities'
+        ]
+      },
+      psychological: {
+        2: [
+          'The line between reality and illusion becomes increasingly blurred and dangerous',
+          'Deep psychological truths surface as the mind grapples with supernatural forces',
+          'Mental barriers break down, revealing disturbing connections between psyche and spirit',
+          'The exploration of consciousness takes terrifying and enlightening turns'
+        ],
+        3: [
+          'The psychological climax forces a confrontation with the deepest fears and truths',
+          'Reality reassembles itself as the mind finally grasps the true nature of the experience',
+          'The final psychological breakthrough either brings salvation or complete mental breakdown',
+          'Consciousness itself becomes the battlefield for the ultimate confrontation'
+        ],
+        4: [
+          'New layers of psychological complexity emerge from the resolved crisis',
+          'The mind adapts to its new understanding, but greater challenges await',
+          'Psychological evolution continues as deeper truths about consciousness surface',
+          'Mental barriers transform into doorways to previously unimaginable realms'
+        ],
+        5: [
+          'The ultimate psychological revelation transforms the very nature of self-understanding',
+          'In the final analysis, the journey becomes one of complete psychological transformation',
+          'The mind achieves a new level of consciousness that transcends previous limitations',
+          'The psychological conclusion redefines what it means to be truly aware'
+        ]
+      },
+      gothic: {
+        2: [
+          'Family secrets buried for generations finally claw their way to the surface',
+          'The weight of history and tradition creates pressure that threatens to crush the present',
+          'Gothic romance and horror intertwine in increasingly complex patterns',
+          'Ancestral sins demand payment as the past refuses to remain buried'
+        ],
+        3: [
+          'The gothic climax reveals the full scope of the family curse and its terrible price',
+          'Tradition and modernity clash in a final battle for the soul of the bloodline',
+          'The gothic conclusion either breaks the cycle of ancestral doom or perpetuates it',
+          'In true gothic fashion, victory comes with a price that echoes through eternity'
+        ],
+        4: [
+          'The gothic tradition evolves as new chapters of the family saga unfold',
+          'Ancient bloodlines adapt to modern times while carrying their historical burdens',
+          'Gothic themes deepen as the family legacy becomes even more complex',
+          'The past and present merge in ways that create new gothic mysteries'
+        ],
+        5: [
+          'The ultimate gothic revelation reshapes the entire understanding of family, tradition, and destiny',
+          'In the final gothic confrontation, the very nature of heritage and legacy is challenged',
+          'The conclusion proves that some gothic traditions transcend time itself',
+          'The final chapter writes a new beginning for an ancient gothic legacy'
+        ]
+      },
+      supernatural: {
+        2: [
+          'Supernatural abilities manifest as the connection to the otherworld strengthens',
+          'The spirit realm reveals its complex hierarchy and ancient laws',
+          'New supernatural allies and enemies emerge as cosmic forces take notice',
+          'The supernatural journey leads to realms where normal laws no longer apply'
+        ],
+        3: [
+          'The supernatural climax tests newly awakened powers against cosmic threats',
+          'The final supernatural confrontation determines the fate of multiple realms',
+          'In the ultimate supernatural battle, the balance between worlds hangs by a thread',
+          'The supernatural conclusion reshapes the relationship between the mortal and spirit worlds'
+        ],
+        4: [
+          'Greater supernatural responsibilities emerge from the victory over cosmic threats',
+          'The supernatural journey continues into realms of even greater power and mystery',
+          'New supernatural challenges test the evolved abilities and wisdom gained',
+          'The supernatural path leads to understanding of universal cosmic truths'
+        ],
+        5: [
+          'The ultimate supernatural revelation explains the true nature of existence itself',
+          'In the final supernatural ascension, mortal understanding transcends all previous limitations',
+          'The supernatural conclusion bridges all worlds and realms in perfect harmony',
+          'The final supernatural truth reveals that all existence is connected in ways beyond imagination'
+        ]
+      },
+      thriller: {
+        2: [
+          'The supernatural pursuit intensifies as the stakes reach life-threatening levels',
+          'New threats emerge that make the previous dangers seem trivial by comparison',
+          'The chase evolves into a deadly game where survival requires constant adaptation',
+          'Supernatural forces gather for an assault that threatens reality itself'
+        ],
+        3: [
+          'The thrilling climax pushes every survival instinct to its absolute limit',
+          'The final supernatural chase tests courage, wit, and determination in equal measure',
+          'In the ultimate thriller confrontation, only the strongest will survive the ordeal',
+          'The conclusion brings either triumphant victory or devastating defeat'
+        ],
+        4: [
+          'New supernatural threats emerge from the shadows of the previous victory',
+          'The thriller evolves as greater dangers require even more desperate measures',
+          'Survival becomes an art form as supernatural predators adapt their hunting strategies',
+          'The stakes escalate beyond personal survival to encompass the fate of many'
+        ],
+        5: [
+          'The ultimate supernatural thriller tests every skill learned and every alliance forged',
+          'In the final supernatural confrontation, the very nature of survival is redefined',
+          'The thrilling conclusion proves that some victories require the ultimate sacrifice',
+          'The last chapter of the supernatural thriller becomes legend among survivors'
+        ]
+      }
+    };
+    
+    const genreProgressions = progressionTemplates[genre] || {};
+    const partProgressions = genreProgressions[currentPart] || ['The story continues in unexpected ways...'];
+    
+    return partProgressions[Math.floor(Math.random() * partProgressions.length)];
+  }
+
+  private getStoryArc(currentPart: number, totalParts: number): string {
+    const arcPosition = currentPart / totalParts;
+    
+    if (arcPosition <= 0.33) {
+      return 'The foundation of the tale grows stronger with each revelation.';
+    } else if (arcPosition <= 0.66) {
+      return 'The story reaches its turning point as crucial elements converge.';
+    } else if (arcPosition < 1.0) {
+      return 'All threads weave together toward the inevitable climax.';
+    } else {
+      return 'The final chapter brings resolution to all that came before.';
+    }
+  }
+
+  private generateDynamicElements(genre: StoryGenre, mood: StoryMood, currentPart: number): string {
+    const elements = [
+      'Unexpected allies reveal themselves at the crucial moment.',
+      'Hidden connections between past and present become clear.',
+      'The true nature of the supernatural forces is finally revealed.',
+      'A twist in the tale changes everything previously understood.',
+      'New mysteries emerge from the resolution of old ones.',
+      'The stakes escalate beyond anything previously imagined.',
+      'Ancient prophecies begin to fulfill themselves in modern times.',
+      'The boundary between possible and impossible continues to blur.',
+      'Choices made in the past create consequences in the present.',
+      'The supernatural world proves to be vast beyond comprehension.'
+    ];
+    
+    return elements[Math.floor(Math.random() * elements.length)];
   }
 
   private getAtmosphereForMood(mood: StoryMood): string {
@@ -740,6 +1194,51 @@ export class StorytellingSystem {
     };
     
     return atmospheres[mood];
+  }
+
+  // New method to handle story completion and prevent immediate repetition
+  completeStory(sessionId: string): void {
+    const activeStory = this.activeStories.get(sessionId);
+    if (activeStory) {
+      // Mark story elements as used to prevent immediate repetition
+      const sessionKey = `${activeStory.selectedGenre}-${activeStory.selectedMood}`;
+      this.markStoryAsCompleted(sessionKey, activeStory.storyId);
+      
+      // Remove from active stories
+      this.activeStories.delete(sessionId);
+    }
+  }
+
+  private markStoryAsCompleted(sessionKey: string, storyId: string): void {
+    if (!this.usedStoryElements.has(sessionKey)) {
+      this.usedStoryElements.set(sessionKey, new Set());
+    }
+    
+    const usedElements = this.usedStoryElements.get(sessionKey)!;
+    usedElements.add(storyId);
+  }
+
+  // Method to clear used story elements for a fresh experience
+  resetStoryPool(genre?: StoryGenre, mood?: StoryMood): void {
+    if (genre && mood) {
+      const sessionKey = `${genre}-${mood}`;
+      this.usedStoryElements.delete(sessionKey);
+    } else {
+      this.usedStoryElements.clear();
+    }
+  }
+
+  // Get story variety statistics for debugging
+  getStoryVarietyInfo(genre: StoryGenre): { total: number, used: number, remaining: number } {
+    const templates = this.storyTemplates.get(genre) || [];
+    const sessionKey = `${genre}-any`;
+    const used = this.usedStoryElements.get(sessionKey)?.size || 0;
+    
+    return {
+      total: templates.length,
+      used: used,
+      remaining: templates.length - used
+    };
   }
 }
 
