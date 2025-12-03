@@ -1,16 +1,34 @@
+export type StoryGenre = 'horror' | 'mystery' | 'romance' | 'adventure' | 'psychological' | 'gothic' | 'supernatural' | 'thriller';
+export type StoryMood = 'suspenseful' | 'mysterious' | 'frightening' | 'melancholic' | 'hopeful' | 'romantic' | 'dark' | 'whimsical' | 'intense' | 'peaceful';
+export type ConsequenceMood = 'brave' | 'curious' | 'cautious' | 'fearful' | 'compassionate' | 'aggressive' | 'playful';
+
+export interface StoryMetadata {
+  id: string;
+  title: string;
+  description: string;
+  genre: StoryGenre;
+  primaryMood: StoryMood;
+  difficulty: 'easy' | 'medium' | 'hard';
+  estimatedLength: 'short' | 'medium' | 'long';
+  themes: string[];
+}
+
 export interface StorySegment {
   id: string;
   text: string;
   choices: StoryChoice[];
-  mood: 'suspenseful' | 'mysterious' | 'frightening' | 'melancholic' | 'hopeful';
+  mood: StoryMood;
   atmosphere: string;
+  genre?: StoryGenre;
+  emotionalIntensity: 'low' | 'medium' | 'high';
 }
 
 export interface StoryChoice {
   id: string;
   text: string;
   nextSegmentId: string;
-  consequenceMood: 'brave' | 'curious' | 'cautious' | 'fearful';
+  consequenceMood: ConsequenceMood;
+  moodShift?: StoryMood;
 }
 
 export interface ActiveStory {
@@ -20,10 +38,80 @@ export interface ActiveStory {
   personalizedElements: string[];
   sessionId: string;
   startedAt: Date;
+  selectedGenre: StoryGenre;
+  selectedMood: StoryMood;
+  dynamicElements: {
+    userPreferences: string[];
+    moodProgression: StoryMood[];
+    interactionHistory: string[];
+  };
 }
 
 export class StorytellingSystem {
   private activeStories: Map<string, ActiveStory> = new Map();
+  
+  private storyMetadata: Record<string, StoryMetadata> = {
+    'mansion_mystery': {
+      id: 'mansion_mystery',
+      title: 'The Mansion\'s Secret',
+      description: 'Explore a haunted mansion and uncover its dark mysteries',
+      genre: 'horror',
+      primaryMood: 'suspenseful',
+      difficulty: 'medium',
+      estimatedLength: 'medium',
+      themes: ['haunted house', 'family secrets', 'supernatural']
+    },
+    'lonely_spirit': {
+      id: 'lonely_spirit',
+      title: 'The Lonely Reader',
+      description: 'Meet a melancholic spirit in an ancient library',
+      genre: 'gothic',
+      primaryMood: 'melancholic',
+      difficulty: 'easy',
+      estimatedLength: 'short',
+      themes: ['loneliness', 'books', 'gentle ghost']
+    },
+    'romantic_specter': {
+      id: 'romantic_specter',
+      title: 'Love Beyond Death',
+      description: 'A ghost yearns for a love that transcends the mortal realm',
+      genre: 'romance',
+      primaryMood: 'romantic',
+      difficulty: 'medium',
+      estimatedLength: 'long',
+      themes: ['eternal love', 'tragedy', 'redemption']
+    },
+    'mystery_manor': {
+      id: 'mystery_manor',
+      title: 'The Vanishing Guests',
+      description: 'Investigate the mysterious disappearances at a grand estate',
+      genre: 'mystery',
+      primaryMood: 'mysterious',
+      difficulty: 'hard',
+      estimatedLength: 'long',
+      themes: ['detective work', 'clues', 'hidden passages']
+    },
+    'whimsical_spirit': {
+      id: 'whimsical_spirit',
+      title: 'The Playful Phantom',
+      description: 'Meet a mischievous but kind-hearted ghost who loves games',
+      genre: 'supernatural',
+      primaryMood: 'whimsical',
+      difficulty: 'easy',
+      estimatedLength: 'short',
+      themes: ['friendship', 'play', 'lighthearted']
+    },
+    'psychological_horror': {
+      id: 'psychological_horror',
+      title: 'Echoes of the Mind',
+      description: 'Question reality as you navigate a ghost\'s fractured psyche',
+      genre: 'psychological',
+      primaryMood: 'intense',
+      difficulty: 'hard',
+      estimatedLength: 'medium',
+      themes: ['sanity', 'perception', 'psychological thriller']
+    }
+  };
   
   private ghostStories: Record<string, StorySegment[]> = {
     'mansion_mystery': [
@@ -51,7 +139,8 @@ export class StorytellingSystem {
           }
         ],
         mood: 'suspenseful',
-        atmosphere: 'A storm rages outside, casting eerie shadows through the windows'
+        atmosphere: 'A storm rages outside, casting eerie shadows through the windows',
+        emotionalIntensity: 'medium'
       },
       {
         id: 'careful_entry',
@@ -295,6 +384,168 @@ export class StorytellingSystem {
     }
     
     return personalized;
+  }
+
+  // Generate a custom story based on user preferences
+  async generateCustomStory(preferences: {
+    genre: StoryGenre;
+    mood: StoryMood;
+    playerName: string;
+    sessionId: string;
+  }): Promise<ActiveStory | null> {
+    try {
+      const { genre, mood, playerName, sessionId } = preferences;
+      
+      // Create custom story metadata
+      const customStoryId = `custom-${genre}-${mood}-${Date.now()}`;
+      const storyTitle = this.generateStoryTitle(genre, mood);
+      
+      // Generate initial story content based on preferences
+      const initialContent = this.generateInitialStoryContent(genre, mood, playerName);
+      
+      // Create story segment
+      const initialSegment: StorySegment = {
+        id: 'custom-start-1',
+        text: initialContent,
+        choices: this.generateChoicesForGenreAndMood(genre, mood),
+        mood: mood,
+        atmosphere: this.getAtmosphereForMood(mood),
+        genre: genre,
+        emotionalIntensity: 'medium'
+      };
+      
+      // Create active story
+      const activeStory: ActiveStory = {
+        storyId: customStoryId,
+        currentSegmentId: initialSegment.id,
+        userChoices: [],
+        personalizedElements: [playerName],
+        sessionId: sessionId,
+        startedAt: new Date(),
+        selectedGenre: genre,
+        selectedMood: mood,
+        dynamicElements: {
+          userPreferences: [genre, mood],
+          moodProgression: [mood],
+          interactionHistory: []
+        }
+      };
+      
+      // Store the story and segment
+      this.activeStories.set(sessionId, activeStory);
+      
+      return {
+        ...activeStory,
+        currentSegment: initialSegment,
+        title: storyTitle,
+        content: initialContent
+      } as any;
+      
+    } catch (error) {
+      console.error('Error generating custom story:', error);
+      return null;
+    }
+  }
+
+  private generateStoryTitle(genre: StoryGenre, mood: StoryMood): string {
+    const titleTemplates: Record<StoryGenre, string[]> = {
+      horror: ['The Haunted', 'Nightmare of', 'Terror in', 'The Cursed'],
+      mystery: ['The Secret of', 'Mystery at', 'The Enigma of', 'Shadows of'],
+      romance: ['Love in', 'The Heart of', 'Passion at', 'Romance in'],
+      adventure: ['Journey to', 'Quest for', 'Adventure in', 'The Expedition to'],
+      psychological: ['Minds of', 'The Psyche of', 'Thoughts in', 'Consciousness of'],
+      gothic: ['The Gothic', 'Dark Tales of', 'The Cathedral of', 'Shadows in'],
+      supernatural: ['Spirits of', 'The Otherworld of', 'Phantoms in', 'The Ethereal'],
+      thriller: ['The Chase in', 'Danger at', 'The Hunt for', 'Pursuit in']
+    };
+    
+    const moodAdjectives: Record<StoryMood, string[]> = {
+      mysterious: ['Veiled', 'Hidden', 'Shrouded', 'Enigmatic'],
+      frightening: ['Terrifying', 'Nightmarish', 'Dreadful', 'Horrifying'],
+      romantic: ['Enchanted', 'Dreamy', 'Passionate', 'Tender'],
+      dark: ['Shadow', 'Obsidian', 'Midnight', 'Noir'],
+      hopeful: ['Dawn', 'Radiant', 'Blessed', 'Luminous'],
+      melancholic: ['Sorrowful', 'Wistful', 'Melancholy', 'Bittersweet'],
+      suspenseful: ['Tense', 'Edge', 'Precipice', 'Threshold'],
+      whimsical: ['Peculiar', 'Curious', 'Whimsical', 'Fantastical'],
+      intense: ['Fierce', 'Burning', 'Tempest', 'Inferno'],
+      peaceful: ['Serene', 'Tranquil', 'Gentle', 'Calm']
+    };
+    
+    const template = titleTemplates[genre][Math.floor(Math.random() * titleTemplates[genre].length)];
+    const adjective = moodAdjectives[mood][Math.floor(Math.random() * moodAdjectives[mood].length)];
+    
+    return `${template} ${adjective} Manor`;
+  }
+
+  private generateInitialStoryContent(genre: StoryGenre, mood: StoryMood, playerName: string): string {
+    const genreIntros: Record<StoryGenre, string> = {
+      horror: `${playerName} approaches a decrepit mansion under the pale moonlight, its windows like hollow eyes watching your every step. The wind carries whispers of the long dead...`,
+      mystery: `${playerName} receives a cryptic letter leading to an abandoned estate where secrets lie buried beneath layers of time and dust...`,
+      romance: `${playerName} discovers an old love letter in the attic, its words speaking of a passion that transcends death itself...`,
+      adventure: `${playerName} stands at the threshold of an otherworldly journey, where spirits guide and danger lurks in ethereal shadows...`,
+      psychological: `${playerName}'s mind begins to blur the lines between reality and the supernatural, as ghostly voices echo thoughts you've never spoken...`,
+      gothic: `${playerName} enters a cathedral of shadows where gargoyles weep stone tears and the very architecture seems alive with spectral energy...`,
+      supernatural: `${playerName} crosses into a realm where the veil between worlds grows thin, and phantoms walk among the living...`,
+      thriller: `${playerName} races against time in a supernatural chase where ghostly pursuers follow your every move through the ethereal plane...`
+    };
+    
+    const moodModifiers: Record<StoryMood, string> = {
+      mysterious: ' Ancient symbols glow faintly on the walls, their meaning lost to mortal understanding.',
+      frightening: ' Terror grips your heart as shadows move with malevolent intent.',
+      romantic: ' The air shimmers with the essence of eternal love, beautiful and haunting.',
+      dark: ' Oppressive darkness seems to have its own consciousness, watching and waiting.',
+      hopeful: ' Despite the supernatural atmosphere, a gentle warmth suggests protection from benevolent spirits.',
+      melancholic: ' A profound sadness permeates the air, the weight of countless untold stories.',
+      suspenseful: ' Every creak and whisper builds tension as you sense you are not alone.',
+      whimsical: ' Playful spirits dance in the moonbeams, their laughter like distant wind chimes.',
+      intense: ' The supernatural energy crackles with overwhelming power, demanding your attention.',
+      peaceful: ' Serene spiritual energy flows around you like a gentle, otherworldly embrace.'
+    };
+    
+    return genreIntros[genre] + moodModifiers[mood];
+  }
+
+  private generateChoicesForGenreAndMood(genre: StoryGenre, mood: StoryMood): StoryChoice[] {
+    const baseChoices = [
+      {
+        id: 'choice-1',
+        text: 'Enter the mysterious building',
+        nextSegmentId: 'custom-continue-1',
+        consequenceMood: 'brave' as ConsequenceMood
+      },
+      {
+        id: 'choice-2', 
+        text: 'Observe from a safe distance',
+        nextSegmentId: 'custom-continue-2',
+        consequenceMood: 'cautious' as ConsequenceMood
+      },
+      {
+        id: 'choice-3',
+        text: 'Call out to any spirits present',
+        nextSegmentId: 'custom-continue-3',
+        consequenceMood: 'curious' as ConsequenceMood
+      }
+    ];
+    
+    return baseChoices;
+  }
+
+  private getAtmosphereForMood(mood: StoryMood): string {
+    const atmospheres: Record<StoryMood, string> = {
+      mysterious: 'ethereal and enigmatic',
+      frightening: 'terrifying and oppressive',
+      romantic: 'passionate and otherworldly',
+      dark: 'shadowy and foreboding', 
+      hopeful: 'uplifting yet supernatural',
+      melancholic: 'sorrowful and haunting',
+      suspenseful: 'tense and anticipatory',
+      whimsical: 'playful and magical',
+      intense: 'overwhelming and powerful',
+      peaceful: 'serene and spiritual'
+    };
+    
+    return atmospheres[mood];
   }
 }
 

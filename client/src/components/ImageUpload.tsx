@@ -7,6 +7,16 @@ interface ImageUploadProps {
   className?: string;
 }
 
+// Enhanced analysis preferences
+type AnalysisGenre = 'supernatural' | 'horror' | 'mystery' | 'romantic' | 'artistic' | 'nature' | 'portrait' | 'abstract';
+type AnalysisMood = 'mysterious' | 'peaceful' | 'dramatic' | 'ethereal' | 'dark' | 'hopeful' | 'intense' | 'whimsical';
+
+interface AnalysisPreferences {
+  genre?: AnalysisGenre;
+  mood?: AnalysisMood;
+  analysisDepth?: 'basic' | 'detailed' | 'artistic';
+}
+
 const ImageUpload: React.FC<ImageUploadProps> = ({ 
   onImageAnalyzed, 
   personalityId, 
@@ -15,6 +25,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showPreferences, setShowPreferences] = useState(false);
+  const [analysisPreferences, setAnalysisPreferences] = useState<AnalysisPreferences>({
+    analysisDepth: 'detailed'
+  });
   
   const { currentAnalysis, isAnalyzing, analyzeImage, clearAnalysis } = useImageAnalysis();
 
@@ -31,8 +45,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
 
-    // Analyze the image
-    const analysis = await analyzeImage(file, personalityId);
+    // Analyze the image with enhanced preferences
+    const analysis = await analyzeImage(file, personalityId, analysisPreferences);
     if (analysis) {
       onImageAnalyzed?.(analysis);
     }
@@ -69,6 +83,83 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
   return (
     <div className={`image-upload max-w-[90vw] sm:max-w-lg mx-auto ${className}`}>
+      {/* Analysis Preferences */}
+      <div className="analysis-preferences mb-4 p-3 bg-purple-900/10 rounded-lg border border-purple-600/20">
+        <div className="flex justify-between items-center mb-2">
+          <h4 className="text-purple-200 font-medium text-sm">Analysis Preferences</h4>
+          <button
+            onClick={() => setShowPreferences(!showPreferences)}
+            className="text-purple-400 hover:text-purple-200 text-xs"
+          >
+            {showPreferences ? 'Hide' : 'Show'}
+          </button>
+        </div>
+        
+        {showPreferences && (
+          <div className="space-y-3">
+            {/* Genre Selection */}
+            <div>
+              <label className="block text-purple-300 text-xs mb-1">Analysis Style</label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1">
+                {(['supernatural', 'artistic', 'nature', 'portrait'] as AnalysisGenre[]).map((genre) => (
+                  <button
+                    key={genre}
+                    onClick={() => setAnalysisPreferences(prev => ({ ...prev, genre }))}
+                    className={`px-2 py-1 rounded text-xs transition-all ${
+                      analysisPreferences.genre === genre
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-purple-800/30 text-purple-200 hover:bg-purple-700/40'
+                    }`}
+                  >
+                    {genre}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Mood Selection */}
+            <div>
+              <label className="block text-purple-300 text-xs mb-1">Mood Focus</label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+                {(['mysterious', 'ethereal', 'dramatic', 'peaceful'] as AnalysisMood[]).map((mood) => (
+                  <button
+                    key={mood}
+                    onClick={() => setAnalysisPreferences(prev => ({ ...prev, mood }))}
+                    className={`px-2 py-1 rounded text-xs transition-all ${
+                      analysisPreferences.mood === mood
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-purple-800/30 text-purple-200 hover:bg-purple-700/40'
+                    }`}
+                  >
+                    {mood}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Analysis Depth */}
+            <div>
+              <label className="block text-purple-300 text-xs mb-1">Analysis Depth</label>
+              <div className="grid grid-cols-3 gap-1">
+                {(['basic', 'detailed', 'artistic'] as const).map((depth) => (
+                  <button
+                    key={depth}
+                    onClick={() => setAnalysisPreferences(prev => ({ ...prev, analysisDepth: depth }))}
+                    className={`px-2 py-1 rounded text-xs transition-all ${
+                      analysisPreferences.analysisDepth === depth
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-purple-800/30 text-purple-200 hover:bg-purple-700/40'
+                    }`}
+                  >
+                    {depth}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {!previewUrl ? (
         <div
           className={`upload-area border-2 border-dashed rounded-lg p-2 sm:p-4 text-center transition-colors duration-200 ${
@@ -189,6 +280,55 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                   </div>
                 </div>
               )}
+              
+              {/* Enhanced Analysis Fields */}
+              {currentAnalysis.visualThemes && currentAnalysis.visualThemes.length > 0 && (
+                <div className="visual-themes">
+                  <div className="text-purple-300 text-xs mb-1">Visual Themes:</div>
+                  <div className="flex flex-wrap gap-1">
+                    {currentAnalysis.visualThemes.map((theme, index) => (
+                      <span key={index} className="bg-purple-700/30 text-purple-200 px-2 py-1 rounded text-xs">
+                        {theme}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {currentAnalysis.storyPotential && (
+                <div className="story-potential bg-purple-900/10 rounded p-2">
+                  <div className="text-purple-300 text-xs mb-1">Story Inspiration:</div>
+                  <div className="text-purple-200 text-xs">
+                    <div className="mb-1">Genre: {currentAnalysis.storyPotential.genre}</div>
+                    <div className="mb-1">Mood: {currentAnalysis.storyPotential.mood}</div>
+                    {currentAnalysis.storyPotential.plotSuggestions && currentAnalysis.storyPotential.plotSuggestions.length > 0 && (
+                      <div>
+                        <div className="text-purple-300 text-xs mb-1 mt-2">Plot Ideas:</div>
+                        {currentAnalysis.storyPotential.plotSuggestions.map((suggestion, index) => (
+                          <div key={index} className="text-purple-200 text-xs">• {suggestion}</div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {currentAnalysis.artisticAnalysis && (
+                <div className="artistic-analysis bg-purple-900/10 rounded p-2">
+                  <div className="text-purple-300 text-xs mb-1">Artistic Perception:</div>
+                  <div className="text-purple-200 text-xs space-y-1">
+                    <div>Style: {currentAnalysis.artisticAnalysis.style}</div>
+                    <div>Composition: {currentAnalysis.artisticAnalysis.composition}</div>
+                    <div>Lighting: {currentAnalysis.artisticAnalysis.lighting}</div>
+                    {currentAnalysis.artisticAnalysis.symbolism && currentAnalysis.artisticAnalysis.symbolism.length > 0 && (
+                      <div>
+                        Symbolism: {currentAnalysis.artisticAnalysis.symbolism.join(', ')}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
               <div className="emotional-context bg-purple-900/10 rounded p-1 sm:p-2">
                 <div className="text-purple-300 text-xs mb-1">Emotional Context:</div>
                 <div className="flex items-center space-x-1 sm:space-x-2 text-xs">
