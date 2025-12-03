@@ -19,6 +19,10 @@ export interface ActiveStory {
   storyId: string;
   currentSegment: StorySegment;
   isActive: boolean;
+  storyLength?: 'short' | 'medium' | 'long';
+  currentPart?: number;
+  totalParts?: number;
+  isMultiPart?: boolean;
 }
 
 export const useStorytelling = () => {
@@ -58,7 +62,11 @@ export const useStorytelling = () => {
           setActiveStory({
             storyId,
             currentSegment: result.segment,
-            isActive: true
+            isActive: true,
+            storyLength: result.storyLength,
+            currentPart: result.currentPart || 1,
+            totalParts: result.totalParts,
+            isMultiPart: result.isMultiPart || false
           });
         }
         return result;
@@ -87,7 +95,11 @@ export const useStorytelling = () => {
         if (result.segment && result.isStoryActive) {
           setActiveStory(prev => prev ? {
             ...prev,
-            currentSegment: result.segment
+            currentSegment: result.segment,
+            currentPart: result.currentPart || prev.currentPart,
+            totalParts: result.totalParts || prev.totalParts,
+            isMultiPart: result.isMultiPart || prev.isMultiPart,
+            storyLength: result.storyLength || prev.storyLength
           } : null);
         } else {
           setActiveStory(null);
@@ -106,6 +118,85 @@ export const useStorytelling = () => {
     setActiveStory(null);
   }, []);
 
+  const continueStory = useCallback(async (sessionId: string) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/chat/story/continue', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sessionId }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.segment) {
+          setActiveStory(prev => prev ? {
+            ...prev,
+            currentSegment: result.segment,
+            currentPart: result.currentPart || (prev.currentPart || 1) + 1,
+            totalParts: result.totalParts || prev.totalParts
+          } : null);
+        }
+        return result;
+      }
+    } catch (error) {
+      console.error('Error continuing story:', error);
+    } finally {
+      setIsLoading(false);
+    }
+    return null;
+  }, []);
+
+  const startCustomStory = useCallback(async (preferences: {
+    genre: string;
+    mood: string;
+    length: string;
+    userName?: string;
+  }, sessionId: string) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/chat/story/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId,
+          preferences: {
+            genre: preferences.genre,
+            mood: preferences.mood,
+            length: preferences.length,
+            userName: preferences.userName || 'traveler'
+          },
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.segment) {
+          const customStoryId = `custom-${preferences.genre}-${preferences.mood}-${preferences.length}-${Date.now()}`;
+          setActiveStory({
+            storyId: customStoryId,
+            currentSegment: result.segment,
+            isActive: true,
+            storyLength: result.storyLength || preferences.length as any,
+            currentPart: result.currentPart || 1,
+            totalParts: result.totalParts || (preferences.length === 'short' ? 1 : preferences.length === 'medium' ? 3 : 5),
+            isMultiPart: result.isMultiPart || (preferences.length !== 'short')
+          });
+        }
+        return result;
+      }
+    } catch (error) {
+      console.error('Error creating custom story:', error);
+    } finally {
+      setIsLoading(false);
+    }
+    return null;
+  }, []);
+
   return {
     activeStory,
     availableStories,
@@ -113,6 +204,8 @@ export const useStorytelling = () => {
     fetchAvailableStories,
     startStory,
     makeChoice,
-    endStory
+    endStory,
+    continueStory,
+    startCustomStory
   };
 };
