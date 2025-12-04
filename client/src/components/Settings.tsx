@@ -98,6 +98,15 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
     eyeTrackingEnabled: settings.eyeTrackingEnabled ?? true,
     textSpiritsEnabled: settings.textSpiritsEnabled ?? true,
     roomWallpaper: settings.roomWallpaper || null,
+    // Analysis preferences
+    imageAnalysisEnabled: (settings as any).imageAnalysisEnabled ?? true,
+    moodVisualizationEnabled: (settings as any).moodVisualizationEnabled ?? true,
+    storyModeEnabled: (settings as any).storyModeEnabled ?? true,
+    emotionalAdaptationEnabled: (settings as any).emotionalAdaptationEnabled ?? true,
+    weatherIntegrationEnabled: (settings as any).weatherIntegrationEnabled ?? true,
+    defaultAnalysisGenre: (settings as any).defaultAnalysisGenre || 'supernatural',
+    defaultAnalysisMood: (settings as any).defaultAnalysisMood || 'mysterious',
+    defaultAnalysisDepth: (settings as any).defaultAnalysisDepth || 'detailed',
     motion3DSettings: settings.motion3DSettings || {
       enabled: true,
       effect: 'float' as const,
@@ -356,8 +365,155 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
       </Suspense>
       {/* Theme, environment, and accessibility controls */}
       <div className="mt-4 space-y-2">
+      {/* Analysis Preferences Section */}
+      <div className="mt-4 p-3 bg-haunted-900/20 rounded-lg border border-haunted-600/30">
+        <h4 className="text-haunted-200 font-medium mb-3 text-sm flex items-center gap-2">
+          <span>🔮</span> Analysis Preferences
+        </h4>
+        
+        {/* AI Analysis Toggles */}
+        <div className="space-y-3 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex items-center justify-between">
+              <label className="text-haunted-200 text-xs flex items-center gap-2">
+                <span>🖼️</span> Image Analysis
+              </label>
+              <button
+                onClick={() => handleChange('imageAnalysisEnabled', !localSettings.imageAnalysisEnabled)}
+                className={`w-9 h-5 rounded-full transition-colors ${
+                  localSettings.imageAnalysisEnabled ? 'bg-purple-600' : 'bg-haunted-800'
+                } relative flex items-center p-0.5`}
+              >
+                <motion.div
+                  className="w-4 h-4 bg-white rounded-full shadow-md"
+                  animate={{ x: localSettings.imageAnalysisEnabled ? 16 : 0 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                />
+              </button>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <label className="text-haunted-200 text-xs flex items-center gap-2">
+                <span>😊</span> Mood Analysis
+              </label>
+              <button
+                onClick={() => handleChange('moodVisualizationEnabled', !localSettings.moodVisualizationEnabled)}
+                className={`w-9 h-5 rounded-full transition-colors ${
+                  localSettings.moodVisualizationEnabled ? 'bg-purple-600' : 'bg-haunted-800'
+                } relative flex items-center p-0.5`}
+              >
+                <motion.div
+                  className="w-4 h-4 bg-white rounded-full shadow-md"
+                  animate={{ x: localSettings.moodVisualizationEnabled ? 16 : 0 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                />
+              </button>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <label className="text-haunted-200 text-xs flex items-center gap-2">
+                <span>📖</span> Story Mode
+              </label>
+              <button
+                onClick={() => handleChange('storyModeEnabled', !localSettings.storyModeEnabled)}
+                className={`w-9 h-5 rounded-full transition-colors ${
+                  localSettings.storyModeEnabled ? 'bg-purple-600' : 'bg-haunted-800'
+                } relative flex items-center p-0.5`}
+              >
+                <motion.div
+                  className="w-4 h-4 bg-white rounded-full shadow-md"
+                  animate={{ x: localSettings.storyModeEnabled ? 16 : 0 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                />
+              </button>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <label className="text-haunted-200 text-xs flex items-center gap-2">
+                <span>🌟</span> Emotional Adaptation
+              </label>
+              <button
+                onClick={() => handleChange('emotionalAdaptationEnabled', !localSettings.emotionalAdaptationEnabled)}
+                className={`w-9 h-5 rounded-full transition-colors ${
+                  localSettings.emotionalAdaptationEnabled ? 'bg-purple-600' : 'bg-haunted-800'
+                } relative flex items-center p-0.5`}
+              >
+                <motion.div
+                  className="w-4 h-4 bg-white rounded-full shadow-md"
+                  animate={{ x: localSettings.emotionalAdaptationEnabled ? 16 : 0 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                />
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        {/* Default Analysis Preferences */}
+        <div className="space-y-3">
+          {/* Analysis Style */}
+          <div>
+            <label className="block text-haunted-300 text-xs mb-2">Default Analysis Style</label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1">
+              {(['supernatural', 'artistic', 'nature', 'portrait'] as const).map((genre) => (
+                <button
+                  key={genre}
+                  onClick={() => handleChange('defaultAnalysisGenre', genre)}
+                  className={`px-2 py-1 rounded text-xs transition-all ${
+                    (localSettings as any).defaultAnalysisGenre === genre
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-haunted-800/50 text-haunted-300 hover:bg-haunted-700/60'
+                  }`}
+                >
+                  {genre}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {/* Mood Focus */}
+          <div>
+            <label className="block text-haunted-300 text-xs mb-2">Default Mood Focus</label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1">
+              {(['mysterious', 'ethereal', 'dramatic', 'peaceful'] as const).map((mood) => (
+                <button
+                  key={mood}
+                  onClick={() => handleChange('defaultAnalysisMood', mood)}
+                  className={`px-2 py-1 rounded text-xs transition-all ${
+                    (localSettings as any).defaultAnalysisMood === mood
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-haunted-800/50 text-haunted-300 hover:bg-haunted-700/60'
+                  }`}
+                >
+                  {mood}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {/* Analysis Depth */}
+          <div>
+            <label className="block text-haunted-300 text-xs mb-2">Default Analysis Depth</label>
+            <div className="grid grid-cols-3 gap-1">
+              {(['basic', 'detailed', 'artistic'] as const).map((depth) => (
+                <button
+                  key={depth}
+                  onClick={() => handleChange('defaultAnalysisDepth', depth)}
+                  className={`px-2 py-1 rounded text-xs transition-all ${
+                    (localSettings as any).defaultAnalysisDepth === depth
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-haunted-800/50 text-haunted-300 hover:bg-haunted-700/60'
+                  }`}
+                >
+                  {depth}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      
       {/* Language selection for AI replies */}
-      <div className="mt-2">
+      <div className="mt-4">
         <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 text-xs sm:text-sm">AI Reply Language</label>
         <select
           value={localSettings.language || 'en'}

@@ -313,6 +313,10 @@ const App = () => {
     weatherIntegrationEnabled: true,
     storyModeEnabled: true,
     emotionalAdaptationEnabled: true,
+    // Default analysis preferences
+    defaultAnalysisGenre: 'supernatural' as 'supernatural' | 'artistic' | 'nature' | 'portrait',
+    defaultAnalysisMood: 'mysterious' as 'mysterious' | 'ethereal' | 'dramatic' | 'peaceful',
+    defaultAnalysisDepth: 'detailed' as 'basic' | 'detailed' | 'artistic',
     // Typing speed in ms per character for ghost messages (lower = faster)
     typingSpeed: 6,
     // If true, typewriter animation is enabled. If false, messages render instantly.
@@ -1244,6 +1248,9 @@ const App = () => {
                     <ImageUpload 
                       onImageAnalyzed={handleImageAnalyzed}
                       personalityId={appSettings.ghostPersonality.id}
+                      defaultAnalysisGenre={appSettings.defaultAnalysisGenre}
+                      defaultAnalysisMood={appSettings.defaultAnalysisMood}
+                      defaultAnalysisDepth={appSettings.defaultAnalysisDepth}
                     />
                   )}
                 </div>
