@@ -1,10 +1,14 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useImageAnalysis, ImageAnalysis } from '../hooks/useImageAnalysis';
 
 interface ImageUploadProps {
   onImageAnalyzed?: (analysis: ImageAnalysis) => void;
   personalityId?: string;
   className?: string;
+  // Global analysis preferences as defaults
+  defaultAnalysisGenre?: AnalysisGenre;
+  defaultAnalysisMood?: AnalysisMood;
+  defaultAnalysisDepth?: 'basic' | 'detailed' | 'artistic';
 }
 
 // Enhanced analysis preferences
@@ -20,17 +24,31 @@ interface AnalysisPreferences {
 const ImageUpload: React.FC<ImageUploadProps> = ({ 
   onImageAnalyzed, 
   personalityId, 
-  className = '' 
+  className = '',
+  defaultAnalysisGenre = 'supernatural',
+  defaultAnalysisMood = 'mysterious', 
+  defaultAnalysisDepth = 'detailed'
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showPreferences, setShowPreferences] = useState(false);
   const [analysisPreferences, setAnalysisPreferences] = useState<AnalysisPreferences>({
-    analysisDepth: 'detailed'
+    genre: defaultAnalysisGenre,
+    mood: defaultAnalysisMood,
+    analysisDepth: defaultAnalysisDepth
   });
   
   const { currentAnalysis, isAnalyzing, analyzeImage, clearAnalysis } = useImageAnalysis();
+
+  // Sync with global defaults when they change
+  useEffect(() => {
+    setAnalysisPreferences(prev => ({
+      genre: defaultAnalysisGenre,
+      mood: defaultAnalysisMood,
+      analysisDepth: defaultAnalysisDepth
+    }));
+  }, [defaultAnalysisGenre, defaultAnalysisMood, defaultAnalysisDepth]);
 
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;

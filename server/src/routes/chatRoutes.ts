@@ -16,6 +16,7 @@ import {
   getPersonalities,
   exportChatLog
 } from '../controllers/chatController';
+import { handleAIModeration, handleGroupMessage } from '../controllers/aiModerationController';
 
 
 
@@ -61,5 +62,8 @@ router.get('/personalities', getPersonalities);
 // Export chat log as a spooky story
 router.get('/export', exportChatLog);
 
+// Group chat and AI moderation routes
+router.post('/ai-moderation', handleAIModeration);
+router.post('/group-message', handleGroupMessage);
 
 export default router;

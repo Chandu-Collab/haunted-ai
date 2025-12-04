@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import React, { useState, useRef, useEffect, useCallback, FormEvent } from 'react';
+import React, { useState, useRef, useEffect, useCallback, FormEvent, Suspense } from 'react';
 import useGhostInteractions, { useSeanceMode } from './hooks/useGhostInteractions';
 import useRooms from './hooks/useRooms';
 import GhostProfileManager from './components/GhostProfileManager';
@@ -76,7 +76,7 @@ const App = () => {
   const [showGhostSelector, setShowGhostSelector] = useState(false);
   const [currentRoom, setCurrentRoom] = useState<{ id: number; name: string; decorations?: any } | null>(null);
   const [showRoomSelector, setShowRoomSelector] = useState(false);
-    const [showSearchBar, setShowSearchBar] = useState(false);
+  const [showSearchBar, setShowSearchBar] = useState(false);
   const [showChatHistory, setShowChatHistory] = useState(false);
   // Room join handler
   const { user, getToken } = useAuth();
@@ -313,6 +313,10 @@ const App = () => {
     weatherIntegrationEnabled: true,
     storyModeEnabled: true,
     emotionalAdaptationEnabled: true,
+    // Default analysis preferences
+    defaultAnalysisGenre: 'supernatural' as 'supernatural' | 'artistic' | 'nature' | 'portrait',
+    defaultAnalysisMood: 'mysterious' as 'mysterious' | 'ethereal' | 'dramatic' | 'peaceful',
+    defaultAnalysisDepth: 'detailed' as 'basic' | 'detailed' | 'artistic',
     // Typing speed in ms per character for ghost messages (lower = faster)
     typingSpeed: 6,
     // If true, typewriter animation is enabled. If false, messages render instantly.
@@ -1092,12 +1096,12 @@ const App = () => {
                 <button
                   onClick={() => setShowRoomSelector(true)}
                   className="p-2 bg-purple-900/20 hover:bg-purple-800/30 border border-purple-500/50 rounded-lg text-purple-300 transition-colors duration-200"
-                  title="Select Room"
-                  aria-label="Select Room"
+                  title="Select Room or Create Group Chat"
+                  aria-label="Select Room or Create Group Chat"
                   tabIndex={0}
                   style={{ marginRight: 8 }}
                 >
-                  🗺️ Room
+                  🗺️ Rooms & Chat
                 </button>
                 {/* Ghost Selector Button */}
                 <button
@@ -1244,6 +1248,9 @@ const App = () => {
                     <ImageUpload 
                       onImageAnalyzed={handleImageAnalyzed}
                       personalityId={appSettings.ghostPersonality.id}
+                      defaultAnalysisGenre={appSettings.defaultAnalysisGenre}
+                      defaultAnalysisMood={appSettings.defaultAnalysisMood}
+                      defaultAnalysisDepth={appSettings.defaultAnalysisDepth}
                     />
                   )}
                 </div>
