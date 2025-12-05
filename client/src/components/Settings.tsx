@@ -236,12 +236,12 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
+    <>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-  className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4"
         onClick={handleClose}
       >
         <motion.div
@@ -836,39 +836,37 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
       </motion.div>
       
       {/* Feature modals (client-only, lazy-loaded into a portal, moved outside scrollable content) */}
-      <AnimatePresence mode="wait">
-        {showFortune && (
-          <Suspense fallback={null}>
-            <FortuneTelling key="fortune-modal" isOpen={showFortune} onClose={() => setShowFortune(false)} sessionId={sessionId} />
-          </Suspense>
-        )}
-        {showSeance && (
-          <Suspense fallback={null}>
-            <SeanceMode key="seance-modal" isOpen={showSeance} onClose={() => setShowSeance(false)} sessionId={sessionId} />
-          </Suspense>
-        )}
-        {showGames && (
-          <Suspense fallback={null}>
-            <GhostGames key="games-modal" isOpen={showGames} onClose={() => setShowGames(false)} sessionId={sessionId} />
-          </Suspense>
-        )}
-        {showSpell && (
-          <Suspense fallback={null}>
-            <SpellCasting key="spell-modal" isOpen={showSpell} onClose={() => setShowSpell(false)} sessionId={sessionId} />
-          </Suspense>
-        )}
-        {showRooms && (
-          <Suspense fallback={null}>
-            <RoomExplorer key="rooms-modal" isOpen={showRooms} onClose={() => setShowRooms(false)} sessionId={sessionId} />
-          </Suspense>
-        )}
-        {showAuth && (
-          <Suspense fallback={null}>
-            <AuthModal key="auth-modal" isOpen={showAuth} onClose={() => setShowAuth(false)} />
-          </Suspense>
-        )}
-      </AnimatePresence>
-    </AnimatePresence>
+      {showFortune && (
+        <Suspense fallback={null}>
+          <FortuneTelling isOpen={showFortune} onClose={() => setShowFortune(false)} sessionId={sessionId} />
+        </Suspense>
+      )}
+      {showSeance && (
+        <Suspense fallback={null}>
+          <SeanceMode isOpen={showSeance} onClose={() => setShowSeance(false)} sessionId={sessionId} />
+        </Suspense>
+      )}
+      {showGames && (
+        <Suspense fallback={null}>
+          <GhostGames isOpen={showGames} onClose={() => setShowGames(false)} sessionId={sessionId} />
+        </Suspense>
+      )}
+      {showSpell && (
+        <Suspense fallback={null}>
+          <SpellCasting isOpen={showSpell} onClose={() => setShowSpell(false)} sessionId={sessionId} />
+        </Suspense>
+      )}
+      {showRooms && (
+        <Suspense fallback={null}>
+          <RoomExplorer isOpen={showRooms} onClose={() => setShowRooms(false)} sessionId={sessionId} />
+        </Suspense>
+      )}
+      {showAuth && (
+        <Suspense fallback={null}>
+          <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
+        </Suspense>
+      )}
+    </>
   );
 };
 

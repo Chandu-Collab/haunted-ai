@@ -211,21 +211,46 @@ const GhostGamesComponent = forwardRef<HTMLDivElement, Props>(function GhostGame
     setCurrentRiddle(null);
     setFeedback('');
     setAnswer('');
+    
+    // Fallback riddles when server is unavailable
+    const fallbackRiddles = [
+      { question: "I float through walls and haunt your dreams. What am I?", answer: "ghost", hint: "I'm the main character of this app!" },
+      { question: "Orange and round, I glow at night. What am I?", answer: "pumpkin", hint: "Associated with Halloween" },
+      { question: "I have no body but make no sound. In darkness I can be found. What am I?", answer: "shadow", hint: "I follow you everywhere in light" },
+      { question: "I'm dead but I walk, I'm cold but I talk. What am I?", answer: "zombie", hint: "I want brains!" },
+      { question: "Black as night, I bring fright, on a broom I take flight. What am I?", answer: "witch", hint: "I cast spells and make potions" },
+      { question: "I have chains but no links, I rattle but don't think. What am I?", answer: "ghost", hint: "I'm bound to this realm" },
+      { question: "Round and bright, I light the night, but I'm not the moon so bright. What am I?", answer: "lantern", hint: "Jack carries me" },
+      { question: "I'm carved with a grin, a candle within, to scare and to win. What am I?", answer: "jack-o-lantern", hint: "A Halloween decoration" }
+    ];
+    
     try {
       const res = await fetch(`${API_URL}/api/games/riddle`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ difficulty, includeHint: true })
       });
+      
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      
       const data = await res.json();
       if (data && data.question && data.answer) {
         setCurrentRiddle({ question: data.question, answer: data.answer, hint: data.hint });
         startRiddle(data.question, data.answer);
+        return; // Success, exit early
       } else {
-        setFeedback('Failed to load riddle. Please try again.');
+        throw new Error('Invalid response format');
       }
     } catch (e) {
-      setFeedback('Failed to load riddle. Please try again.');
+      console.log('🔮 Server unavailable, using mystical backup riddles');
+      // Always use fallback on any error
+      const randomRiddle = fallbackRiddles[Math.floor(Math.random() * fallbackRiddles.length)];
+      setCurrentRiddle(randomRiddle);
+      startRiddle(randomRiddle.question, randomRiddle.answer);
+      setFeedback('🔮 Using mystical backup riddles (server offline)');
+      setTimeout(() => setFeedback(''), 3000);
     }
   };
 
@@ -234,31 +259,107 @@ const GhostGamesComponent = forwardRef<HTMLDivElement, Props>(function GhostGame
     setFeedback('');
     setAnswer('');
     setTriviaAnswered(false);
+    
+    // Fallback trivia when server is unavailable
+    const fallbackTrivia = [
+      { 
+        question: "Which famous ghost ship is said to sail the seas forever?", 
+        options: ["Flying Dutchman", "Black Pearl", "Titanic", "Queen Anne's Revenge"], 
+        answer: "Flying Dutchman",
+        hint: "It's from Dutch maritime folklore"
+      },
+      { 
+        question: "What do ghosts say to scare people?", 
+        options: ["Boo!", "Hello!", "Hi there!", "Good morning!"], 
+        answer: "Boo!",
+        hint: "It's a classic spooky sound"
+      },
+      { 
+        question: "On which night do ghosts and spirits roam freely?", 
+        options: ["Halloween", "Christmas", "New Year", "Easter"], 
+        answer: "Halloween",
+        hint: "October 31st"
+      },
+      { 
+        question: "What is another word for a ghost?", 
+        options: ["Spirit", "Angel", "Fairy", "Demon"], 
+        answer: "Spirit",
+        hint: "It's about the essence of a being"
+      },
+      { 
+        question: "Which tool do witches traditionally use for transportation?", 
+        options: ["Broomstick", "Magic Carpet", "Flying Car", "Pegasus"], 
+        answer: "Broomstick",
+        hint: "It's used for cleaning too!"
+      },
+      { 
+        question: "What creature transforms during a full moon?", 
+        options: ["Werewolf", "Vampire", "Ghost", "Zombie"], 
+        answer: "Werewolf",
+        hint: "They howl at the moon"
+      }
+    ];
+    
     try {
       const res = await fetch(`${API_URL}/api/games/trivia`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ difficulty, includeHint: true })
       });
+      
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      
       const data = await res.json();
       if (data && data.question && data.options && data.answer) {
         setCurrentTrivia({ question: data.question, options: data.options, answer: data.answer, hint: data.hint });
+        return; // Success, exit early
       } else {
-        setFeedback('Failed to load trivia. Please try again.');
+        throw new Error('Invalid response format');
       }
     } catch (e) {
-      setFeedback('Failed to load trivia. Please try again.');
+      console.log('🔮 Server unavailable, using mystical backup trivia');
+      // Always use fallback on any error
+      const randomTrivia = fallbackTrivia[Math.floor(Math.random() * fallbackTrivia.length)];
+      setCurrentTrivia(randomTrivia);
+      setFeedback('🔮 Using mystical backup trivia (server offline)');
+      setTimeout(() => setFeedback(''), 3000);
     }
   };
 
   const memoryIcons = ['👻', '🎃', '🕯️', '🦇', '🧙', '🪦', '🦴', '🕸️', '⚰️', '🔮', '🌙', '⭐'];
   const startMemoryGame = async () => {
     const sequenceLength = difficulty === 'easy' ? 3 : difficulty === 'medium' ? 5 : difficulty === 'hard' ? 7 : 9;
-    const shuffledIcons = [...memoryIcons].sort(() => Math.random() - 0.5);
-    const sequence = shuffledIcons.slice(0, sequenceLength);
     
-    setCurrentMemory({ sequence, userSequence: [], completed: false, difficulty });
-    setFeedback('');
+    try {
+      const res = await fetch(`${API_URL}/api/games/memory`, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ difficulty })
+      });
+      
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      
+      const data = await res.json();
+      if (data && Array.isArray(data.sequence)) {
+        setCurrentMemory({ sequence: data.sequence, userSequence: [], completed: false, difficulty });
+        return; // Success, exit early
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (e) {
+      console.log('🧠 Server unavailable, using mystical backup memory');
+      // Always use fallback: generate local sequence
+      const shuffledIcons = [...memoryIcons].sort(() => Math.random() - 0.5);
+      const sequence = shuffledIcons.slice(0, sequenceLength);
+      setCurrentMemory({ sequence, userSequence: [], completed: false, difficulty });
+      setFeedback('🧠 Using mystical backup memory (server offline)');
+      setTimeout(() => setFeedback(''), 3000);
+    }
+    
     setAnswer('');
   };
 

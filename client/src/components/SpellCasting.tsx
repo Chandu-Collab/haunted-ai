@@ -20,34 +20,69 @@ const SpellCastingComponent = forwardRef<HTMLDivElement, Props>(function SpellCa
   // Fetch AI-generated spell result from backend
   const getSpellResult = async (spellName: string) => {
     if (!spellName.trim()) return 'The spirits are confused. Try a real spell!';
+    
     try {
-      const response = await fetch('/api/games/spell', {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${API_URL}/api/games/spell`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ spell: spellName })
       });
-      if (!response.ok) throw new Error('Failed to get spell result');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
       const data = await response.json();
       return data.result || 'The spirits are silent...';
     } catch (err) {
-      return 'The spirits are silent... (error)';
+      console.error('Error casting spell:', err);
+      // Fallback spell results when server is unavailable
+      const fallbackResults = [
+        `✨ ${spellName} glows with mystical energy and lights up the darkness around you!`,
+        `🌟 Your ${spellName} spell creates dancing lights that swirl through the air!`,
+        `💫 The ${spellName} incantation summons a gentle breeze that whispers ancient secrets!`,
+        `🔮 Your ${spellName} spell causes nearby objects to shimmer with ethereal light!`,
+        `👻 The ${spellName} magic attracts friendly spirits who giggle and vanish!`,
+        `🕯️ ${spellName} conjures floating candles that illuminate hidden messages!`,
+        `⚡ Your ${spellName} spell crackles with purple lightning that dances between your fingers!`,
+        `🌙 The ${spellName} enchantment calls forth silver moonbeams that bathe everything in soft light!`,
+        `🧙‍♀️ Your ${spellName} magic transforms into sparkles that rain down like stardust!`,
+        `🔥 The ${spellName} spell ignites a warm, comforting fire that burns without heat!`
+      ];
+      return fallbackResults[Math.floor(Math.random() * fallbackResults.length)];
     }
   };
 
   const handleCast = async () => {
     setCasting(true);
     setResult(null);
+    
+    // Try to play audio, but don't fail if it doesn't work
     if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play();
+      try {
+        audioRef.current.currentTime = 0;
+        await audioRef.current.play();
+      } catch (audioError) {
+        console.log('Audio play failed (this is normal on some browsers):', audioError);
+        // Continue without audio - this is not a critical error
+      }
     }
+    
     castSpell(spell);
-    // Instantly get spell result (no delay)
-    (async () => {
+    
+    // Get spell result
+    try {
       const res = await getSpellResult(spell);
       setResult(res);
+    } catch (error) {
+      console.error('Error getting spell result:', error);
+      setResult('The magical energies dissipate mysteriously...');
+    } finally {
       setCasting(false);
       setSpell('');
+    }
+  };
     })();
   };
 
@@ -94,8 +129,13 @@ const SpellCastingComponent = forwardRef<HTMLDivElement, Props>(function SpellCa
             </div>
           )}
 
-          {/* Spell sound effect */}
-          <audio ref={audioRef} src="/audio/effects/spell-cast.mp3" preload="auto" />
+          {/* Spell sound effect - make audio optional */}
+          <audio 
+            ref={audioRef} 
+            src="/audio/effects/spell-cast.mp3" 
+            preload="none"
+            onError={() => console.log('Audio file not found - continuing without sound')}
+          />
         </div>
       </div>
     </Portal>

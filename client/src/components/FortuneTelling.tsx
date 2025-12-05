@@ -20,32 +20,38 @@ const FortuneTellingComponent = forwardRef<HTMLDivElement, Props>(function Fortu
   const [fortune, setFortune] = useState<string | null>(null);
   const [flipped, setFlipped] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchNewFortune = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      playSyntheticSound('ghost');
+      const fortuneText = await getFortune();
+      setFortune(fortuneText);
+      setFlipped(true);
+    } catch (err) {
+      console.error('Error fetching fortune:', err);
+      setError('The spirits are silent... Try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
       setFlipped(false);
-      setLoading(true);
-      (async () => {
-        playSyntheticSound('ghost');
-        const fortuneText = await getFortune();
-        setFortune(fortuneText);
-        setFlipped(true);
-        setLoading(false);
-      })();
+      setFortune(null);
+      setError(null);
+      fetchNewFortune();
     }
     // eslint-disable-next-line
   }, [isOpen]);
 
   const handleDrawAgain = () => {
     setFlipped(false);
-    setLoading(true);
-    (async () => {
-      playSyntheticSound('ghost');
-      const fortuneText = await getFortune();
-      setFortune(fortuneText);
-      setFlipped(true);
-      setLoading(false);
-    })();
+    setFortune(null);
+    fetchNewFortune();
   };
 
   if (!isOpen) return null;
@@ -83,7 +89,23 @@ const FortuneTellingComponent = forwardRef<HTMLDivElement, Props>(function Fortu
                     className="absolute inset-0 flex items-center justify-center px-2 sm:px-4 text-base sm:text-lg text-center z-10"
                   >
                     {loading ? (
-                      <span className="ghost-text animate-fade-in-slow">The spirits are whispering...</span>
+                      <motion.div
+                        animate={{ scale: [1, 1.05, 1] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="ghost-text animate-fade-in-slow text-center"
+                      >
+                        <div className="text-2xl mb-2">🔮</div>
+                        <div>The spirits are whispering...</div>
+                      </motion.div>
+                    ) : error ? (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="text-red-300 text-center"
+                      >
+                        <div className="text-2xl mb-2">👻</div>
+                        <div>{error}</div>
+                      </motion.div>
                     ) : (
                       <TypewriterText text={fortune || ''} className="ghost-text animate-fade-in-slow" isGhost speed={22} />
                     )}
