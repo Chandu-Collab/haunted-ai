@@ -172,6 +172,28 @@ const GhostGamesComponent = forwardRef<HTMLDivElement, Props>(function GhostGame
     }
   }, [unlockedAchievements, speedAnswers, totalPoints, gamesPlayed]);
   
+  // Clear all game states
+  const clearGameStates = () => {
+    setCurrentRiddle(null);
+    setCurrentTrivia(null);
+    setCurrentMemory(null);
+    setCurrentPattern(null);
+    setCurrentWord(null);
+    setAnswer('');
+    setFeedback('');
+    setTriviaAnswered(false);
+    setHintUsed(false);
+    setIsGameActive(false);
+  };
+
+  // Handle game mode switching
+  const handleGameModeChange = (mode: string) => {
+    clearGameStates();
+    setGameMode(mode);
+    // Start new game after a brief delay to allow state to update
+    setTimeout(() => startNewGame(), 100);
+  };
+
   // Start new game
   const startNewGame = () => {
     setIsGameActive(true);
@@ -724,7 +746,7 @@ const GhostGamesComponent = forwardRef<HTMLDivElement, Props>(function GhostGame
                       ? 'bg-purple-700 text-white border-purple-400' 
                       : 'bg-haunted-800 text-haunted-200 border-haunted-700 hover:bg-purple-800/50'
                   }`}
-                  onClick={() => setGameMode(mode.key)}
+                  onClick={() => handleGameModeChange(mode.key)}
                   title={mode.description}
                 >
                   <div>{mode.emoji}</div>
