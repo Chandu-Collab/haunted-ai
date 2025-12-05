@@ -1,8 +1,24 @@
+import type { Request, Response } from 'express';
+import { getAIProvider } from '../ai/providerFactory';
+
 // POST /api/games/trivia
 export const generateTrivia = async (req: Request, res: Response) => {
   try {
+    const { difficulty = 'easy', includeHint = false } = req.body;
     const aiProvider = getAIProvider('gemini');
-    const prompt = `Generate a single multiple-choice trivia question about ghosts, hauntings, or the supernatural. Respond ONLY in JSON with keys 'question', 'options' (array of 4), and 'answer' (must match one of the options). Example: { "question": "Which famous ship is said to be haunted?", "options": ["Titanic", "Queen Mary", "Mayflower", "Santa Maria"], "answer": "Queen Mary" }`;
+    
+    let difficultyText = '';
+    switch (difficulty) {
+      case 'easy': difficultyText = 'simple and straightforward'; break;
+      case 'medium': difficultyText = 'moderately challenging'; break;
+      case 'hard': difficultyText = 'difficult and complex'; break;
+      case 'nightmare': difficultyText = 'extremely challenging and obscure'; break;
+      default: difficultyText = 'simple and straightforward';
+    }
+    
+    const hintText = includeHint ? ', "hint" (a subtle clue)' : '';
+    const prompt = `Generate a single ${difficultyText} multiple-choice trivia question about ghosts, hauntings, or the supernatural. Respond ONLY in JSON with keys 'question', 'options' (array of 4)${hintText}, and 'answer' (must match one of the options exactly). Example: { "question": "Which famous ship is said to be haunted?", "options": ["Titanic", "Queen Mary", "Mayflower", "Santa Maria"], "answer": "Queen Mary"${includeHint ? ', "hint": "This ship is now a hotel in California"' : ''} }`;
+    
     const response = await aiProvider.generateResponse(prompt, {});
     let trivia;
     try {
@@ -24,8 +40,18 @@ export const generateTrivia = async (req: Request, res: Response) => {
 // POST /api/games/memory
 export const generateMemorySequence = async (req: Request, res: Response) => {
   try {
+    const { difficulty = 'easy' } = req.body;
     const aiProvider = getAIProvider('gemini');
-    const prompt = `Generate a random sequence of 4 to 6 spooky emoji for a memory game. Respond ONLY in JSON with key 'sequence' as an array of emoji. Example: { "sequence": ["👻", "🎃", "🕯️", "🦇"] }`;
+    
+    let sequenceLength = 3;
+    switch (difficulty) {
+      case 'easy': sequenceLength = 3; break;
+      case 'medium': sequenceLength = 5; break;
+      case 'hard': sequenceLength = 7; break;
+      case 'nightmare': sequenceLength = 9; break;
+    }
+    
+    const prompt = `Generate a random sequence of exactly ${sequenceLength} spooky emoji for a memory game. Use only these emoji: 👻🎃🕯️🦇🧙🪦🦴🕸️⚰️🔮🌙⭐. Respond ONLY in JSON with key 'sequence' as an array of emoji. Example: { "sequence": ["👻", "🎃", "🕯️", "🦇"] }`;
     const response = await aiProvider.generateResponse(prompt, {});
     let memory;
     try {
@@ -54,14 +80,25 @@ export const getFortune = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to generate fortune' });
   }
 };
-import type { Request, Response } from 'express';
-import { getAIProvider } from '../ai/providerFactory';
 
 // POST /api/games/riddle
 export const generateRiddle = async (req: Request, res: Response) => {
   try {
+    const { difficulty = 'easy', includeHint = false } = req.body;
     const aiProvider = getAIProvider('gemini');
-    const prompt = `Generate a single creative, fun, and challenging riddle for a human user. Respond ONLY in JSON with keys 'question' and 'answer'. Example: { "question": "What has keys but can't open locks?", "answer": "A piano" }`;
+    
+    let difficultyText = '';
+    switch (difficulty) {
+      case 'easy': difficultyText = 'simple and straightforward'; break;
+      case 'medium': difficultyText = 'moderately challenging'; break;
+      case 'hard': difficultyText = 'difficult and complex'; break;
+      case 'nightmare': difficultyText = 'extremely challenging and obscure'; break;
+      default: difficultyText = 'simple and straightforward';
+    }
+    
+    const hintText = includeHint ? ', "hint" (a subtle clue to help solve it)' : '';
+    const prompt = `Generate a single ${difficultyText}, creative, and fun riddle for a human user. Make it engaging and not too obvious. Respond ONLY in JSON with keys 'question' (the riddle)${hintText}, and 'answer' (brief, clear answer). Example: { "question": "What has keys but can't open locks?", "answer": "piano"${includeHint ? ', "hint": "It makes music when you press its keys"' : ''} }`;
+    
     const response = await aiProvider.generateResponse(prompt, {});
     let riddle;
     try {
@@ -74,6 +111,10 @@ export const generateRiddle = async (req: Request, res: Response) => {
     if (!riddle || !riddle.question || !riddle.answer) {
       return res.status(500).json({ error: 'Failed to generate riddle' });
     }
+    
+    // Ensure answer is lowercase for easier matching
+    riddle.answer = riddle.answer.toLowerCase();
+    
     res.json(riddle);
   } catch (error) {
     console.error('Error generating riddle:', error);

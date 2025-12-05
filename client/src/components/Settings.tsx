@@ -363,6 +363,51 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
           availablePersonalities={availablePersonalities}
         />
       </Suspense>
+
+      {/* Interactive Activities Section */}
+      <div className="mt-4 p-3 bg-haunted-900/20 rounded-lg border border-haunted-600/30">
+        <h4 className="text-haunted-200 font-medium mb-3 text-sm flex items-center gap-2">
+          <span>🎮</span> Interactive Activities
+        </h4>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <button
+            onClick={openFortune}
+            className="p-2 bg-haunted-700/50 hover:bg-haunted-600/50 rounded-lg border border-haunted-600/30 transition-colors flex flex-col items-center gap-1 text-center"
+          >
+            <span className="text-lg">🔮</span>
+            <span className="text-haunted-200">Fortune Telling</span>
+          </button>
+          <button
+            onClick={openSeance}
+            className="p-2 bg-haunted-700/50 hover:bg-haunted-600/50 rounded-lg border border-haunted-600/30 transition-colors flex flex-col items-center gap-1 text-center"
+          >
+            <span className="text-lg">👻</span>
+            <span className="text-haunted-200">Seance Mode</span>
+          </button>
+          <button
+            onClick={openGames}
+            className="p-2 bg-haunted-700/50 hover:bg-haunted-600/50 rounded-lg border border-haunted-600/30 transition-colors flex flex-col items-center gap-1 text-center"
+          >
+            <span className="text-lg">🎲</span>
+            <span className="text-haunted-200">Ghost Games</span>
+          </button>
+          <button
+            onClick={openSpell}
+            className="p-2 bg-haunted-700/50 hover:bg-haunted-600/50 rounded-lg border border-haunted-600/30 transition-colors flex flex-col items-center gap-1 text-center"
+          >
+            <span className="text-lg">✨</span>
+            <span className="text-haunted-200">Spell Casting</span>
+          </button>
+          <button
+            onClick={openExplore}
+            className="p-2 bg-haunted-700/50 hover:bg-haunted-600/50 rounded-lg border border-haunted-600/30 transition-colors flex flex-col items-center gap-1 text-center col-span-2"
+          >
+            <span className="text-lg">🏚️</span>
+            <span className="text-haunted-200">Explore Rooms</span>
+          </button>
+        </div>
+      </div>
+
       {/* Theme, environment, and accessibility controls */}
       <div className="mt-4 space-y-2">
       {/* Analysis Preferences Section */}
@@ -789,37 +834,40 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
           </div>
         </motion.div>
       </motion.div>
-    {/* Feature modals (client-only, lazy-loaded into a portal, moved outside scrollable content) */}
-    {showFortune && (
-      <Suspense fallback={null}>
-        <FortuneTelling key="fortune" isOpen={showFortune} onClose={() => setShowFortune(false)} sessionId={sessionId} />
-      </Suspense>
-    )}
-    {showSeance && (
-      <Suspense fallback={null}>
-        <SeanceMode key="seance" isOpen={showSeance} onClose={() => setShowSeance(false)} sessionId={sessionId} />
-      </Suspense>
-    )}
-    {showGames && (
-      <Suspense fallback={null}>
-        <GhostGames key="games" isOpen={showGames} onClose={() => setShowGames(false)} sessionId={sessionId} />
-      </Suspense>
-    )}
-    {showSpell && (
-      <Suspense fallback={null}>
-        <SpellCasting key="spell" isOpen={showSpell} onClose={() => setShowSpell(false)} sessionId={sessionId} />
-      </Suspense>
-    )}
-    {showRooms && (
-      <Suspense fallback={null}>
-        <RoomExplorer key="rooms" isOpen={showRooms} onClose={() => setShowRooms(false)} sessionId={sessionId} />
-      </Suspense>
-    )}
-    {showAuth && (
-      <Suspense fallback={null}>
-        <AuthModal key="auth" isOpen={showAuth} onClose={() => setShowAuth(false)} />
-      </Suspense>
-    )}
+      
+      {/* Feature modals (client-only, lazy-loaded into a portal, moved outside scrollable content) */}
+      <AnimatePresence mode="wait">
+        {showFortune && (
+          <Suspense fallback={null}>
+            <FortuneTelling key="fortune-modal" isOpen={showFortune} onClose={() => setShowFortune(false)} sessionId={sessionId} />
+          </Suspense>
+        )}
+        {showSeance && (
+          <Suspense fallback={null}>
+            <SeanceMode key="seance-modal" isOpen={showSeance} onClose={() => setShowSeance(false)} sessionId={sessionId} />
+          </Suspense>
+        )}
+        {showGames && (
+          <Suspense fallback={null}>
+            <GhostGames key="games-modal" isOpen={showGames} onClose={() => setShowGames(false)} sessionId={sessionId} />
+          </Suspense>
+        )}
+        {showSpell && (
+          <Suspense fallback={null}>
+            <SpellCasting key="spell-modal" isOpen={showSpell} onClose={() => setShowSpell(false)} sessionId={sessionId} />
+          </Suspense>
+        )}
+        {showRooms && (
+          <Suspense fallback={null}>
+            <RoomExplorer key="rooms-modal" isOpen={showRooms} onClose={() => setShowRooms(false)} sessionId={sessionId} />
+          </Suspense>
+        )}
+        {showAuth && (
+          <Suspense fallback={null}>
+            <AuthModal key="auth-modal" isOpen={showAuth} onClose={() => setShowAuth(false)} />
+          </Suspense>
+        )}
+      </AnimatePresence>
     </AnimatePresence>
   );
 };
