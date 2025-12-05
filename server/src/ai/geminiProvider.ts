@@ -3,7 +3,7 @@
 import { AIProvider } from './aiProvider';
 import fetch from 'node-fetch';
 
-const GEMINI_API_KEY = process.env.GOOGLE_API_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_KEY || process.env.GOOGLE_API_KEY;
 // Use a faster Gemini model for lower latency
 const GEMINI_MODEL = 'gemini-flash-latest';
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
