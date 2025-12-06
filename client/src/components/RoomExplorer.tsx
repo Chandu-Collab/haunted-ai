@@ -3,6 +3,7 @@ import FloatingGhosts from './FloatingGhosts';
 import FloatingGhostOrbs from './FloatingGhostOrbs';
 import FogEffect from './FogEffect';
 import ParticleSystem from './ParticleSystem';
+import MultiplayerGameLobby from './MultiplayerGameLobby';
 import useGhostInteractions from '../hooks/useGhostInteractions';
 import Portal from './Portal';
 
@@ -59,13 +60,14 @@ const ROOMS = [
 
 
 
-const RoomExplorer = forwardRef<HTMLDivElement, Props>(function RoomExplorer({ isOpen, onClose, sessionId }, ref) {
+const RoomExplorer = forwardRef<HTMLDivElement, Props>(function RoomExplorer({ isOpen, onClose, sessionId }, ref) => {
   const { exploreRoom, state } = useGhostInteractions(sessionId);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [roomDescription, setRoomDescription] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [visitCounts, setVisitCounts] = useState<Record<string, number>>({});
+  const [showMultiplayerGames, setShowMultiplayerGames] = useState(false);
 
   const handleExplore = async (roomId: string, roomName: string) => {
     setSelectedRoom(roomId);
@@ -225,6 +227,22 @@ const RoomExplorer = forwardRef<HTMLDivElement, Props>(function RoomExplorer({ i
                     </>
                   )}
                 </div>
+                
+                {/* Room Actions */}
+                <div className="flex justify-center gap-2 mb-3">
+                  <button
+                    onClick={() => setShowMultiplayerGames(true)}
+                    className="px-3 py-1 bg-purple-700 hover:bg-purple-600 rounded-full text-xs font-semibold transition-colors flex items-center gap-1"
+                  >
+                    🎮 Play Games
+                  </button>
+                  <button
+                    onClick={() => handleToggleVisited(selectedRoom)}
+                    className="px-3 py-1 bg-blue-700 hover:bg-blue-600 rounded-full text-xs font-semibold transition-colors"
+                  >
+                    {state.roomsVisited.includes(selectedRoom) ? '↩️ Mark Unvisited' : '✅ Mark Visited'}
+                  </button>
+                </div>
               </div>
               
               {/* Content */}
@@ -251,6 +269,14 @@ const RoomExplorer = forwardRef<HTMLDivElement, Props>(function RoomExplorer({ i
               </div>
             </div>
           )}
+
+          {/* Multiplayer Games Modal */}
+          <MultiplayerGameLobby
+            isOpen={showMultiplayerGames}
+            onClose={() => setShowMultiplayerGames(false)}
+            roomId={selectedRoom || undefined}
+            sessionId={sessionId}
+          />
 
           <div className="mt-2 sm:mt-4 flex justify-end">
             <button onClick={onClose} className="px-2 sm:px-3 py-1 bg-haunted-600 rounded shadow-md hover:bg-purple-700/80 transition-colors text-xs sm:text-base">Close</button>

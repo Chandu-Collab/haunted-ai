@@ -26,6 +26,9 @@ import AudioInitPrompt from './components/AudioInitPrompt';
 import MessageSearch from './components/MessageSearch';
 import ChatHistory from './components/ChatHistory';
 import Motion3DBackground from './components/Motion3DBackground';
+import GameChallengeNotifications from './components/GameChallengeNotifications';
+import MultiplayerGameLobby from './components/MultiplayerGameLobby';
+import ChatGameButton from './components/ChatGameButton';
 
 // New AI Components
 import MoodVisualizer from './components/MoodVisualizer';
@@ -78,6 +81,7 @@ const App = () => {
   const [showRoomSelector, setShowRoomSelector] = useState(false);
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [showChatHistory, setShowChatHistory] = useState(false);
+  const [showMultiplayerGames, setShowMultiplayerGames] = useState(false);
   // Room join handler
   const { user, getToken } = useAuth();
   const { saveSessionToStorage } = useChatHistory();
@@ -1140,6 +1144,14 @@ const App = () => {
                   <>
                     <span className="text-purple-300 text-sm ml-2">Room: {currentRoom.name}</span>
                     <button
+                      onClick={() => setShowMultiplayerGames(true)}
+                      className="ml-2 px-2 py-1 bg-purple-700 rounded text-white text-xs hover:bg-purple-600 border border-purple-500/50"
+                      title="Play Games with Friends"
+                      aria-label="Start Multiplayer Games"
+                    >
+                      🎮 Play Games
+                    </button>
+                    <button
                       onClick={() => setCurrentRoom(null)}
                       className="ml-2 px-2 py-1 bg-haunted-700 rounded text-white text-xs hover:bg-haunted-600 border border-purple-500/50"
                       title="Leave Room"
@@ -1589,6 +1601,16 @@ const App = () => {
                 tabIndex={0}
               />
               
+              {/* Chat Game Button for quick access when in room */}
+              {currentRoom && (
+                <ChatGameButton 
+                  roomId={currentRoom.id?.toString()} 
+                  sessionId={sessionId}
+                  size="medium"
+                  variant="button"
+                />
+              )}
+              
               <button
                 type="submit"
                 disabled={(!input.trim() || isTyping || !user)}
@@ -1624,6 +1646,16 @@ const App = () => {
               >
                 Vision
               </button>
+              {currentRoom && (
+                <button
+                  type="button"
+                  onClick={() => { if (user) setShowMultiplayerGames(true); else { setShowAuth(true); addNotification({ type: 'info', title: 'Sign in required', message: 'Please sign in to start games', duration: 2500 }); } }}
+                  className="text-purple-400 hover:text-purple-200 font-semibold"
+                  title="Start games with friends in this room"
+                >
+                  🎮 Games
+                </button>
+              )}
             </div>
           </form>
         </div>
@@ -1633,6 +1665,55 @@ const App = () => {
           notifications={notifications}
           onRemove={removeNotification}
         />
+        
+        {/* Game Challenge Notifications */}
+        <GameChallengeNotifications />
+        
+        {/* Floating Multiplayer Games Button - Always visible when in room */}
+        {currentRoom && (
+          <motion.button
+            onClick={() => setShowMultiplayerGames(true)}
+            className="fixed bottom-20 right-4 z-50 w-14 h-14 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 rounded-full shadow-lg flex items-center justify-center text-2xl transition-all duration-300 border-2 border-purple-400/50"
+            title="Play Games with Friends"
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            whileHover={{ scale: 1.1, rotate: 360 }}
+            whileTap={{ scale: 0.9 }}
+            transition={{ 
+              type: "spring", 
+              stiffness: 260, 
+              damping: 20,
+              rotate: { duration: 0.6 }
+            }}
+          >
+            🎮
+            <motion.div
+              className="absolute inset-0 rounded-full bg-purple-400/20"
+              animate={{
+                scale: [1, 1.2, 1],
+                opacity: [0.7, 0, 0.7],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+          </motion.button>
+        )}
+        
+        {/* Multiplayer Games Modal */}
+        {showMultiplayerGames && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70">
+            <MultiplayerGameLobby
+              isOpen={showMultiplayerGames}
+              onClose={() => setShowMultiplayerGames(false)}
+              roomId={currentRoom?.id?.toString()}
+              sessionId={sessionId}
+            />
+          </div>
+        )}
+        
         {/* Auth Modal */}
         <React.Suspense fallback={null}>
           {AuthModal && <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />}
