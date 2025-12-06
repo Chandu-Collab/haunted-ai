@@ -40,6 +40,7 @@ const GhostGames = React.lazy(() => import('./GhostGames'));
 const SpellCasting = React.lazy(() => import('./SpellCasting'));
 const RoomExplorer = React.lazy(() => import('./RoomExplorer'));
 const AuthModal = React.lazy(() => import('./AuthModal'));
+const MultiplayerGameLobby = React.lazy(() => import('./MultiplayerGameLobby'));
 
 interface Track {
   name: string;
@@ -173,6 +174,7 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
   const [showSpell, setShowSpell] = useState(false);
   const [showRooms, setShowRooms] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
+  const [showMultiplayerGames, setShowMultiplayerGames] = useState(false);
 
   const handleChange = (key: string, value: any) => {
     const newSettings = { ...localSettings, [key]: value };
@@ -400,10 +402,17 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
           </button>
           <button
             onClick={openExplore}
-            className="p-2 bg-haunted-700/50 hover:bg-haunted-600/50 rounded-lg border border-haunted-600/30 transition-colors flex flex-col items-center gap-1 text-center col-span-2"
+            className="p-2 bg-haunted-700/50 hover:bg-haunted-600/50 rounded-lg border border-haunted-600/30 transition-colors flex flex-col items-center gap-1 text-center"
           >
             <span className="text-lg">🏚️</span>
             <span className="text-haunted-200">Explore Rooms</span>
+          </button>
+          <button
+            onClick={() => setShowMultiplayerGames(true)}
+            className="p-2 bg-purple-700/50 hover:bg-purple-600/50 rounded-lg border border-purple-600/30 transition-colors flex flex-col items-center gap-1 text-center"
+          >
+            <span className="text-lg">🎮</span>
+            <span className="text-haunted-200">Multiplayer</span>
           </button>
         </div>
       </div>
@@ -864,6 +873,11 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
       {showAuth && (
         <Suspense fallback={null}>
           <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
+        </Suspense>
+      )}
+      {showMultiplayerGames && (
+        <Suspense fallback={null}>
+          <MultiplayerGameLobby isOpen={showMultiplayerGames} onClose={() => setShowMultiplayerGames(false)} sessionId={sessionId} />
         </Suspense>
       )}
     </>
