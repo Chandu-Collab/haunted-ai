@@ -202,7 +202,12 @@ export default function useGhostInteractions(sessionId?: string) {
   };
 
   const exploreRoom = (roomId: string) => {
-    setState(s => ({ ...s, roomsVisited: s.roomsVisited.includes(roomId) ? s.roomsVisited : [...s.roomsVisited, roomId] }));
+    setState(s => ({ 
+      ...s, 
+      roomsVisited: s.roomsVisited.includes(roomId) 
+        ? s.roomsVisited.filter(id => id !== roomId) 
+        : [...s.roomsVisited, roomId] 
+    }));
   };
 
   // Fetch a fortune from the backend AI API
