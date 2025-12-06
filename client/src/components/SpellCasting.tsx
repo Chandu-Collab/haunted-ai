@@ -10,7 +10,7 @@ interface Props {
 
 
 
-const SpellCastingComponent = forwardRef<HTMLDivElement, Props>(function SpellCasting({ isOpen, onClose, sessionId }, ref) {
+const SpellCasting = forwardRef<HTMLDivElement, Props>(function SpellCasting({ isOpen, onClose, sessionId }, ref) {
   const { castSpell } = useGhostInteractions(sessionId);
   const [spell, setSpell] = useState('');
   const [result, setResult] = useState<string | null>(null);
@@ -83,8 +83,6 @@ const SpellCastingComponent = forwardRef<HTMLDivElement, Props>(function SpellCa
       setSpell('');
     }
   };
-    })();
-  };
 
   if (!isOpen) return null;
 
@@ -142,4 +140,4 @@ const SpellCastingComponent = forwardRef<HTMLDivElement, Props>(function SpellCa
   );
 });
 
-export default memo(SpellCastingComponent);
+export default memo(SpellCasting);
