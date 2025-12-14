@@ -4,6 +4,9 @@ import { Interaction } from "../entities/Interaction"
 import { User } from "../entities/User"
 import { Room } from "../entities/Room"
 import { GhostProfile } from "../entities/GhostProfile"
+import { UserMemory } from "../entities/UserMemory"
+import { GhostRelationship } from "../entities/GhostRelationship"
+import { SentimentAnalysis } from "../entities/SentimentAnalysis"
 // Environment variables are loaded centrally via `src/config/env.ts`.
 // Do not call dotenv.config() here to avoid ordering issues.
 
@@ -35,7 +38,7 @@ export const AppDataSource = new DataSource({
     database: process.env.DB_NAME || "haunted_ai",
     synchronize: false,
     logging: true,
-    entities: [Message, Interaction, User, Room, GhostProfile],
+    entities: [Message, Interaction, User, Room, GhostProfile, UserMemory, GhostRelationship, SentimentAnalysis],
     subscribers: [],
     migrations: [],
 });
