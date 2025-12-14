@@ -46,6 +46,10 @@ import { useImageAnalysis, ImageAnalysis } from './hooks/useImageAnalysis';
 import usePersonalities from './hooks/usePersonalities';
 import usePersonalRituals from './hooks/usePersonalRituals';
 import PersonalitySelector from './components/PersonalitySelector';
+import { useAIMemory } from './hooks/useAIMemory';
+import RelationshipTracker from './components/RelationshipTracker';
+import MemoryVault from './components/MemoryVault';
+import SentimentDashboard from './components/SentimentDashboard';
 
 // Utils
 import { GHOST_PERSONALITIES, type GhostPersonality } from './utils/ghostPersonalities';
@@ -82,6 +86,12 @@ const App = () => {
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [showChatHistory, setShowChatHistory] = useState(false);
   const [showMultiplayerGames, setShowMultiplayerGames] = useState(false);
+  const [showRelationshipTracker, setShowRelationshipTracker] = useState(false);
+  const [showMemoryVault, setShowMemoryVault] = useState(false);
+  const [showSentimentDashboard, setShowSentimentDashboard] = useState(false);
+  // AI Memory Hook
+  const { autoStoreMemory, analyzeMessageSentiment, updateGhostRelationship } = useAIMemory();
+  
   // Room join handler
   const { user, getToken } = useAuth();
   const { saveSessionToStorage } = useChatHistory();
@@ -603,7 +613,7 @@ const App = () => {
 
   const [pendingGhostMsgId, setPendingGhostMsgId] = useState<string | null>(null);
 
-  const sendMessage = useCallback((messageContent: string, imageBase64?: string) => {
+  const sendMessage = useCallback(async (messageContent: string, imageBase64?: string) => {
     if (!messageContent.trim() && !imageBase64) return;
 
     // Save session to storage when sending a message
@@ -620,6 +630,21 @@ const App = () => {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
+
+    // AI Memory Integration: Auto-store user message
+    if (user && messageContent.trim()) {
+      try {
+        await autoStoreMemory(messageContent, true, appSettings.ghostPersonality.id);
+        
+        // Analyze sentiment of user message
+        const sentiment = await analyzeMessageSentiment(userMessage.id, messageContent);
+        if (sentiment) {
+          userMessage.moodAnalysis = sentiment;
+        }
+      } catch (error) {
+        console.error('AI Memory processing error:', error);
+      }
+    }
 
     // Play message sound for user message
     if (appSettings.soundEnabled) {
@@ -674,6 +699,25 @@ const App = () => {
         // Play ghost sound when ghost message is received
         if (appSettings.soundEnabled) {
           playSyntheticSound('ghost');
+        }
+
+        // AI Memory Integration: Update relationship based on conversation
+        if (user && messageContent.trim()) {
+          try {
+            const sentiment = userMessage.moodAnalysis?.overallSentiment || 0;
+            const topics = userMessage.moodAnalysis?.topics || [];
+            
+            await updateGhostRelationship(appSettings.ghostPersonality.id, {
+              sentiment,
+              topics,
+              duration: 30, // Approximate conversation time
+              trustChange: sentiment > 0 ? 0.5 : -0.2,
+              intimacyChange: messageContent.length > 50 ? 0.3 : 0.1,
+              fearChange: sentiment < -0.5 ? 0.3 : -0.1
+            });
+          } catch (error) {
+            console.error('Relationship update error:', error);
+          }
         }
       } catch (err) {
         setMessages(prev => prev.map(msg =>
@@ -1150,6 +1194,30 @@ const App = () => {
                       aria-label="Start Multiplayer Games"
                     >
                       🎮 Play Games
+                    </button>
+                    <button
+                      onClick={() => setShowRelationshipTracker(true)}
+                      className="ml-2 px-2 py-1 bg-purple-700 rounded text-white text-xs hover:bg-purple-600 border border-purple-500/50"
+                      title="Relationship Status"
+                      aria-label="View Relationship"
+                    >
+                      💕 Bond
+                    </button>
+                    <button
+                      onClick={() => setShowMemoryVault(true)}
+                      className="ml-2 px-2 py-1 bg-purple-700 rounded text-white text-xs hover:bg-purple-600 border border-purple-500/50"
+                      title="Memory Vault"
+                      aria-label="View Memories"
+                    >
+                      🧠 Memories
+                    </button>
+                    <button
+                      onClick={() => setShowSentimentDashboard(true)}
+                      className="ml-2 px-2 py-1 bg-purple-700 rounded text-white text-xs hover:bg-purple-600 border border-purple-500/50"
+                      title="Sentiment Analysis"
+                      aria-label="View Emotions"
+                    >
+                      📊 Mood
                     </button>
                     <button
                       onClick={() => setCurrentRoom(null)}
@@ -1713,6 +1781,23 @@ const App = () => {
             />
           </div>
         )}
+        
+        {/* AI Memory Components */}
+        <RelationshipTracker
+          ghostPersonalityId={appSettings.ghostPersonality.id}
+          isVisible={showRelationshipTracker}
+          onClose={() => setShowRelationshipTracker(false)}
+        />
+        
+        <MemoryVault
+          isVisible={showMemoryVault}
+          onClose={() => setShowMemoryVault(false)}
+        />
+        
+        <SentimentDashboard
+          isVisible={showSentimentDashboard}
+          onClose={() => setShowSentimentDashboard(false)}
+        />
         
         {/* Auth Modal */}
         <React.Suspense fallback={null}>

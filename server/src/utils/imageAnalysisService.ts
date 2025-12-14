@@ -177,6 +177,25 @@ Format your response as JSON with these fields:
         intensity: analysis.emotionalContext?.intensity || 'medium',
         associations: Array.isArray(analysis.emotionalContext?.associations) ? 
           analysis.emotionalContext.associations : []
+      },
+      visualThemes: Array.isArray(analysis.visualThemes) ? analysis.visualThemes : ['mysterious', 'ethereal'],
+      narrativeGenres: Array.isArray(analysis.narrativeGenres) ? analysis.narrativeGenres : ['supernatural'],
+      storyPotential: {
+        genre: analysis.storyPotential?.genre || 'supernatural',
+        mood: analysis.storyPotential?.mood || 'mysterious',
+        elements: Array.isArray(analysis.storyPotential?.elements) ? analysis.storyPotential.elements : [],
+        plotSuggestions: Array.isArray(analysis.storyPotential?.plotSuggestions) ? analysis.storyPotential.plotSuggestions : []
+      },
+      artisticAnalysis: {
+        style: analysis.artisticAnalysis?.style || 'unknown',
+        composition: analysis.artisticAnalysis?.composition || 'balanced',
+        lighting: analysis.artisticAnalysis?.lighting || 'natural',
+        symbolism: Array.isArray(analysis.artisticAnalysis?.symbolism) ? analysis.artisticAnalysis.symbolism : []
+      },
+      contextualMeaning: {
+        culturalReferences: Array.isArray(analysis.contextualMeaning?.culturalReferences) ? analysis.contextualMeaning.culturalReferences : [],
+        historicalContext: analysis.contextualMeaning?.historicalContext,
+        symbolicInterpretation: analysis.contextualMeaning?.symbolicInterpretation || 'A window into the ethereal realm'
       }
     };
   }
@@ -200,6 +219,25 @@ Format your response as JSON with these fields:
         dominantEmotion: 'curiosity',
         intensity: 'medium',
         associations: ['memories', 'emotions', 'experiences']
+      },
+      visualThemes: ['mysterious', 'ethereal'],
+      narrativeGenres: ['supernatural'],
+      storyPotential: {
+        genre: 'supernatural',
+        mood: 'mysterious',
+        elements: [],
+        plotSuggestions: ['A story waiting to unfold in the shadows']
+      },
+      artisticAnalysis: {
+        style: 'unknown',
+        composition: 'balanced',
+        lighting: 'natural',
+        symbolism: []
+      },
+      contextualMeaning: {
+        culturalReferences: [],
+        historicalContext: undefined,
+        symbolicInterpretation: 'A window into the ethereal realm'
       }
     };
   }
@@ -235,6 +273,25 @@ Format your response as JSON with these fields:
         dominantEmotion: 'curiosity',
         intensity: 'medium',
         associations: ['mystery', 'connection']
+      },
+      visualThemes: ['mysterious', 'ethereal'],
+      narrativeGenres: ['supernatural'],
+      storyPotential: {
+        genre: 'supernatural',
+        mood: 'mysterious',
+        elements: ['unknown'],
+        plotSuggestions: ['A mystery waiting to unfold']
+      },
+      artisticAnalysis: {
+        style: 'unknown',
+        composition: 'mysterious',
+        lighting: 'ethereal',
+        symbolism: ['mystery']
+      },
+      contextualMeaning: {
+        culturalReferences: [],
+        historicalContext: undefined,
+        symbolicInterpretation: 'A glimpse into the unknown realm'
       }
     };
   }

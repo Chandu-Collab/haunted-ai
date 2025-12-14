@@ -879,9 +879,9 @@ const generateCustomStory = async (req: Request, res: Response): Promise<void> =
       res.json({
         success: true,
         segment: {
-          text: customStory.content,
-          mood: customStory.mood,
-          choices: customStory.currentSegment?.choices || []
+          text: (customStory as any).content || 'Welcome to your custom story...',
+          mood: customStory.selectedMood,
+          choices: (customStory as any).currentSegment?.choices || []
         },
         storyLength: customStory.storyLength,
         currentPart: customStory.currentPart,

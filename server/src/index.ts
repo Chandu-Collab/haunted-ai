@@ -24,10 +24,8 @@ import rateLimit from 'express-rate-limit';
 
 // Initialize Express app
 const app = express();
-import translateMessageRoutes from './routes/translateMessage';
-app.use('/api/translate-message', translateMessageRoutes);
 
-// Middleware: enable CORS for the configured client origin (FIRST)
+// Middleware: enable CORS for the configured client origin (FIRST - before any routes)
 const CLIENT_ORIGIN = process.env.CLIENT_URL || 'http://localhost:5173';
 app.use(cors({
   origin: CLIENT_ORIGIN,
@@ -36,6 +34,18 @@ app.use(cors({
   credentials: true,
   optionsSuccessStatus: 204
 }));
+
+// Handle preflight requests explicitly
+app.options('*', cors({
+  origin: CLIENT_ORIGIN,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  credentials: true,
+  optionsSuccessStatus: 204
+}));
+
+import translateMessageRoutes from './routes/translateMessage';
+import aiMemoryRoutes from './routes/aiMemoryRoutes';
 
 // Analytics middleware
 import { analyticsMiddleware, getAnalytics } from './middleware/analytics';
@@ -110,6 +120,9 @@ app.use('/api/games', gameRoutes);
 app.use('/api/interactions', interactionRoutes);
 // Authentication routes (signup / login)
 app.use('/api/auth', authLimiter, authRoutes);
+// AI Memory and Translation routes
+app.use('/api/translate-message', translateMessageRoutes);
+app.use('/api/ai-memory', aiMemoryRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
