@@ -228,6 +228,7 @@ export class StorytellingSystem {
           }
         ],
         mood: 'mysterious',
+        emotionalIntensity: 'medium',
         atmosphere: 'Dust motes dance in the pale moonlight streaming through tall windows'
       },
       {
@@ -254,6 +255,7 @@ export class StorytellingSystem {
           }
         ],
         mood: 'frightening',
+        emotionalIntensity: 'high',
         atmosphere: 'The air grows cold, and shadows seem to move independently of their sources'
       },
       {
@@ -280,6 +282,7 @@ export class StorytellingSystem {
           }
         ],
         mood: 'melancholic',
+        emotionalIntensity: 'medium',
         atmosphere: 'The melody seems to come from everywhere and nowhere at once'
       }
     ],
@@ -309,6 +312,7 @@ export class StorytellingSystem {
           }
         ],
         mood: 'melancholic',
+        emotionalIntensity: 'low',
         atmosphere: 'Soft lamplight creates a warm but lonely ambiance among the dusty books'
       }
     ]
@@ -328,7 +332,14 @@ export class StorytellingSystem {
       userChoices: [],
       personalizedElements: userName ? [userName] : [],
       sessionId,
-      startedAt: new Date()
+      startedAt: new Date(),
+      selectedGenre: 'horror',
+      selectedMood: 'mysterious',
+      dynamicElements: {
+        userPreferences: [],
+        moodProgression: ['mysterious'],
+        interactionHistory: []
+      }
     };
 
     this.activeStories.set(sessionId, activeStory);

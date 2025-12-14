@@ -227,7 +227,7 @@ export const getAIModerationSuggestion = async (req: Request, res: Response) => 
     // Get recent conversation context
     const recentMessages = room.messages
       .slice(-10)
-      .map(msg => `${msg.sender}: ${msg.content}`)
+      .map(msg => `${msg.isGhost ? 'Ghost' : 'User'}: ${msg.content}`)
       .join('\n');
     
     const prompt = `You are an AI moderator for a ${room.chatMode || 'balanced'} group chat room called "${room.name}".

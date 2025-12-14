@@ -1,14 +1,24 @@
 import { Router } from 'express';
 import {
-  getGroupRooms,
-  createGroupRoom,
-  joinGroupRoom,
-  leaveGroupRoom,
-  getRoomMessages,
-  sendGroupMessage,
-  updateRoomSettings,
-  joinByInviteCode
-} from '../controllers/groupRoomController';
+  getRooms as getGroupRooms,
+  createRoom as createGroupRoom,
+  joinRoom as joinGroupRoom,
+  leaveRoom as leaveGroupRoom,
+  joinRoomByInvite as joinByInviteCode
+} from '../controllers/roomController';
+
+// Create placeholder functions for missing functionality
+const getRoomMessages = async (req: any, res: any) => {
+  res.status(501).json({ error: 'Feature not implemented yet' });
+};
+
+const sendGroupMessage = async (req: any, res: any) => {
+  res.status(501).json({ error: 'Feature not implemented yet' });
+};
+
+const updateRoomSettings = async (req: any, res: any) => {
+  res.status(501).json({ error: 'Feature not implemented yet' });
+};
 
 const router = Router();
 
