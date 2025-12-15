@@ -31,7 +31,7 @@ interface FormData {
   activityLevel: ActivityLevel;
   voiceSettings: {
     tone: VoiceTone;
-    speed: number;
+    speed: number;//helps
     pitch: number;
     volume: number;
   };
