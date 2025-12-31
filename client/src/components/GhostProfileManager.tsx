@@ -32,7 +32,7 @@ interface FormData {
   voiceSettings: {
     tone: VoiceTone;
     speed: number;//helps
-    pitch: number;
+    pitch: number;//helps
     volume: number;
   };
   preferences: {
