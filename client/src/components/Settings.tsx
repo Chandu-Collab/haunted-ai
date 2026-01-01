@@ -55,6 +55,7 @@ interface SettingsProps {
   settings: {
     soundEnabled: boolean;
     voiceEnabled: boolean;
+    voiceInputEnabled?: boolean; // Add voice input setting
     musicEnabled: boolean;
     musicVolume: number;
     particleCount: number;
@@ -94,6 +95,7 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
   const [localSettings, setLocalSettings] = useState({
     ...settings,
     language: settings.language || 'en',
+    voiceInputEnabled: settings.voiceInputEnabled ?? true, // Add voice input setting
     lightningEnabled: settings.lightningEnabled ?? true,
     fogEnabled: settings.fogEnabled ?? true,
     eyeTrackingEnabled: settings.eyeTrackingEnabled ?? true,
@@ -129,6 +131,7 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
     const newSettings = {
       ...settings,
       language: settings.language || 'en',
+      voiceInputEnabled: settings.voiceInputEnabled ?? true, // Add voice input setting
       lightningEnabled: settings.lightningEnabled ?? true,
       fogEnabled: settings.fogEnabled ?? true,
       eyeTrackingEnabled: settings.eyeTrackingEnabled ?? true,
@@ -158,6 +161,7 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
     settings.soundEnabled, 
     settings.musicEnabled, 
     settings.voiceEnabled,
+    settings.voiceInputEnabled, // Add to dependency array
     settings.theme,
     settings.language,
     settings.lightningEnabled,
@@ -317,6 +321,29 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, settings, onSettin
       <Suspense fallback={<div className="text-haunted-400 text-xs">Loading controls...</div>}>
         <VoiceControls isEnabled={localSettings.voiceEnabled} onToggle={(enabled) => handleChange('voiceEnabled', enabled)} />
       </Suspense>
+
+      {/* Voice Input Control */}
+      <div className="space-y-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+          <label className="text-haunted-200 font-medium text-base sm:text-lg">Voice Input</label>
+          <button
+            onClick={() => handleChange('voiceInputEnabled', !localSettings.voiceInputEnabled)}
+            className={`w-11 sm:w-12 h-6 sm:h-7 rounded-full transition-colors ${
+              localSettings.voiceInputEnabled ? 'bg-green-600' : 'bg-haunted-800'
+            } relative flex items-center p-0.5 flex-shrink-0`}
+          >
+            <motion.div
+              className="w-5 sm:w-6 h-5 sm:h-6 bg-white rounded-full shadow-md"
+              animate={{ x: localSettings.voiceInputEnabled ? 20 : 0 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            />
+          </button>
+        </div>
+        <div className="text-xs text-haunted-400">
+          Speak directly to the spirits using your microphone. Click the 🎤 button in chat to start voice input.
+        </div>
+      </div>
+
       {localSettings.voiceEnabled && (
         <div className="mt-2">
           <label className="text-haunted-200 font-medium block mb-1 sm:mb-2 text-xs sm:text-sm">Ghost Voice Effect</label>
