@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model UserMemory {
+  id              Int      @id @default(autoincrement())
+  userId          String
+  memoryContent   String
+  memoryType      String
+  context         String?
+  importance      Float    @default(5.0)
+  emotionalWeight Float    @default(1.0)
+  tags            String?
+  embedding       String?
+  accessCount     Int      @default(1)
+  lastAccessed    DateTime?
+  isDecaying      Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model GhostRelationship {
+  id                     Int      @id @default(autoincrement())
+  userId                 String
+  ghostPersonalityId     String
+  trustLevel             Float    @default(0.0)
+  intimacyLevel          Float    @default(0.0)
+  fearLevel              Float    @default(0.0)
+  affectionLevel         Float    @default(0.0)
+  conversationCount      Int      @default(0)
+  totalInteractionTime   Int      @default(0)
+  relationshipMilestones String?
+  personalNicknames      String?
+  sharedMemories         String?
+  conflictHistory        String?
+  relationshipStatus     String   @default("stranger")
+  lastInteraction        DateTime?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+model SentimentAnalysis {
+  id               Int      @id @default(autoincrement())
+  userId           String
+  messageId        String
+  messageContent   String
+  overallSentiment Float
+  emotionJoy       Float
+  emotionSadness   Float
+  emotionAnger     Float
+  emotionFear      Float
+  emotionSurprise  Float
+  emotionDisgust   Float
+  stressLevel      Float
+  engagementLevel  Float
+  detectedTopics   String?
+  contextualFactors String?
+  analysisDate     DateTime @default(now())
+  createdAt        DateTime @default(now())
+}
+
+model GhostProfile {
+  id                String   @id @default(uuid())
+  name              String
+  backstory         String?
+  emoji             String?
+  color             String?
+  appearance        Json
+  personalityTraits Json
+  activityLevel     String
+  voiceSettings     Json
+  preferences       Json
+  abilities         Json
+  stats             Json
+  createdBy         String
+  isActive          Boolean  @default(false)
+  isFeatured        Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Interaction {
+  sessionId      String   @id
+  userId         String
+  achievements   Json
+  energy         Int
+  roomsVisited   Json
+  meta           Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Message {
+  id                String   @id @default(uuid())
+  content           String
+  isGhost           Boolean
+  sessionId         String
+  personalityId     String
+  moodAnalysis      Json
+  contextualFactors Json
+  imageUrl          String?
+  imageAnalysis     Json
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  timestamp         DateTime
+  roomId            Int
+}
+
+model Room {
+  id                   Int      @id @default(autoincrement())
+  name                 String
+  decorations          Json
+  type                 String
+  description          String?
+  privacy              String
+  inviteCode           String? @db.VarChar(10)
+  maxParticipants      Int
+  participantCount     Int
+  chatMode             String
+  aiModerationEnabled  Boolean @default(false)
+  aiInterventionDelay  Int
+  aiSettings           Json
+  conversationMetrics  Json
+  ownerId              Int
+  theme                Json
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model RoomUser {
+  id              Int      @id @default(autoincrement())
+  roomId          Int
+  userId          String
+  joinedAt        DateTime @default(now())
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  avatarUrl     String?
+  nickname      String
+  greeting      String?
+  goodbye       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
