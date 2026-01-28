@@ -1,0 +1,172 @@
+// Prisma schema file for the haunted-ai project
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Message {
+  id                String   @id @default(uuid())
+  content           String
+  isGhost           Boolean  @default(false)
+  sessionId         String
+  personalityId     String?  @db.VarChar
+  moodAnalysis      Json?
+  contextualFactors Json?
+  imageUrl          String?  @db.VarChar
+  imageAnalysis     Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  timestamp         DateTime @default(now())
+  roomId            Int?
+
+  room              Room?    @relation(fields: [roomId], references: [id])
+
+  @@map("messages")
+}
+
+model Room {
+  id                Int      @id @default(autoincrement())
+  name              String   @unique
+  type              String   @default("haunted")
+  description       String?
+  privacy           String   @default("public")
+  inviteCode        String?  @unique
+  maxParticipants   Int      @default(10)
+  participantCount  Int      @default(0)
+  chatMode          String?  @default("balanced")
+  aiModerationEnabled Boolean @default(true)
+  aiInterventionDelay Int     @default(30)
+  aiSettings        Json?
+  conversationMetrics Json?
+  ownerId           Int?
+  decorations       Json?
+  theme             Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  messages          Message[]
+  users             RoomUser[]
+}
+
+model RoomUser {
+  id        Int    @id @default(autoincrement())
+  roomId    Int
+  userId    String
+
+  room      Room   @relation(fields: [roomId], references: [id])
+  user      User   @relation(fields: [userId], references: [id])
+
+  @@unique([roomId, userId])
+}
+
+model User {
+  id                String   @id @default(uuid())
+  email             String   @unique
+  passwordHash      String
+  avatarUrl         String?  @db.VarChar
+  nickname          String?  @db.VarChar
+  greeting          String?  @db.VarChar
+  goodbye           String?  @db.VarChar
+  createdAt         DateTime @default(now())
+
+  rooms             RoomUser[]
+  sentimentAnalyses SentimentAnalysis[]
+  memories          UserMemory[]
+  ghostRelationships GhostRelationship[]
+}
+
+model SentimentAnalysis {
+  id                Int      @id @default(autoincrement())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+  messageId         String
+  messageContent    String
+  overallSentiment  Float
+  emotionJoy        Float
+  emotionSadness    Float
+  emotionAnger      Float
+  emotionFear       Float
+  emotionSurprise   Float
+  emotionDisgust    Float
+  stressLevel       Float
+  engagementLevel   Float
+  detectedTopics    String?
+  contextualFactors String?
+  analysisDate      DateTime @default(now())
+  createdAt         DateTime @default(now())
+}
+
+model GhostProfile {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  backstory   String
+  emoji       String   @default("👻")
+  color       String?  @db.VarChar
+  personalityTraits Json?
+  activityLevel String @default("moderate")
+  voiceSettings Json?
+  preferences Json?
+  abilities   Json?
+  appearance  Json?
+  stats       Json?
+  createdBy   String?  @db.VarChar
+  isActive    Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model GhostRelationship {
+  id                   Int      @id @default(autoincrement())
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id])
+  ghostPersonalityId   String
+  trustLevel           Float    @default(0.0)
+  intimacyLevel        Float    @default(0.0)
+  fearLevel            Float    @default(0.0)
+  affectionLevel       Float    @default(0.0)
+  conversationCount    Int      @default(0)
+  totalInteractionTime Int      @default(0)
+  relationshipMilestones Json?
+  personalNicknames    Json?
+  sharedMemories       Json?
+  conflictHistory      Json?
+  relationshipStatus   String   @default("stranger")
+  lastInteraction      DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model Interaction {
+  sessionId       String   @id
+  userId          String?
+  achievements    Json?
+  energy          Int      @default(80)
+  roomsVisited    Json?
+  meta            Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model UserMemory {
+  id              Int      @id @default(autoincrement())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  memoryContent   String
+  memoryType      String   @default("conversation")
+  context         String?
+  importance      Float    @default(5.0)
+  emotionalWeight Float    @default(1.0)
+  tags            String?
+  embedding       String?
+  accessCount     Int      @default(1)
+  lastAccessed    DateTime?
+  isDecaying      Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

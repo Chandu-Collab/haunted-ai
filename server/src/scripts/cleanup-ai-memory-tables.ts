@@ -6,14 +6,28 @@ import path from 'path';
 const envPath = path.join(__dirname, '../../.env');
 config({ path: envPath });
 
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  throw new Error("DATABASE_URL is not set in the environment variables.");
+}
+const parsedUrl = new URL(databaseUrl);
+
+const dbConfig = {
+  host: parsedUrl.hostname,
+  port: parseInt(parsedUrl.port || "5432"),
+  username: parsedUrl.username,
+  password: decodeURIComponent(parsedUrl.password),
+  database: parsedUrl.pathname.slice(1),
+};
+
 async function cleanupAIMemoryTables() {
   const dataSource = new DataSource({
     type: 'postgres',
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '5432'),
-    username: process.env.DB_USERNAME || 'postgres',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'haunted_ai',
+    host: dbConfig.host,
+    port: dbConfig.port,
+    username: dbConfig.username,
+    password: dbConfig.password,
+    database: dbConfig.database,
   });
 
   try {

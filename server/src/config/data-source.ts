@@ -10,14 +10,6 @@ import { SentimentAnalysis } from "../entities/SentimentAnalysis"
 // Environment variables are loaded centrally via `src/config/env.ts`.
 // Do not call dotenv.config() here to avoid ordering issues.
 
-// Log the database configuration (without sensitive data)
-console.log('Database configuration:', {
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || '5432',
-    username: process.env.DB_USERNAME || 'postgres',
-    database: process.env.DB_NAME || 'haunted_ai'
-});
-
 // Log the actual environment variables being used
 console.log('Environment variables loaded:', {
     DB_HOST: process.env.DB_HOST ? '***' : 'Not set',
@@ -27,18 +19,31 @@ console.log('Environment variables loaded:', {
     DB_PASSWORD: process.env.DB_PASSWORD ? '***' : 'Not set'
 });
 
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  throw new Error("DATABASE_URL is not set in the environment variables.");
+}
+const parsedUrl = new URL(databaseUrl);
+
 export const AppDataSource = new DataSource({
     type: "postgres",
-    host: process.env.DB_HOST || "localhost",
-    port: parseInt(process.env.DB_PORT || "5432"),
-    username: process.env.DB_USERNAME || "postgres",
-    // Ensure password is a string; coerce if necessary. pg requires password to be a string.
-    // Do not hard-code secrets here; rely on process.env (fall back to empty string).
-    password: String(process.env.DB_PASSWORD || ""),
-    database: process.env.DB_NAME || "haunted_ai",
+    host: parsedUrl.hostname,
+    port: parseInt(parsedUrl.port || "5432"),
+    username: parsedUrl.username,
+    password: decodeURIComponent(parsedUrl.password),
+    database: parsedUrl.pathname.slice(1),
     synchronize: false,
     logging: true,
-    entities: [Message, Interaction, User, Room, GhostProfile, UserMemory, GhostRelationship, SentimentAnalysis],
+    entities: [
+        Message,
+        Interaction,
+        User,
+        Room,
+        GhostProfile,
+        UserMemory,
+        GhostRelationship,
+        SentimentAnalysis
+    ],
     subscribers: [],
     migrations: [],
 });

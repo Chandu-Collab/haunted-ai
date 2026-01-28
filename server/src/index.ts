@@ -26,7 +26,7 @@ import rateLimit from 'express-rate-limit';
 const app = express();
 
 // Middleware: enable CORS for the configured client origin (FIRST - before any routes)
-const CLIENT_ORIGIN = process.env.CLIENT_URL || 'http://localhost:5173';
+const CLIENT_ORIGIN = process.env.CLIENT_URL || 'https://your-production-url.com';
 app.use(cors({
   origin: CLIENT_ORIGIN,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
