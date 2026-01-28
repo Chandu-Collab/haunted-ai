@@ -60,7 +60,8 @@ const ROOMS = [
 
 
 
-const RoomExplorer = forwardRef<HTMLDivElement, Props>(function RoomExplorer({ isOpen, onClose, sessionId }, ref) => {
+const RoomExplorer = forwardRef<HTMLDivElement, Props>((props, ref) => {
+  const { isOpen, onClose, sessionId } = props;
   const { exploreRoom, state } = useGhostInteractions(sessionId);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [roomDescription, setRoomDescription] = useState<string | null>(null);
@@ -85,7 +86,7 @@ const RoomExplorer = forwardRef<HTMLDivElement, Props>(function RoomExplorer({ i
       
       // Try to fetch AI-enhanced description
       try {
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const API_URL = 'http://localhost:5000';
         const res = await fetch(`${API_URL}/api/games/room-description`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
