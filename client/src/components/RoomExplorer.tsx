@@ -60,7 +60,8 @@ const ROOMS = [
 
 
 
-const RoomExplorer = forwardRef<HTMLDivElement, Props>(function RoomExplorer({ isOpen, onClose, sessionId }, ref) => {
+const RoomExplorer = forwardRef<HTMLDivElement, Props>((props, ref) => {
+  const { isOpen, onClose, sessionId } = props;
   const { exploreRoom, state } = useGhostInteractions(sessionId);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [roomDescription, setRoomDescription] = useState<string | null>(null);
