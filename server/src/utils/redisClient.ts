@@ -1,6 +1,6 @@
 import { createClient } from 'redis';
 
-const redisUrl = process.env.REDIS_URL || 'redis://aws-1-ap-southeast-1.pooler.supabase.com:6379';
+const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
 export const redisClient = createClient({ url: redisUrl });
 
