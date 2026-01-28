@@ -24,11 +24,11 @@ const dbConfig = {
 async function checkAIMemoryTables() {
   const dataSource = new DataSource({
     type: 'postgres',
-    host: dbConfig.host,
-    port: dbConfig.port,
-    username: dbConfig.username,
-    password: dbConfig.password,
-    database: dbConfig.database,
+    host: process.env.DB_HOST || 'aws-1-ap-southeast-1.pooler.supabase.com',
+    port: parseInt(process.env.DB_PORT || '5432'),
+    username: process.env.DB_USERNAME || 'postgres',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'haunted_ai',
   });
 
   try {

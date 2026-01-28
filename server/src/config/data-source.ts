@@ -27,11 +27,13 @@ const parsedUrl = new URL(databaseUrl);
 
 export const AppDataSource = new DataSource({
     type: "postgres",
-    host: parsedUrl.hostname,
-    port: parseInt(parsedUrl.port || "5432"),
-    username: parsedUrl.username,
-    password: decodeURIComponent(parsedUrl.password),
-    database: parsedUrl.pathname.slice(1),
+    host: process.env.DB_HOST || "aws-1-ap-southeast-1.pooler.supabase.com",
+    port: parseInt(process.env.DB_PORT || "5432"),
+    username: process.env.DB_USERNAME || "postgres",
+    // Ensure password is a string; coerce if necessary. pg requires password to be a string.
+    // Do not hard-code secrets here; rely on process.env (fall back to empty string).
+    password: String(process.env.DB_PASSWORD || ""),
+    database: process.env.DB_NAME || "haunted_ai",
     synchronize: false,
     logging: true,
     entities: [
