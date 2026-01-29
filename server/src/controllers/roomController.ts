@@ -46,14 +46,37 @@ import { Request, Response } from 'express';
 import { AppDataSource } from '../config/data-source';
 import { Room } from '../entities/Room';
 import { User } from '../entities/User';
+import { FindOperator } from 'typeorm';
+import { ParsedQs } from 'qs';
 
 export const getRooms = async (req: Request, res: Response) => {
   const { type, privacy } = req.query;
   const roomRepo = AppDataSource.getRepository(Room);
   
+  const parseStringOrArray = (
+    value: string | ParsedQs | (string | ParsedQs)[] | undefined
+  ): string | string[] | undefined => {
+    if (!value) return undefined;
+
+    if (Array.isArray(value)) {
+      return value.map((v) => {
+        if (typeof v === "string") return v;
+        if (typeof v === "object" && v !== null) return JSON.stringify(v);
+        return String(v);
+      });
+    }
+
+    if (typeof value === "string") return value;
+    if (typeof value === "object" && value !== null) return JSON.stringify(value);
+
+    return String(value);
+  };
+  
   let whereClause: any = {};
-  if (type) whereClause.type = type;
-  if (privacy) whereClause.privacy = privacy;
+  const parsedType = parseStringOrArray(req.query.type);
+  const parsedPrivacy = parseStringOrArray(req.query.privacy);
+  if (parsedType) whereClause.type = parsedType;
+  if (parsedPrivacy) whereClause.privacy = parsedPrivacy;
   
   // Only show public rooms and rooms user has access to
   if (!privacy) {

@@ -1,14 +1,22 @@
 import type { Request, Response } from 'express';
 import { AppDataSource } from '../config/data-source';
 import { Interaction } from '../entities/Interaction';
+import { FindOperator } from 'typeorm';
 
 // NOTE: This controller uses sessionId passed by the client as the key.
 // It's intentionally simple and unauthenticated to avoid invasive changes. For production,
 // consider adding proper user authentication and authorization.
 
+const parseStringOrArray = (value: string | string[]): string | undefined => {
+  if (Array.isArray(value)) {
+    return value.join(','); // Adjust logic based on your database requirements
+  }
+  return value;
+};
+
 const getInteraction = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { sessionId } = req.params;
+    const sessionId = parseStringOrArray(req.params.sessionId);
     if (!sessionId) {
       res.status(400).json({ error: 'sessionId required' });
       return;
@@ -24,8 +32,8 @@ const getInteraction = async (req: Request, res: Response): Promise<void> => {
     }
 
     if (!record) {
-      // return a default shape
-      record = repo.create({ sessionId, achievements: [], energy: 80, roomsVisited: [] });
+      // Ensure sessionId is a string before creating the record
+      record = repo.create({ sessionId: String(sessionId), achievements: [], energy: 80, roomsVisited: [] });
       // if requester is authenticated, set ownership
       if (requesterId) record.userId = requesterId;
       await repo.save(record);
@@ -40,7 +48,7 @@ const getInteraction = async (req: Request, res: Response): Promise<void> => {
 
 const upsertInteraction = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { sessionId } = req.params;
+    const sessionId: string = req.params.sessionId as string;
     const payload = req.body || {};
     if (!sessionId) {
       res.status(400).json({ error: 'sessionId required' });
@@ -51,7 +59,7 @@ const upsertInteraction = async (req: Request, res: Response): Promise<void> => 
     let record = await repo.findOneBy({ sessionId });
     const requesterId = (req as any).userId as string | undefined;
     if (!record) {
-      record = repo.create({ sessionId, achievements: [], energy: 80, roomsVisited: [] });
+      record = repo.create({ sessionId: String(sessionId), achievements: [], energy: 80, roomsVisited: [] });
       if (requesterId) record.userId = requesterId;
     } else {
       // If record is owned and owner differs from requester, forbid
@@ -91,7 +99,7 @@ const patchInteraction = async (req: Request, res: Response): Promise<void> => {
     let record = await repo.findOneBy({ sessionId });
     const requesterId = (req as any).userId as string | undefined;
     if (!record) {
-      record = repo.create({ sessionId, achievements: [], energy: 80, roomsVisited: [] });
+      record = repo.create({ sessionId: String(sessionId), achievements: [], energy: 80, roomsVisited: [] });
       if (requesterId) record.userId = requesterId;
     } else {
       if (record.userId && requesterId && record.userId !== requesterId) {

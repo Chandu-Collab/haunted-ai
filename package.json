@@ -16,7 +16,6 @@
     "@heroicons/react": "^2.2.0",
     "@supabase/supabase-js": "^2.89.0",
     "@tailwindcss/typography": "^0.5.19",
-    "@types/multer": "^2.0.0",
     "autoprefixer": "^10.4.21",
     "axios": "^1.12.2",
     "bad-words": "^4.0.0",
@@ -31,6 +30,8 @@
     "tailwindcss": "^4.1.16"
   },
   "devDependencies": {
+    "@types/express-rate-limit": "^5.1.3",
+    "@types/multer": "^2.0.0",
     "@types/node": "^24.10.1",
     "@types/node-fetch": "^2.6.13",
     "@types/pg": "^8.16.0",
