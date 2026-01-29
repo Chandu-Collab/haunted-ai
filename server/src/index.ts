@@ -132,6 +132,11 @@ app.get('/health', (req, res) => {
 // Analytics dashboard endpoint (basic JSON)
 app.get('/admin/analytics', getAnalytics);
 
+// Add a root route to handle requests to the root path
+app.get('/', (req, res) => {
+  res.send('Welcome to Haunted AI!');
+});
+
 // Start server
 const PORT = process.env.PORT || 5000;
 
