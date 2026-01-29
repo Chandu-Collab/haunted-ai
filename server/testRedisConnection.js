@@ -1,4 +1,10 @@
 const { createClient } = require('redis');
+const dotenv = require('dotenv');
+const path = require('path');
+
+// Explicitly load .env file
+const envPath = path.resolve(__dirname, './.env');
+dotenv.config({ path: envPath });
 
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 const redisClient = createClient({ url: redisUrl });
