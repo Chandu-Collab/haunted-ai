@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { AppDataSource } from '../config/data-source';
 import { GhostProfile } from '../entities/GhostProfile';
+import { FindOperator } from 'typeorm';
+import { ParsedQs } from 'qs';
 
 export const getGhostProfiles = async (req: Request, res: Response) => {
   try {
@@ -10,7 +12,7 @@ export const getGhostProfiles = async (req: Request, res: Response) => {
     let whereClause: any = {};
     if (active !== undefined) whereClause.isActive = active === 'true';
     if (featured !== undefined) whereClause.isFeatured = featured === 'true';
-    if (createdBy) whereClause.createdBy = createdBy;
+    if (createdBy) whereClause.createdBy = parseStringOrArray(createdBy);
     
     const ghosts = await repo.find({
       where: whereClause,
@@ -246,4 +248,23 @@ export const cloneGhostProfile = async (req: Request, res: Response) => {
     console.error('cloneGhostProfile error:', error);
     res.status(500).json({ error: 'Failed to clone ghost profile' });
   }
+};
+
+const parseStringOrArray = (
+  value: string | ParsedQs | (string | ParsedQs)[] | undefined
+): string | string[] | undefined => {
+  if (!value) return undefined;
+
+  if (Array.isArray(value)) {
+    return value.map((v) => {
+      if (typeof v === "string") return v;
+      if (typeof v === "object" && v !== null) return JSON.stringify(v);
+      return String(v);
+    });
+  }
+
+  if (typeof value === "string") return value;
+  if (typeof value === "object" && value !== null) return JSON.stringify(value);
+
+  return undefined;
 };
