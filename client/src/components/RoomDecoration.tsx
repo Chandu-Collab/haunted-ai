@@ -15,14 +15,14 @@ const RoomDecoration: React.FC<{ roomId: number }> = ({ roomId }) => {
       formData.append('image', imageFile);
       formData.append('roomId', String(roomId));
       // You need a backend endpoint to handle this upload, e.g. /api/rooms/upload-wallpaper
-      const uploadRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/rooms/upload-wallpaper`, {
+      const uploadRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/rooms/upload-wallpaper`, {
         method: 'POST',
         body: formData
       });
       if (!uploadRes.ok) throw new Error('Failed to upload image');
       const data = await uploadRes.json();
       const wallpaperUrl = data.url; // The backend should return the uploaded image URL
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/rooms/decorate`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/rooms/decorate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ roomId, decorations: { wallpaper: wallpaperUrl } })

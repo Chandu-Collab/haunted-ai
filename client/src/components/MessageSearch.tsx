@@ -21,7 +21,7 @@ const MessageSearch: React.FC<MessageSearchProps> = ({ roomId, sessionId, onClos
   // Export chat log handler
   const handleExport = async () => {
     try {
-      let url = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/chat/export`;
+      let url = `${import.meta.env.VITE_API_BASE_URL}/api/chat/export`;
       const params = new URLSearchParams();
       if (roomId) params.append('roomId', roomId);
       if (sessionId) params.append('sessionId', sessionId);

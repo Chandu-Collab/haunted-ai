@@ -17,7 +17,7 @@ export default function usePersonalRituals() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/rituals?userId=${user.id}`);
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/rituals?userId=${user.id}`);
       if (!res.ok) throw new Error('Failed to fetch rituals');
       const data = await res.json();
       setRituals({ greeting: data.greeting || '', goodbye: data.goodbye || '' });
