@@ -13,7 +13,7 @@ const PersonalRituals: React.FC = () => {
       if (!user) return;
       setLoading(true);
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/rituals?userId=${user.id}`);
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/rituals?userId=${user.id}`);
         if (!res.ok) throw new Error('Failed to fetch rituals');
         const data = await res.json();
         setGreeting(data.greeting || '');
@@ -34,7 +34,7 @@ const PersonalRituals: React.FC = () => {
     if (!user) return;
     setSaving(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/rituals`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/rituals`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

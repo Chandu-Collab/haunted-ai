@@ -7,7 +7,7 @@ export interface Room {
   decorations?: Record<string, any>;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function useRooms() {
   const [rooms, setRooms] = useState<Room[]>([]);

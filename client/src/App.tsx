@@ -73,7 +73,7 @@ interface EnhancedMessage extends Message {
 }
 
 // API configuration
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const App = () => {
   const [sessionId] = useState(`session-${Math.random().toString(36).substring(2, 9)}`);

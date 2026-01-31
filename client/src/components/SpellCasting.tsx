@@ -22,7 +22,7 @@ const SpellCasting = forwardRef<HTMLDivElement, Props>(function SpellCasting({ i
     if (!spellName.trim()) return 'The spirits are confused. Try a real spell!';
     
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const API_URL = import.meta.env.VITE_API_BASE_URL;
       const response = await fetch(`${API_URL}/api/games/spell`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

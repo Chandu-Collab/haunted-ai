@@ -18,7 +18,7 @@ const GhostAppearanceCustomizer: React.FC = () => {
     const fetchGhostProfile = async () => {
       if (!user) return;
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/ghosts`);
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/ghosts`);
         if (!res.ok) throw new Error('Failed to fetch ghost profiles');
         const ghosts = await res.json();
         // Find ghost profile by user email or other logic (adjust as needed)
@@ -53,7 +53,7 @@ const GhostAppearanceCustomizer: React.FC = () => {
     }
     setSaving(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/ghosts/appearance`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/ghosts/appearance`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: ghostId, appearance: { color, emoji } })

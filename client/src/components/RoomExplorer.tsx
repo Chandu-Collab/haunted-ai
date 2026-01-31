@@ -85,8 +85,8 @@ const RoomExplorer = forwardRef<HTMLDivElement, Props>((props, ref) => {
       const baseDescription = room?.description || 'A mysterious room shrouded in darkness.';
       
       // Try to fetch AI-enhanced description
+      const API_URL = import.meta.env.VITE_API_BASE_URL;
       try {
-        const API_URL = 'http://localhost:5000';
         const res = await fetch(`${API_URL}/api/games/room-description`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
