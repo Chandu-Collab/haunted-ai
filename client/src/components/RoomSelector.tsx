@@ -42,7 +42,7 @@ export default function RoomSelector({ onJoin, currentRoomId, onClose }: RoomSel
   const [newRoomChatMode, setNewRoomChatMode] = useState<ChatMode>('balanced');
   const [maxParticipants, setMaxParticipants] = useState(10);
   
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   // Separate rooms by type
   const hauntedRooms = rooms.filter((room: Room) => !room.type || room.type === 'haunted');

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, forwardRef, memo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useAudio from '../hooks/useAudio';
@@ -6,7 +5,7 @@ import useGhostInteractions from '../hooks/useGhostInteractions';
 import Portal from './Portal';
 
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 interface Props {
   isOpen: boolean;

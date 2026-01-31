@@ -66,7 +66,7 @@ export default function useGhostInteractions(sessionId?: string) {
   }, [state]);
 
   // Server sync (optional) - if a sessionId is provided, fetch and sync minimal fields.
-  const API_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:5000';
+  const API_URL = import.meta.env.VITE_API_BASE_URL;
   const syncRef = useRef<{ timer?: number | null }>({ timer: null });
 
   useEffect(() => {

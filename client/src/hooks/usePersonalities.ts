@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { GhostPersonality } from '../utils/ghostPersonalities';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const usePersonalities = () => {
   const [personalities, setPersonalities] = useState<GhostPersonality[]>([]);
