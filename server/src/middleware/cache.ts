@@ -1,7 +1,13 @@
-import { redisClient } from '../utils/redisClient';
+import { redisClient, isRedisConnected } from '../utils/redisClient';
 import { Request, Response, NextFunction } from 'express';
 
 export const cacheMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+  // Skip caching if Redis is not connected
+  if (!isRedisConnected()) {
+    next();
+    return;
+  }
+
   const key = `cache:${req.originalUrl}`;
   try {
     const cached = await redisClient.get(key);
@@ -13,7 +19,11 @@ export const cacheMiddleware = async (req: Request, res: Response, next: NextFun
     // Monkey-patch res.json to cache the result
     const originalJson = res.json.bind(res);
     res.json = (body: any) => {
-      redisClient.setEx(key, 60, JSON.stringify(body)); // cache for 60s
+      if (isRedisConnected()) {
+        redisClient.setEx(key, 60, JSON.stringify(body)).catch(err => 
+          console.error('Cache set error:', err)
+        );
+      }
       res.setHeader('X-Cache', 'MISS');
       return originalJson(body);
     };

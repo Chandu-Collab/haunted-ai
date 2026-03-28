@@ -27,19 +27,29 @@ const app = express();
 
 // Middleware: enable CORS for the configured client origin (FIRST - before any routes)
 const CLIENT_ORIGIN = process.env.CLIENT_URL || 'https://haunted-ai.netlify.app';
+const ALLOWED_ORIGINS = [
+  CLIENT_ORIGIN,
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'http://127.0.0.1:3000'
+];
+
 app.use(cors({
-  origin: CLIENT_ORIGIN,
+  origin: ALLOWED_ORIGINS,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Cache-Control', 'Pragma', 'Expires', 'X-Requested-With', 'cache-control'],
   credentials: true,
   optionsSuccessStatus: 204
 }));
 
 // Handle preflight requests explicitly
 app.options('*', cors({
-  origin: CLIENT_ORIGIN,
+  origin: ALLOWED_ORIGINS,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Cache-Control', 'Pragma', 'Expires', 'X-Requested-With', 'cache-control'],
   credentials: true,
   optionsSuccessStatus: 204
 }));
