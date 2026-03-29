@@ -29,7 +29,6 @@ import Motion3DBackground from './components/Motion3DBackground';
 import GameChallengeNotifications from './components/GameChallengeNotifications';
 import MultiplayerGameLobby from './components/MultiplayerGameLobby';
 import ChatGameButton from './components/ChatGameButton';
-import VoiceInputButton from './components/VoiceInputButton';
 
 // New AI Components
 import MoodVisualizer from './components/MoodVisualizer';
@@ -737,24 +736,6 @@ const App = () => {
     e.preventDefault();
     sendMessage(input);
   };
-
-  // Handle voice input transcript
-  const handleVoiceTranscript = useCallback((transcript: string) => {
-    if (transcript.trim()) {
-      console.log('🎤 Voice transcript received:', transcript);
-      
-      // Auto-send the voice message and ensure AI responds with voice
-      sendMessage(transcript.trim(), undefined, true);
-      
-      // Add notification for voice input success
-      addNotification({
-        type: 'success',
-        title: 'Voice Message Sent',
-        message: 'Your voice message has been sent to the ghost',
-        duration: 3000
-      });
-    }
-  }, [sendMessage, addNotification]);
 
   // Handle image analysis
   const handleImageAnalyzed = useCallback((analysis: ImageAnalysis) => {
@@ -1682,21 +1663,21 @@ const App = () => {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      if (input.trim() && !isTyping && user) {
+                        sendMessage(input);
+                      }
+                    }
+                  }}
                   placeholder="Speak to the spirits..."
                   className="flex-1 bg-gray-800/50 border border-purple-500/50 rounded-lg px-4 py-2 placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
                   style={{ color: '#ffffff' }}
                   disabled={isTyping}
                   aria-label="Message input"
                   tabIndex={0}
-                />
-                
-                {/* Voice Input Button */}
-                <VoiceInputButton
-                  onTranscript={handleVoiceTranscript}
-                  isEnabled={appSettings.voiceInputEnabled && user !== null}
-                  language={appSettings.language === 'en' ? 'en-US' : appSettings.language || 'en-US'}
-                  size="md"
-                  className="flex-shrink-0"
+                  autoFocus
                 />
               </div>
               
