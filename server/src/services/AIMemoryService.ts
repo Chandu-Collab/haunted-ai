@@ -119,17 +119,21 @@ export class AIMemoryService {
         intimacyLevel: 0,
         fearLevel: 10,
         affectionLevel: 0,
-        relationshipStatus: 'stranger'
+        relationshipStatus: 'stranger',
+        conversationCount: 0,
+        totalInteractionTime: 0
       });
     }
 
     // Update relationship metrics
-    relationship.conversationCount += 1;
-    relationship.totalInteractionTime += interactionData.duration;
+    // Handle potential undefined for default values if retrieved from DB inconsistently
+    relationship.conversationCount = (relationship.conversationCount || 0) + 1;
+    relationship.totalInteractionTime = (relationship.totalInteractionTime || 0) + interactionData.duration;
     relationship.lastInteraction = new Date();
 
     // Apply changes based on interaction
-    const sentimentMultiplier = Math.abs(interactionData.sentiment);
+    const sentiment = interactionData.sentiment || 0;
+    const sentimentMultiplier = Math.abs(sentiment);
     
     if (interactionData.trustChange !== undefined) {
       relationship.trustLevel += interactionData.trustChange * sentimentMultiplier;
@@ -144,12 +148,12 @@ export class AIMemoryService {
     }
 
     // Apply natural progression based on positive interactions
-    if (interactionData.sentiment > 0.3) {
+    if (sentiment > 0.3) {
       relationship.affectionLevel += 0.5;
       relationship.trustLevel += 0.2;
       relationship.intimacyLevel += 0.3;
       relationship.fearLevel -= 0.1;
-    } else if (interactionData.sentiment < -0.3) {
+    } else if (sentiment < -0.3) {
       relationship.trustLevel -= 0.3;
       relationship.fearLevel += 0.5;
       relationship.affectionLevel -= 0.2;

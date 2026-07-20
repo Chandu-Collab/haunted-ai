@@ -34,6 +34,7 @@ export const AppDataSource = new DataSource({
     database: parsedUrl.pathname.slice(1),
     synchronize: false,
     logging: true,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     entities: [
         Message,
         Interaction,

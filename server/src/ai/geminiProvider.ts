@@ -3,7 +3,7 @@
 import { AIProvider } from './aiProvider';
 import fetch from 'node-fetch';
 
-const GEMINI_API_KEY = process.env.GEMINI_KEY || process.env.GOOGLE_API_KEY;
+// Environment variable loaded dynamically in class
 // Use a faster Gemini model for lower latency
 const GEMINI_MODEL = 'gemini-flash-latest';
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
@@ -11,6 +11,7 @@ const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/
 
 export class GeminiProvider implements AIProvider {
   async generateResponse(prompt: string, options?: any): Promise<string> {
+    const GEMINI_API_KEY = process.env.GEMINI_KEY || process.env.GOOGLE_API_KEY;
     if (!GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY is not set in environment variables');
     }
