@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL;
+
 export interface StorySegment {
   id: string;
   text: string;
@@ -33,7 +35,7 @@ export const useStorytelling = () => {
   const fetchAvailableStories = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/chat/stories');
+      const response = await fetch(`${API_URL}/api/chat/stories`);
       if (response.ok) {
         const stories = await response.json();
         setAvailableStories(stories);
@@ -48,7 +50,7 @@ export const useStorytelling = () => {
   const startStory = useCallback(async (storyId: string, sessionId: string, userName?: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/chat/story/start', {
+      const response = await fetch(`${API_URL}/api/chat/story/start`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -82,7 +84,7 @@ export const useStorytelling = () => {
   const makeChoice = useCallback(async (choiceId: string, sessionId: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/chat/story/choice', {
+      const response = await fetch(`${API_URL}/api/chat/story/choice`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -121,7 +123,7 @@ export const useStorytelling = () => {
   const continueStory = useCallback(async (sessionId: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/chat/story/continue', {
+      const response = await fetch(`${API_URL}/api/chat/story/continue`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -157,7 +159,7 @@ export const useStorytelling = () => {
   }, sessionId: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/chat/story/generate', {
+      const response = await fetch(`${API_URL}/api/chat/story/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
