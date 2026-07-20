@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL;
+
 export interface ImageAnalysis {
   description: string;
   mood: string;
@@ -53,7 +55,7 @@ export const useImageAnalysis = () => {
       // Convert image to base64
       const base64 = await fileToBase64(imageFile);
       
-      const response = await fetch('/api/chat/analyze-image', {
+      const response = await fetch(`${API_URL}/api/chat/analyze-image`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

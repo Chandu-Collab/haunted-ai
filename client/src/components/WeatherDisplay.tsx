@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL;
+
 interface WeatherData {
   condition: string;
   temperature: number;
@@ -100,7 +102,7 @@ const WeatherDisplay: React.FC<WeatherDisplayProps> = ({ className = '' }) => {
 
   const fetchSpiritualAtmosphere = async (lat: number, lon: number) => {
     try {
-      const response = await fetch('/api/chat/spiritual-atmosphere', {
+      const response = await fetch(`${API_URL}/api/chat/spiritual-atmosphere`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -144,7 +146,7 @@ const WeatherDisplay: React.FC<WeatherDisplayProps> = ({ className = '' }) => {
 
   const fetchWeatherWithCoords = async (lat: number, lon: number) => {
     try {
-      const response = await fetch(`/api/chat/weather?lat=${lat}&lon=${lon}`);
+      const response = await fetch(`${API_URL}/api/chat/weather?lat=${lat}&lon=${lon}`);
       if (response.ok) {
         const result = await response.json();
         setWeather(result.weather);
@@ -157,7 +159,7 @@ const WeatherDisplay: React.FC<WeatherDisplayProps> = ({ className = '' }) => {
 
   const fetchRandomWeather = async () => {
     try {
-      const response = await fetch('/api/chat/weather');
+      const response = await fetch(`${API_URL}/api/chat/weather`);
       if (response.ok) {
         const result = await response.json();
         setWeather(result.weather);

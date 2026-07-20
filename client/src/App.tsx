@@ -667,7 +667,7 @@ const App = () => {
     // Fetch full AI reply from backend and translate if needed
     (async () => {
       try {
-        const response = await fetch(`/api/chat/send`, {
+        const response = await fetch(`${API_URL}/api/chat/send`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
