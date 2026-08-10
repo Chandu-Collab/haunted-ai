@@ -1,8 +1,16 @@
 # 👻 Haunted AI — AI Companion Platform
 
+![Built With](https://img.shields.io/badge/Built_With-React_&_Node-e34f26?style=flat)
+![Powered By](https://img.shields.io/badge/Powered_By-Google_Gemini-007acc?style=flat)
+![Type](https://img.shields.io/badge/Type-AI_Companion-4c1?style=flat)
+![Status](https://img.shields.io/badge/Status-Active-brightgreen?style=flat)
+![License](https://img.shields.io/badge/License-MIT-yellow?style=flat)
+
 > An AI companion built to turn boring moments into engaging experiences.
 
-[Live Demo](#) · [Report Bug](#) · [Request Feature](#)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-00C7B7?style=for-the-badge&logo=netlify&logoColor=white)](https://haunted-ai.netlify.app/)
+[![Report Bug](https://img.shields.io/badge/Report%20Bug-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Chandu-Collab/haunted-ai/issues)
+[![Request Feature](https://img.shields.io/badge/Request%20Feature-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Chandu-Collab/haunted-ai/issues)
 
 ---
 
@@ -165,7 +173,7 @@ Haunted AI is built around one simple idea:
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/haunted-ai.git
+git clone https://github.com/Chandu-Collab/haunted-ai.git
 cd haunted-ai
 ```
 
@@ -173,10 +181,9 @@ cd haunted-ai
 
 ```bash
 cd server
-cp .env.example .env
 ```
 
-Edit the `server/.env` file with your configuration:
+Create a `server/.env` file with your configuration:
 - You will need a valid **Supabase** database URL.
 - You will need a **Google Gemini API Key**.
 
@@ -194,8 +201,9 @@ In a new terminal:
 
 ```bash
 cd client
-cp .env.example .env
 ```
+
+Create a `client/.env` file and set your variables.
 
 Install dependencies and start the development server:
 
@@ -228,6 +236,6 @@ MIT License
 
 ## 🔗 Links
 
-- 🌐 **Live Product**: (Add Link)
-- 💻 **Source Code**: https://github.com/yourusername/haunted-ai
-- 🐛 **Issues**: https://github.com/yourusername/haunted-ai/issues
+- 🌐 **Live Product**: https://haunted-ai.netlify.app/
+- 💻 **Source Code**: https://github.com/Chandu-Collab/haunted-ai
+- 🐛 **Issues**: https://github.com/Chandu-Collab/haunted-ai/issues
