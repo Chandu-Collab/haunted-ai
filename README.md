@@ -1,70 +1,166 @@
-## Performance & Scalability
+# 👻 Haunted AI — AI Companion Platform
 
-### Load Balancing & Clustering
+> An AI companion built to turn boring moments into engaging experiences.
 
-#### PM2 (Node.js Clustering)
+[Live Demo](#) · [Report Bug](#) · [Request Feature](#)
 
-To run multiple Node.js processes for better CPU utilization:
+---
 
-```bash
-npm install -g pm2
-pm2 start dist/index.js -i max # or specify number of instances
+## 🚧 Product Status
+
+**Haunted AI is an experimental project exploring real-time AI companionship.**
+
+It is built to showcase a novel idea for solving real-time engagement and boredom, rather than functioning as an immediate commercial startup. Future releases may expand character systems, personalization, memory, and interactive experiences.
+
+---
+
+## ✨ What is Haunted AI?
+
+Haunted AI is an AI companion platform designed to help users break boredom, reset their mood, and engage in meaningful or playful conversations.
+
+Instead of providing a single generic chatbot experience, Haunted AI explores character-driven AI interactions where each character can have its own personality, communication style, behavior, and purpose.
+
+The long-term vision is to make AI interaction feel less like "asking a chatbot questions" and more like spending time with a digital companion.
+
+---
+
+## 🎯 The Problem
+
+Traditional AI chat interfaces are highly utility-focused.
+
+Users usually open an AI assistant because they need an answer, but there are many moments when people simply want:
+
+- Someone to talk to
+- A distraction from repetitive work
+- Something entertaining
+- A way to reset after a stressful moment
+- A more personalized conversational experience
+
+Haunted AI explores this space.
+
+---
+
+## 💡 Product Vision
+
+Haunted AI aims to become a character-driven AI companion platform where users can choose the kind of interaction they want.
+
+Different characters can provide different experiences:
+
+🎭 **Personality-driven conversations**  
+🎮 **Interactive mini-games**  
+💬 **Casual conversations**  
+🧠 **Context-aware responses**  
+👻 **Themed AI experiences**  
+✨ **Personalized interactions**  
+
+---
+
+## 🚀 Current Experience
+
+The current version includes:
+
+- **Real-time AI conversations**: Powered by WebSockets (Socket.IO).
+- **Character-driven personality**: Select different ghost profiles with distinct behavior.
+- **Atmospheric visual experience**: 3D motion backgrounds, particle systems, fog effects.
+- **Interactive experiences**: Play chat-based games with the AI.
+- **Conversation history**: Persistent state powered by Supabase and Prisma.
+- **Typing indicators & real-time presence**: See when the companion is responding.
+
+---
+
+## 🧠 How It Works
+
+```text
+User
+  ↓
+Character Selection
+  ↓
+Conversation Context
+  ↓
+AI Processing (Google Gemini)
+  ↓
+Character Personality
+  ↓
+Response
+  ↓
+Interactive Experience
 ```
 
-#### Nginx (Recommended for Production)
+---
 
-Use Nginx as a reverse proxy to distribute traffic across your Node.js instances:
+## 🛠️ Tech Stack
 
-```
-upstream haunted_ai_backend {
-	server 127.0.0.1:5000;
-	server 127.0.0.1:5001;
-	# Add more servers as needed
-}
+### Frontend
+- **Framework**: React
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Animations**: Framer Motion
+- **Tooling**: Vite
 
-server {
-	listen 80;
-	server_name yourdomain.com;
+### Backend
+- **Runtime**: Node.js
+- **Framework**: Express
+- **Real-time**: Socket.IO
 
-	location / {
-		proxy_pass http://haunted_ai_backend;
-		proxy_set_header Host $host;
-		proxy_set_header X-Real-IP $remote_addr;
-		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-		proxy_set_header X-Forwarded-Proto $scheme;
-	}
-}
-```
+### Data
+- **Database**: Supabase
+- **ORM**: Prisma & TypeORM
 
-This setup helps handle multiple concurrent users and improves reliability.
-# Haunted AI Chatbot 👻
+### AI
+- **Provider**: Google Gemini (gemini-flash-latest)
 
-A spooky AI chatbot that becomes increasingly personal and unsettling the more you talk to it. Built with React, Node.js, and OpenAI's GPT-3.5.
+### Deployment
+- **Frontend**: Netlify
+- **Backend**: Render
 
-## Features
+---
 
-- **Creepy AI Personality**: The ghost's responses become more personal and unsettling over time
-- **Real-time Chat**: WebSocket-based communication for instant message delivery
-- **Typing Indicators**: Visual feedback when the ghost is "typing"
-- **Message History**: Chat history is saved and restored between sessions
-- **Atmospheric UI**: Dark theme with spooky animations and effects
-- **Responsive Design**: Works on desktop and mobile devices
+## 🏗️ Architecture
 
-## Tech Stack
+The platform separates the client application and the API layer. Clients connect via REST for standard operations and upgrade to WebSockets (Socket.IO) for real-time interactions and low-latency responses.
 
-- **Frontend**: React, TypeScript, Tailwind CSS, Framer Motion
-- **Backend**: Node.js, Express, Socket.IO
-- **Database**: MongoDB with Mongoose
-- **AI**: OpenAI GPT-3.5
+---
 
-## Prerequisites
+## 🎨 Product Philosophy
 
-- Node.js (v16 or later)
-- npm or yarn
-- MongoDB (local or Atlas)
-- OpenAI API key
+Haunted AI is built around one simple idea:
 
-## Getting Started
+> **AI doesn't always need to solve a problem.**
+> **Sometimes it can simply make a moment better.**
+
+"AI for the moments when you don't need an answer."
+
+---
+
+## 🗺️ Roadmap
+
+### Phase 1 — Core Companion
+- [x] Real-time conversation
+- [x] Character personality
+- [x] Conversation history
+- [x] Responsive UI
+- [x] Atmospheric VFX (Fog, Particles)
+
+### Phase 2 — Interactive Experiences
+- [x] Mini-games
+- [ ] More character experiences
+- [ ] Rich interaction modes
+
+### Phase 3 — Personalization
+- [ ] User profiles
+- [ ] Long-term memory
+- [ ] Personalized characters
+- [ ] Conversation preferences
+
+### Phase 4 — Platform
+- [ ] Character marketplace
+- [ ] Custom character creation
+- [ ] Community experiences
+- [ ] Advanced personalization
+
+---
+
+## ⚙️ Local Setup
 
 ### 1. Clone the repository
 
@@ -80,19 +176,15 @@ cd server
 cp .env.example .env
 ```
 
-Edit the `.env` file with your configuration:
-
-```env
-PORT=5000
-MONGO_URI=mongodb://localhost:27017/haunted-ai
-OPENAI_API_KEY=your_openai_api_key_here
-CLIENT_URL=http://localhost:3000
-```
+Edit the `server/.env` file with your configuration:
+- You will need a valid **Supabase** database URL.
+- You will need a **Google Gemini API Key**.
 
 Install dependencies and start the server:
 
 ```bash
 npm install
+npm run migrate
 npm run dev
 ```
 
@@ -105,82 +197,37 @@ cd client
 cp .env.example .env
 ```
 
-Edit the `.env` file:
-
-```env
-REACT_APP_API_URL=http://localhost:5000
-```
-
 Install dependencies and start the development server:
 
 ```bash
 npm install
-npm start
+npm run dev
 ```
 
-The app should now be running at `http://localhost:3000`
-
-## Environment Variables
-
-### Backend (server/.env)
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| PORT | Port for the Express server | 5000 |
-| MONGO_URI | MongoDB connection string | mongodb://localhost:27017/haunted-ai |
-| OPENAI_API_KEY | Your OpenAI API key | - |
-| CLIENT_URL | URL of the frontend | http://localhost:3000 |
-
-### Frontend (client/.env)
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| REACT_APP_API_URL | URL of the backend API | http://localhost:5000 |
-
-## API Endpoints
-
-- `GET /api/chat/history/:sessionId` - Get chat history for a session
-- `POST /api/chat/send` - Send a new message
-
-## Deployment
-
-### Backend Deployment
-
-1. Set up a MongoDB database (e.g., MongoDB Atlas)
-2. Deploy the server to a hosting provider (e.g., Heroku, Railway, or Render)
-3. Set the environment variables in your hosting provider's dashboard
-
-### Frontend Deployment
-
-1. Update the `REACT_APP_API_URL` in the client's `.env` file to point to your deployed backend
-2. Build the React app: `npm run build`
-3. Deploy the `build` folder to a static hosting service (e.g., Vercel, Netlify, or GitHub Pages)
-
-## Customization
-
-### Changing the Ghost's Personality
-
-Edit the system prompt in `server/src/controllers/chatController.ts` to modify the ghost's personality and behavior.
-
-### Styling
-
-Customize the colors and styling in:
-- `client/tailwind.config.js` - Theme configuration
-- `client/src/index.css` - Global styles and animations
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- Inspired by various AI horror experiences and interactive fiction
-- Built with amazing open source technologies
+The app should now be running at `http://localhost:5173`
 
 ---
 
-👻 Happy haunting!
+## 🔐 Privacy
+
+Conversations and interactions are stored in Supabase to provide a persistent memory experience. No PII is shared with third parties, and all AI processing is done using official provider APIs without logging for model training.
+
+---
+
+## 🤝 Contributing
+
+Contributions, ideas, and feedback are welcome. Check the roadmap for areas where we need the most help!
+
+---
+
+## 📄 License
+
+MIT License
+
+---
+
+## 🔗 Links
+
+- 🌐 **Live Product**: (Add Link)
+- 💻 **Source Code**: https://github.com/yourusername/haunted-ai
+- 🐛 **Issues**: https://github.com/yourusername/haunted-ai/issues
